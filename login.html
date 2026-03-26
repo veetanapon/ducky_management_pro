@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vee Car Consumption</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+  <body class="">
+    <!-- <div class="container">
+      <div class="card">
+        <h2 style="margin-bottom:8px">Vee Car Consumption App</h2>
+        <p class="muted">กรอกอีเมลเพื่อเข้าใช้งาน</p>
+        <input type="email" id="email" placeholder="your@email.com" style="width:100%;margin-top:12px" />
+        <button style="width:100%;margin-top:16px" onclick="login()">
+          ขอเข้าใช้งาน
+        </button>
+        <p id="status" class="muted" style="margin-top:12px"></p>
+      </div>
+    </div> -->
+
+    <div id="login" class="sheet show">
+      <div class="sheet-header">
+        <span>Login</span>
+      </div>
+      <div class="sheet-body">
+        <p class="muted">กรอกอีเมลเพื่อเข้าใช้งาน</p>
+        <input type="email" id="email" placeholder="your@email.com" />
+        <button id="submitLogin" onclick="login()">เข้าสู่ระบบ</button>
+        <p id="status" class="muted" style="margin-top:12px"></p>
+      </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+  </body>
+
+</html>
