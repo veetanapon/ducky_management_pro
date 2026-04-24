@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sale Manage | Ducky Management Pro</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="module_calendar" data-module="sale_manage">
+  <header class="app-header container">
+    <div class="header-leading">
+      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
+      <div>
+        <h1 id="moduleTitle">ขายออก / บิล</h1>
+        <p class="muted" id="moduleSubtitle">กำลังโหลดข้อมูล...</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="backBtn" type="button">←</button>
+      <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+    </div>
+  </header>
+
+  <main class="container page-body module-page-layout">
+    <section class="card-panel module-page-intro">
+      <div class="section-card-head">
+        <h3>ภาพรวมขายออก / บิล</h3>
+        <span class="badge-inline muted-badge" id="modulePermissionBadge">กำลังโหลด</span>
+      </div>
+      <p class="muted" id="moduleHint">กำลังโหลดข้อมูลสรุป...</p>
+    </section>
+
+    <section id="moduleSummaryCards" class="module-summary-grid"></section>
+
+    <section class="card-panel module-calendar-panel">
+      <div class="section-card-head">
+        <h3 id="calendarTitle">ปฏิทินการบันทึก</h3>
+        <div class="module-calendar-nav">
+          <button type="button" class="secondary-btn calendar-nav-btn" id="calendarPrevBtn">‹</button>
+          <span class="badge-inline muted-badge" id="calendarMonthLabel">-</span>
+          <button type="button" class="secondary-btn calendar-nav-btn" id="calendarNextBtn">›</button>
+        </div>
+      </div>
+      <div class="module-calendar-legend">
+        <span><i class="legend-swatch legend-swatch--filled"></i> มีบันทึก</span>
+        <span><i class="legend-swatch legend-swatch--empty"></i> ยังไม่บันทึก</span>
+      </div>
+      <div class="module-calendar-weekdays">
+        <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+      </div>
+      <div id="moduleCalendarGrid" class="module-calendar-grid"></div>
+    </section>
+
+    <section class="card-panel">
+      <div class="section-card-head">
+        <h3>บันทึกล่าสุด</h3>
+        <span class="badge-inline muted-badge" id="recentCountBadge">0 รายการ</span>
+      </div>
+      <div id="recentLogList" class="log-list"></div>
+    </section>
+  </main>
+
+  <div id="moduleFabRoot"></div>
+
+
+  <div id="saleBillSheet" class="sheet hidden">
+    <div class="sheet-backdrop" id="saleBillBackdrop"></div>
+    <div class="sheet-panel">
+      <div class="sheet-header">
+        <span>ขายออก / ออกบิลเงินสด</span>
+        <button id="saleBillCloseBtn" type="button">&times;</button>
+      </div>
+      <form id="saleBillForm" class="sheet-body form-stack">
+        <div id="saleTypeWrap" class="hidden">
+          <label class="field-label">ประเภทการขาย</label>
+          <div class="sale-type-toggle">
+            <button type="button" class="is-active" id="saleTypeEggBtn" data-sale-type="egg">ขายไข่</button>
+            <button type="button" id="saleTypeDuckBtn" data-sale-type="duck">ขายเป็ด</button>
+          </div>
+        </div>
+        <label class="field-label">วันที่ขาย</label>
+        <input id="saleBillDate" type="date" required />
+        <label class="field-label">ชื่อผู้ซื้อ (ไม่แสดงในบิล)</label>
+        <input id="saleBuyerName" type="text" placeholder="ชื่อผู้ซื้อ (optional)" />
+        <label class="field-label">หมายเหตุท้ายบิล</label>
+        <textarea id="saleBillRemark" rows="2" placeholder="หมายเหตุเพิ่มเติม (optional)"></textarea>
+        <div class="inline-note" id="saleBillStockNote"></div>
+        <h3 style="margin:0">รายการขาย</h3>
+        <div id="saleItemsList" class="sale-items-list"></div>
+      </form>
+      <div class="sheet-footer sheet-footer--dual">
+        <button class="text-btn" id="addSaleItemBtn" type="button">+ เพิ่มรายการ</button>
+        <button class="secondary-btn" id="salePreviewBtn" form="saleBillForm" type="submit">Preview บิล</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="billPreviewSheet" class="sheet hidden">
+    <div class="sheet-backdrop" id="billPreviewBackdrop"></div>
+    <div class="sheet-panel bill-preview-panel">
+      <div class="sheet-header">
+        <span>Preview บิลเงินสด</span>
+        <button id="billPreviewCloseBtn" type="button">&times;</button>
+      </div>
+      <div class="sheet-body form-stack bill-preview-body">
+        <img id="billPreviewImage" class="bill-preview-image hidden" alt="bill preview" />
+        <div id="billPreviewMeta" class="muted"></div>
+      </div>
+      <div class="sheet-footer sheet-footer--triple">
+        <button class="secondary-btn" id="billDownloadBtn" type="button">เซฟเป็นรูป</button>
+        <button class="secondary-btn" id="billBackToEditBtn" type="button">กลับไปแก้</button>
+        <button id="billConfirmBtn" type="button">ยืนยันบิล</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"</script>
+  <script src="js/core/state.js"></script>
+  <script src="js/core/cache.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/core/auth.js"></script>
+  <script src="js/modules/nav.js"></script>
+  <script src="js/modules/module-calendar-page.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

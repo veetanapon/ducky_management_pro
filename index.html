@@ -1,72 +1,120 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vee Car Consumption</title>
+  <title>Ducky Management Pro</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-
-<body>
-
-  <header class="container">
-    <h1>My Cars</h1>
-    <div style="display:flex; gap:14px; align-items:center">
-      <!-- <div class="theme-toggle" onclick="toggleTheme()">🌓</div> -->
-      <div class="noti" onclick="loadNotifications()">
-        🔔
-        <div id="badge" class="badge" style="display:none">0</div>
+<body data-page="index">
+  <header class="app-header container">
+    <div class="header-leading">
+      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
+      <div>
+        <h1>My Batch Lists</h1>
+        <p class="muted" id="pageSubtitle">รายการชุดสัตว์ที่เข้าถึงได้</p>
       </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="refreshBtn" type="button" title="รีเฟรช">↻</button>
+      <button class="icon-btn" id="logoutBtn" type="button" title="ออกจากระบบ">⎋</button>
     </div>
   </header>
 
-  <main class="container" id="carList"></main>
+  <main class="container page-body">
+    <section class="search-bar">
+      <input id="batchSearch" type="search" placeholder="ค้นหาชื่อชุดสัตว์..." />
+    </section>
 
-  <!-- Floating Add Button -->
-  <button class="fab" onclick="openAddVehicle()">＋</button>
+    <section id="offlineBanner" class="banner warning hidden">
+      กำลังแสดงข้อมูลจากเครื่อง อาจยังไม่เป็นข้อมูลล่าสุด
+    </section>
 
-  <!-- Bottom Sheet -->
-  <div id="addSheet" class="sheet hidden">
-    <div class="sheet-header">
-      <span>เพิ่มรถ</span>
-      <button onclick="closeAddVehicle()">&times;</button>
-    </div>
+    <section id="batchLists" class="batch-list"></section>
+  </main>
 
-    <div class="sheet-body">
-      <input id="v_name" placeholder="ชื่อรถ" />
-      <input id="v_brand" placeholder="ยี่ห้อ" />
-      <input id="v_model" placeholder="รุ่น" />
+  <button class="fab" id="fabMain" type="button" aria-label="actions">＋</button>
+  <div id="fabMenu" class="fab-menu hidden"></div>
 
-      <select id="v_type">
-        <option value="fuel">⛽ น้ำมัน</option>
-        <option value="ev">⚡ EV</option>
-      </select>
+  <div id="addSheet" class="sheet hidden" aria-hidden="true">
+    <div class="sheet-backdrop" data-close-sheet></div>
+    <div class="sheet-panel">
+      <div class="sheet-header">
+        <span id="sheetTitle">เพิ่มชุดสัตว์ใหม่</span>
+        <button id="closeSheetBtn" type="button" class="icon-btn">×</button>
+      </div>
+      <form id="batchForm" class="sheet-body">
+        <input id="ab_species" list="speciesList" placeholder="ชนิดสัตว์" required />
+        <datalist id="speciesList">
+          <option value="เป็ด"></option>
+          <option value="ปลา"></option>
+        </datalist>
 
-      <input id="v_odometer" type="number" placeholder="เลขไมล์เริ่มต้น" />
+        <input id="ab_name" placeholder="ชื่อชุดสัตว์" required />
+        <div class="grid-2">
+          <input id="ab_initqty" type="number" min="0" step="1" placeholder="จำนวนเริ่มต้น" />
+          <input id="ab_currqty" type="number" min="0" step="1" placeholder="จำนวนปัจจุบัน" />
+        </div>
+        <input id="ab_unitprice" type="number" min="0" step="0.01" placeholder="ราคาต่อหน่วย" />
 
-      <!-- <label class="upload">
-      📷 เลือกรูป
-      <input type="file" id="v_image" accept="image/*" />
-      
-    </label> -->
-      <label class="upload">
-        📷 เลือกรูป
-        <input type="file" id="vehicleImage" accept="image/*" />
-      </label>
+        <div class="grid-2">
+          <select id="ab_status">
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+          <input id="ab_startDate" type="date" />
+        </div>
 
-      <img id="imagePreview" class="image-preview hidden" />
+        <input id="ab_endDate" type="date" />
+        <textarea id="ab_remark" rows="3" placeholder="หมายเหตุเพิ่มเติม"></textarea>
 
-      <button onclick="submitVehicle()">บันทึก</button>
+        <label class="upload">
+          <span>📷 เลือกรูป</span>
+          <input type="file" id="batchImage" accept="image/*" />
+        </label>
+
+        <img id="imagePreview" class="image-preview hidden" alt="preview" />
+        <button id="submitBatchBtn" type="submit">บันทึกข้อมูล</button>
+      </form>
     </div>
   </div>
 
-
-  <!-- <button class="add-btn">+</button> -->
+  <template id="batchCardTemplate">
+    <article class="swipe-wrap">
+      <div class="swipe-actions">
+        <button class="swipe-btn edit" type="button" data-action="edit">✎</button>
+        <button class="swipe-btn delete" type="button" data-action="delete">🗑</button>
+      </div>
+      <div class="batch-card compact swipe-content">
+        <div class="batch-thumb"><img alt="" /></div>
+        <div class="batch-info">
+          <div class="batch-header-row">
+            <span class="batch-title"></span>
+            <span class="batch-subtitle"></span>
+          </div>
+          <div class="batch-stats-row">
+            <div class="batch-stat">
+              <span class="label js-start"></span>
+              <span class="value js-current"></span>
+            </div>
+            <div class="batch-stat text-right">
+              <span class="label js-right-label"></span>
+              <span class="value js-right-value"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </template>
 
   <script src="js/config.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="js/core/state.js"></script>
+  <script src="js/core/cache.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/core/auth.js"></script>
+  <script src="js/modules/nav.js"></script>
+  <script src="js/modules/forms.js"></script>
+  <script src="js/modules/index-page.js"></script>
   <script src="js/app.js"></script>
 </body>
-
 </html>

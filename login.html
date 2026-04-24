@@ -1,42 +1,35 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vee Car Consumption</title>
+  <title>Login | Ducky Management Pro</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-
-<body>
-
-  <body class="">
-    <!-- <div class="container">
-      <div class="card">
-        <h2 style="margin-bottom:8px">Vee Car Consumption App</h2>
-        <p class="muted">กรอกอีเมลเพื่อเข้าใช้งาน</p>
-        <input type="email" id="email" placeholder="your@email.com" style="width:100%;margin-top:12px" />
-        <button style="width:100%;margin-top:16px" onclick="login()">
-          ขอเข้าใช้งาน
-        </button>
-        <p id="status" class="muted" style="margin-top:12px"></p>
-      </div>
-    </div> -->
-
-    <div id="login" class="sheet show">
+<body class="login-page">
+  <main class="container">
+    <section class="sheet-panel login-panel">
       <div class="sheet-header">
-        <span>Login</span>
+        <span>เข้าสู่ระบบ</span>
       </div>
-      <div class="sheet-body">
+      <form id="loginForm" class="sheet-body">
         <p class="muted">กรอกอีเมลเพื่อเข้าใช้งาน</p>
-        <input type="email" id="email" placeholder="your@email.com" />
-        <button id="submitLogin" onclick="login()">เข้าสู่ระบบ</button>
-        <p id="status" class="muted" style="margin-top:12px"></p>
-      </div>
-    </div>
+        <input type="email" id="email" placeholder="your@email.com" required />
+        <input type="text" id="deviceName" placeholder="ชื่ออุปกรณ์ (ไม่บังคับ)" />
+        <button id="submitLogin" type="submit">เข้าสู่ระบบ</button>
+        <p id="status" class="muted"></p>
+      </form>
+    </section>
+  </main>
 
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-  </body>
-
+  <script src="js/config.js"></script>
+  <script src="js/core/state.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/core/auth.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      AppAuth.bootstrapLoginPage();
+    });
+  </script>
+</body>
 </html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Egg Daily | Ducky Management Pro</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="module_calendar" data-module="egg_daily">
+  <header class="app-header container">
+    <div class="header-leading">
+      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
+      <div>
+        <h1 id="moduleTitle">บันทึกจำนวนไข่รายวัน</h1>
+        <p class="muted" id="moduleSubtitle">กำลังโหลดข้อมูล...</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="backBtn" type="button">←</button>
+      <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+    </div>
+  </header>
+
+  <main class="container page-body module-page-layout">
+    <section class="card-panel module-page-intro">
+      <div class="section-card-head">
+        <h3>ภาพรวมบันทึกจำนวนไข่รายวัน</h3>
+        <span class="badge-inline muted-badge" id="modulePermissionBadge">กำลังโหลด</span>
+      </div>
+      <p class="muted" id="moduleHint">กำลังโหลดข้อมูลสรุป...</p>
+    </section>
+
+    <section id="moduleSummaryCards" class="module-summary-grid"></section>
+
+    <section class="card-panel module-calendar-panel">
+      <div class="section-card-head">
+        <h3 id="calendarTitle">ปฏิทินการบันทึก</h3>
+        <div class="module-calendar-nav">
+          <button type="button" class="secondary-btn calendar-nav-btn" id="calendarPrevBtn">‹</button>
+          <span class="badge-inline muted-badge" id="calendarMonthLabel">-</span>
+          <button type="button" class="secondary-btn calendar-nav-btn" id="calendarNextBtn">›</button>
+        </div>
+      </div>
+      <div class="module-calendar-legend">
+        <span><i class="legend-swatch legend-swatch--filled"></i> มีบันทึก</span>
+        <span><i class="legend-swatch legend-swatch--empty"></i> ยังไม่บันทึก</span>
+      </div>
+      <div class="module-calendar-weekdays">
+        <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+      </div>
+      <div id="moduleCalendarGrid" class="module-calendar-grid"></div>
+    </section>
+  </main>
+
+  <div id="moduleFabRoot"></div>
+
+  <div id="eggDailySheet" class="sheet hidden">
+    <div class="sheet-backdrop" id="eggDailyBackdrop"></div>
+    <div class="sheet-panel">
+      <div class="sheet-header">
+        <span id="eggDailyTitle">บันทึกจำนวนไข่รายวัน</span>
+        <button id="eggDailyCloseBtn" type="button">&times;</button>
+      </div>
+      <form id="eggDailyForm" class="sheet-body form-stack">
+        <label class="field-label">วันที่บันทึก</label>
+        <input id="eggDailyDate" type="date" required />
+        <div class="inline-note">กดเพิ่มรายการ แล้วเลือกชนิดไข่ที่ต้องการบันทึก โดยชนิดไข่ห้ามซ้ำกันในวันเดียว</div>
+        <div id="eggEntryList" class="module-entry-list"></div>
+        <button type="button" class="secondary-btn entry-add-btn" id="addEggEntryBtn">+ เพิ่มรายการไข่</button>
+      </form>
+      <div class="sheet-footer">
+        <button id="eggDailySubmitBtn" form="eggDailyForm" type="submit">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/core/state.js"></script>
+  <script src="js/core/cache.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/core/auth.js"></script>
+  <script src="js/modules/nav.js"></script>
+  <script src="js/modules/module-calendar-page.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
