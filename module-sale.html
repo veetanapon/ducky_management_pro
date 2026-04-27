@@ -51,13 +51,42 @@
       <div id="moduleCalendarGrid" class="module-calendar-grid"></div>
     </section>
 
-    <section class="card-panel">
+    <section class="card-panel sale-range-summary-panel" id="saleRangeSummaryPanel">
       <div class="section-card-head">
-        <h3>บันทึกล่าสุด</h3>
-        <span class="badge-inline muted-badge" id="recentCountBadge">0 รายการ</span>
+        <h3>รวมบิล</h3>
+        <span class="badge-inline muted-badge" id="saleRangeSummaryBadge">ยังไม่ค้นหา</span>
       </div>
-      <div id="recentLogList" class="log-list"></div>
+      <p class="muted">สรุปยอดเรียกเก็บตามช่วงวันที่ เพื่อใช้ทำสลิปสรุปยอดรายวัน</p>
+      <div class="sale-range-search-grid sale-range-search-grid--with-buyer">
+        <div class="sale-range-field">
+          <label class="field-label" for="saleRangeStartDate">วันที่เริ่ม</label>
+          <input id="saleRangeStartDate" type="date" />
+        </div>
+        <div class="sale-range-field">
+          <label class="field-label" for="saleRangeEndDate">วันที่สิ้นสุด</label>
+          <input id="saleRangeEndDate" type="date" />
+        </div>
+        <div class="sale-range-field sale-range-field--buyer">
+          <label class="field-label" for="saleRangeBuyerSearch">ค้นหาผู้ซื้อ</label>
+          <input id="saleRangeBuyerSearch" type="search" placeholder="พิมพ์บางส่วนของชื่อ" />
+        </div>
+        <div class="sale-range-field sale-range-field--action">
+          <label class="field-label">&nbsp;</label>
+          <button type="button" id="saleRangeSearchBtn">ค้นหา</button>
+        </div>
+      </div>
+      <div id="saleRangeSummaryList" class="sale-range-summary-list">
+        <div class="empty-state">เลือกช่วงวันที่แล้วกดค้นหาเพื่อดูสรุปยอด</div>
+      </div>
+      <div id="saleRangeSummaryFooter" class="sale-range-summary-footer hidden">
+        <div>
+          <span class="muted">ยอดรวมสุทธิ</span>
+          <strong id="saleRangeGrandTotal">0.00 ฿</strong>
+        </div>
+        <button type="button" class="secondary-btn" id="saleRangePreviewBtn">Preview สรุปยอด</button>
+      </div>
     </section>
+
   </main>
 
   <div id="moduleFabRoot"></div>
@@ -85,6 +114,7 @@
         <label class="field-label">หมายเหตุท้ายบิล</label>
         <textarea id="saleBillRemark" rows="2" placeholder="หมายเหตุเพิ่มเติม (optional)"></textarea>
         <div class="inline-note" id="saleBillStockNote"></div>
+        <div class="inline-note hidden" id="salePriceSetNote"></div>
         <h3 style="margin:0">รายการขาย</h3>
         <div id="saleItemsList" class="sale-items-list"></div>
       </form>
@@ -114,7 +144,26 @@
     </div>
   </div>
 
-  <script src="js/config.js"</script>
+
+  <div id="saleRangePreviewSheet" class="sheet hidden">
+    <div class="sheet-backdrop" id="saleRangePreviewBackdrop"></div>
+    <div class="sheet-panel bill-preview-panel">
+      <div class="sheet-header">
+        <span>Preview สรุปยอดบิล</span>
+        <button id="saleRangePreviewCloseBtn" type="button">&times;</button>
+      </div>
+      <div class="sheet-body form-stack bill-preview-body">
+        <img id="saleRangePreviewImage" class="bill-preview-image hidden" alt="sale range summary preview" />
+        <div id="saleRangePreviewMeta" class="muted"></div>
+      </div>
+      <div class="sheet-footer sheet-footer--dual">
+        <button class="secondary-btn" id="saleRangeBackBtn" type="button">กลับไปเลือกบิล</button>
+        <button id="saleRangeDownloadBtn" type="button">เซฟเป็นรูป</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
   <script src="js/core/state.js"></script>
   <script src="js/core/cache.js"></script>
   <script src="js/core/api.js"></script>

@@ -32,5 +32,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   if (page === 'admin_permissions' && window.AdminPermissionsPage) {
     await AdminPermissionsPage.bootstrap();
+    return;
+  }
+  if (page === 'items_price_manage' && window.ItemsPriceManagePage) {
+    await ItemsPriceManagePage.bootstrap();
   }
 });

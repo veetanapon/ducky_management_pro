@@ -17,6 +17,7 @@ window.NavDrawer = (() => {
     module_sale: 'ขายออก/บิล',
     batch_access: 'สิทธิ์การเข้าถึง batch',
     admin_permissions: 'จัดการสิทธิ์',
+    items_price_manage: 'จัดการราคาไข่',
     report: 'รายงาน'
   };
 
@@ -60,6 +61,7 @@ window.NavDrawer = (() => {
     }
 
     if (bodyPage === 'batch' || bodyPage === 'batch_dashboard') return 'batch_dashboard';
+    if (bodyPage === 'items_price_manage') return 'items_price_manage';
     return bodyPage || 'index';
   }
 
@@ -330,6 +332,10 @@ window.NavDrawer = (() => {
           label: 'จัดการสิทธิ์',
           href: 'admin-permissions.html',
           active: state.page === 'admin_permissions'
+        }, {
+          label: 'จัดการราคาไข่',
+          href: 'items-price-manage.html',
+          active: state.page === 'items_price_manage'
         }]
       });
     }

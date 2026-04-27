@@ -1,5 +1,5 @@
 window.ModuleCalendarPage = (() => {
-  const state = { batch: null, moduleType: '', month: '', permission: 'none', data: null, feedLots: [], feedLotMap: {}, feedEditDate: '', feedEditRows: [] };
+  const state = { batch: null, moduleType: '', month: '', permission: 'none', data: null, feedLots: [], feedLotMap: {}, feedEditDate: '', feedEditRows: [], saleType: '', salePriceSet: null, salePriceItems: [], salePriceLoaded: false, billDraft: null, billPreviewImage: '', saleEditBillId: '', saleRangeRows: [], saleRangeTotals: null, saleRangeImage: '', logoUrl: 'assets/farm-logo.png' };
   const CACHE_TTL_MS = 60 * 1000;
   const EGG_TYPE_OPTIONS = [
     { key: 'qty_all', label: 'ไข่รวม' },
@@ -56,6 +56,27 @@ function bindBaseEvents() {
     document.getElementById('addEggEntryBtn')?.addEventListener('click', () => appendEggEntryRow());
     document.getElementById('eggEntryList')?.addEventListener('click', onEggListClick);
     document.getElementById('eggEntryList')?.addEventListener('change', onEggListChange);
+
+    document.getElementById('saleBillCloseBtn')?.addEventListener('click', closeSaleBillSheet);
+    document.getElementById('saleBillBackdrop')?.addEventListener('click', closeSaleBillSheet);
+    document.getElementById('saleBillForm')?.addEventListener('submit', onPreviewBillSubmit);
+    document.getElementById('addSaleItemBtn')?.addEventListener('click', () => appendSaleItemRow());
+    document.getElementById('saleTypeEggBtn')?.addEventListener('click', async () => { await loadEffectiveEggPriceSet(true); setSaleType('egg', true); });
+    document.getElementById('saleTypeDuckBtn')?.addEventListener('click', () => setSaleType('duck', true));
+    document.getElementById('billPreviewCloseBtn')?.addEventListener('click', closeBillPreview);
+    document.getElementById('billPreviewBackdrop')?.addEventListener('click', closeBillPreview);
+    document.getElementById('billBackToEditBtn')?.addEventListener('click', backToEditBill);
+    document.getElementById('billDownloadBtn')?.addEventListener('click', downloadBillImage);
+    document.getElementById('billConfirmBtn')?.addEventListener('click', confirmBill);
+    document.getElementById('saleRangeSearchBtn')?.addEventListener('click', searchSaleRangeSummary);
+    document.getElementById('saleRangePreviewBtn')?.addEventListener('click', previewSaleRangeSummaryImage);
+    document.getElementById('saleRangeSummaryList')?.addEventListener('click', onSaleRangeListClick);
+    document.getElementById('saleRangePreviewCloseBtn')?.addEventListener('click', closeSaleRangePreview);
+    document.getElementById('saleRangePreviewBackdrop')?.addEventListener('click', closeSaleRangePreview);
+    document.getElementById('saleRangeBackBtn')?.addEventListener('click', closeSaleRangePreview);
+    document.getElementById('saleRangeDownloadBtn')?.addEventListener('click', downloadSaleRangeSummaryImage);
+    ensureSaleDiscountField();
+    normalizeSaleLayout();
   }
 
   async function load(batchId) {
@@ -91,6 +112,7 @@ function bindBaseEvents() {
     renderHeader();
     renderSummary();
     renderCalendar();
+    initSaleRangeSummaryDefaults();
     // renderRecentLogs();
     renderFab();
     if (window.NavDrawer) {
@@ -162,9 +184,8 @@ function bindBaseEvents() {
   
 function renderCalendar() {
     const calendarPanel = document.querySelector('.module-calendar-panel');
-    const isFishSale = state.moduleType === 'sale_manage' && state.batch?.specie === 'fish';
-    if (calendarPanel) calendarPanel.classList.toggle('hidden', isFishSale || state.moduleType === 'report');
-    if (isFishSale || state.moduleType === 'report') return;
+    if (calendarPanel) calendarPanel.classList.toggle('hidden', state.moduleType === 'report');
+    if (state.moduleType === 'report') return;
 
     const grid = document.getElementById('moduleCalendarGrid');
     const month = state.month;
@@ -178,18 +199,28 @@ function renderCalendar() {
     for (let day = 1; day <= lastDay; day += 1) {
       const key = `${month}-${String(day).padStart(2, '0')}`;
       const item = map[key] || null;
-      const canQuickEdit = !!item && (state.moduleType === 'egg_daily' || state.moduleType === 'feed_manage') && state.permission === 'write';
+      const canQuickEdit = !!item && ['egg_daily', 'feed_manage', 'sale_manage'].includes(state.moduleType) && state.permission === 'write';
       const cls = item ? 'module-day module-day--filled' : 'module-day module-day--missing';
       const meta = item ? `${escapeHtml(item.meta || '')}` : 'ยังไม่บันทึก';
       const plusLine = item?.plus_text ? `<div class="module-day-total module-day-total--plus">${escapeHtml(item.plus_text)}</div>` : '';
       const minusLine = item?.minus_text ? `<div class="module-day-total module-day-total--minus">${escapeHtml(item.minus_text)}</div>` : '';
-      const iconLine = item?.icon ? `<div class="module-day-total module-day-total--icon">${escapeHtml(item.icon)}</div>` : '';
-      const plainLine = (!item?.plus_text && !item?.minus_text && !item?.icon)
+      const iconLine = renderCalendarIconLine(item);
+      const plainLine = (!item?.plus_text && !item?.minus_text && !item?.icon && !item?.icon_top && !item?.icon_bottom)
         ? `<div class="module-day-total">${escapeHtml(item?.value || '-')}</div>`
         : '';
       cells.push(`<div class="${cls}${canQuickEdit ? ' module-day--clickable' : ''}" title="${meta}" ${canQuickEdit ? `data-log-date="${key}"` : ''}><div class="module-day-number">${day}</div>${plusLine}${minusLine}${iconLine}${plainLine}</div>`);
     }
     grid.innerHTML = cells.join('');
+  }
+
+
+  function renderCalendarIconLine(item) {
+    if (!item) return '';
+    if (item.icon_top || item.icon_bottom) {
+      return `<div class="module-day-icons"><div class="module-day-icon-line module-day-icon-line--top">${escapeHtml(item.icon_top || '')}</div><div class="module-day-icon-line module-day-icon-line--bottom">${escapeHtml(item.icon_bottom || '')}</div></div>`;
+    }
+    if (item.icon) return `<div class="module-day-total module-day-total--icon">${escapeHtml(item.icon)}</div>`;
+    return '';
   }
 
   function renderRecentLogs() {
@@ -238,10 +269,7 @@ function renderCalendar() {
       button.addEventListener('click', async () => {
         const code = button.dataset.moduleAction;
         document.getElementById('moduleFab')?.classList.remove('open');
-        if (code === 'sale-create') {
-          location.href = `module-batch-manage.html?bid=${encodeURIComponent(state.batch.id)}&action=sell`;
-          return;
-        }
+        if (code === 'sale-create') return openSaleBillSheet();
         if (code === 'feed-in') return openFeedSheet('in');
         if (code === 'feed-out') return openFeedSheet('out');
         if (code === 'egg-add') return openEggDailySheet();
@@ -469,6 +497,14 @@ function openFeedSheet(mode) {
       state.feedLots = Array.isArray(response.feed_lots) ? response.feed_lots : state.feedLots;
       state.feedLotMap = Object.fromEntries(state.feedLots.map((lot) => [lot.label, lot]));
       openFeedSheetForEdit(response);
+      return;
+    }
+    if (state.moduleType === 'sale_manage') {
+      const ok = confirm(`ต้องการแก้ไขบิลประจำวันที่ ${logDate} ใช่หรือไม่`);
+      if (!ok) return;
+      const response = await AppApi.post({ action: 'getSaleBillRecord', batch_id: state.batch.id, log_date: logDate });
+      if (!response || response.status !== 'ok') return alert(response?.message || 'โหลดบิลไม่สำเร็จ');
+      await openSaleBillSheetForEdit(response.bill, response.items || []);
     }
   }
 
@@ -591,6 +627,544 @@ function openFeedSheet(mode) {
     await load(state.batch.id);
   }
 
+
+  async function openSaleBillSheet() {
+    if (!state.batch) return;
+    state.saleEditBillId = '';
+    document.getElementById('saleBillDate').value = todayString();
+    document.getElementById('saleBuyerName').value = '';
+    document.getElementById('saleBillRemark').value = '';
+    if (document.getElementById('saleDiscount')) document.getElementById('saleDiscount').value = '0';
+    document.getElementById('saleItemsList').innerHTML = '';
+
+    const isDuck = String(state.batch.specie || '').toLowerCase() === 'duck';
+    const isFish = String(state.batch.specie || '').toLowerCase() === 'fish';
+    const typeWrap = document.getElementById('saleTypeWrap');
+    typeWrap?.classList.toggle('hidden', !isDuck);
+
+    if (isDuck) {
+      await loadEffectiveEggPriceSet();
+      setSaleType('egg', false);
+    } else if (isFish) {
+      setSaleType('fish', false);
+    } else {
+      setSaleType('duck', false);
+    }
+
+    normalizeSaleLayout();
+    showSheet(document.getElementById('saleBillSheet'));
+  }
+
+
+  async function openSaleBillSheetForEdit(bill, items) {
+    if (!bill) return;
+    state.saleEditBillId = bill.bill_id || '';
+    document.getElementById('saleBillDate').value = bill.log_date || todayString();
+    document.getElementById('saleBuyerName').value = bill.buyer || bill.sale_name || '';
+    document.getElementById('saleBillRemark').value = bill.remark || '';
+    if (document.getElementById('saleDiscount')) document.getElementById('saleDiscount').value = Number(bill.discount || 0);
+    document.getElementById('saleItemsList').innerHTML = '';
+
+    const isDuck = String(state.batch?.specie || '').toLowerCase() === 'duck';
+    document.getElementById('saleTypeWrap')?.classList.toggle('hidden', !isDuck);
+    const billType = bill.sale_type || (state.batch?.specie === 'fish' ? 'fish' : 'duck');
+    if (billType === 'egg') await loadEffectiveEggPriceSet(true);
+    setSaleType(billType, false);
+    document.getElementById('saleItemsList').innerHTML = '';
+    (items || []).forEach((item) => appendSaleItemRow({
+      item_name: item.item_name || item.sale_item || '',
+      unit: item.unit || item.sale_unit || '',
+      qty: item.qty != null ? item.qty : item.sale_qty,
+      unit_price: item.unit_price,
+      total_qty: item.total_qty,
+      display_name: item.display_name || item.sale_item || ''
+    }));
+    if (!document.querySelector('#saleItemsList .sale-item-card')) appendSaleItemRow();
+    normalizeSaleLayout();
+    showSheet(document.getElementById('saleBillSheet'));
+  }
+
+  function closeSaleBillSheet() { hideSheet(document.getElementById('saleBillSheet')); }
+  function closeBillPreview() { hideSheet(document.getElementById('billPreviewSheet')); }
+  function backToEditBill() { hideSheet(document.getElementById('billPreviewSheet')); showSheet(document.getElementById('saleBillSheet')); }
+
+  async function loadEffectiveEggPriceSet(force = false) {
+    if (state.salePriceLoaded && !force) return;
+    state.salePriceLoaded = true;
+    state.salePriceSet = null;
+    state.salePriceItems = [];
+    const note = document.getElementById('salePriceSetNote');
+    if (note) {
+      note.classList.remove('hidden');
+      note.textContent = 'กำลังโหลดชุดราคาไข่...';
+    }
+    const response = await AppApi.post({ action: 'getEffectiveEggPriceSet', batch_id: state.batch.id });
+    if (!response || response.status !== 'ok') {
+      if (note) note.textContent = response?.message || 'โหลดชุดราคาไข่ไม่สำเร็จ';
+      return;
+    }
+    state.salePriceSet = response.price_set || null;
+    state.salePriceItems = Array.isArray(response.items) ? response.items : [];
+    if (note) {
+      if (state.salePriceSet && state.salePriceItems.length) {
+        note.textContent = `ใช้ชุดราคาไข่: ${state.salePriceSet.name || '-'} • ${state.salePriceItems.length} รายการราคา`;
+      } else {
+        note.textContent = 'ยังไม่พบชุดราคาไข่ที่ผูกกับ batch/user นี้ กรุณาให้ admin ผูกชุดราคาก่อนขายไข่';
+      }
+    }
+  }
+
+  function setSaleType(type, resetItems = true) {
+    state.saleType = type;
+    document.getElementById('saleTypeEggBtn')?.classList.toggle('is-active', type === 'egg');
+    document.getElementById('saleTypeDuckBtn')?.classList.toggle('is-active', type === 'duck');
+    const stockNote = document.getElementById('saleBillStockNote');
+    const priceNote = document.getElementById('salePriceSetNote');
+    if (type === 'egg') {
+      if (stockNote) stockNote.textContent = `ขายไข่เป็นการเก็บ log และออกบิลเท่านั้น ไม่ผูกกับจำนวนไข่ที่เก็บได้ • ฟาร์มบนบิล: ${state.data?.farm_name || state.batch?.owner_name || '-'}`;
+      priceNote?.classList.remove('hidden');
+    } else if (type === 'fish') {
+      if (stockNote) stockNote.textContent = `ขายปลาเป็นการเก็บ log และออกบิลเท่านั้น ไม่หักจำนวนสัตว์ใน batch เพราะขายเหมาเป็นน้ำหนักกิโล • ฟาร์มบนบิล: ${state.data?.farm_name || '-'}`;
+      priceNote?.classList.add('hidden');
+    } else {
+      if (stockNote) stockNote.textContent = `คงเหลือปัจจุบัน ${formatCompactNumber(state.batch.current_qty || 0)} ตัว • ขายเป็ดจะหักจำนวนคงเหลือใน batch`;
+      priceNote?.classList.add('hidden');
+    }
+    if (resetItems) {
+      document.getElementById('saleItemsList').innerHTML = '';
+      appendSaleItemRow();
+    } else if (!document.querySelector('#saleItemsList .sale-item-card')) {
+      appendSaleItemRow();
+    }
+  }
+
+  function appendSaleItemRow(seed = {}) {
+    const type = state.saleType || (state.batch?.specie === 'fish' ? 'fish' : 'duck');
+    if (type === 'egg' && !state.salePriceItems.length) {
+      alert('ยังไม่มีรายการราคาไข่สำหรับชุดนี้ กรุณาให้ admin ผูกชุดราคาก่อน');
+      return;
+    }
+    const wrap = document.createElement('div');
+    wrap.className = `sale-item-card sale-item-card--${escapeAttr(type)}`;
+    if (type === 'egg') renderEggSaleRow(wrap, seed);
+    else renderManualSaleRow(wrap, seed, type);
+    const list = document.getElementById('saleItemsList');
+    list.appendChild(wrap);
+    requestAnimationFrame(() => wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+    syncSaleItemRow(wrap);
+  }
+
+  function renderEggSaleRow(wrap, seed = {}) {
+    const selectedName = seed.item_name || (state.salePriceItems[0]?.item_name || '');
+    const selectedPrice = seed.unit_price != null ? Number(seed.unit_price || 0) : Number((getPriceItemByName(selectedName) || state.salePriceItems[0] || {}).current_price || 0);
+    const options = state.salePriceItems.map((item) => {
+      const label = item.display_name || item.item_name;
+      return `<option value="${escapeAttr(item.item_name)}" ${String(selectedName || '') === String(item.item_name) ? 'selected' : ''}>${escapeHtml(label)} • ${formatMoney(item.current_price)} บาท/ฟอง</option>`;
+    }).join('');
+    wrap.innerHTML = `
+      <div class="sale-item-head">
+        <span class="feed-entry-badge">รายการขายไข่</span>
+        <button class="remove-line-btn" type="button">ลบรายการ</button>
+      </div>
+      <div class="sale-egg-grid sale-egg-grid--top">
+        <div class="sale-grid-field sale-grid-field--item">
+          <label class="field-label">น้ำหนัก/ชนิดไข่</label>
+          <select class="sale-item-name" required>${options}</select>
+        </div>
+        <div class="sale-grid-field sale-grid-field--unit">
+          <label class="field-label">รูปแบบ</label>
+          <select class="sale-item-unit" required>
+            <option value="full_set" ${seed.unit === 'full_set' ? 'selected' : ''}>เต็มตั้ง</option>
+            <option value="tray" ${seed.unit === 'tray' ? 'selected' : ''}>เศษแผง</option>
+            <option value="piece" ${seed.unit === 'piece' ? 'selected' : ''}>เศษฟอง</option>
+          </select>
+        </div>
+      </div>
+      <div class="sale-egg-grid sale-egg-grid--bottom">
+        <div class="sale-grid-field">
+          <label class="field-label">จำนวน</label>
+          <input class="sale-item-qty" type="number" min="1" step="1" value="${Number(seed.qty || 1)}" required>
+        </div>
+        <div class="sale-grid-field">
+          <label class="field-label">ราคาต่อฟอง</label>
+          <input class="sale-item-price" type="number" min="0" step="0.01" value="${selectedPrice || ''}" required>
+        </div>
+        <div class="sale-grid-field">
+          <label class="field-label">จำนวนรวม</label>
+          <div class="line-total-badge sale-total-qty-badge">0</div>
+        </div>
+        <div class="sale-grid-field">
+          <label class="field-label">เป็นเงิน</label>
+          <div class="line-total-badge sale-line-total-badge">0.00 ฿</div>
+        </div>
+      </div>
+    `;
+    bindSaleRowEvents(wrap);
+  }
+
+  function renderManualSaleRow(wrap, seed = {}, type = 'duck') {
+    const isFish = type === 'fish';
+    wrap.innerHTML = `
+      <div class="sale-item-head">
+        <span class="feed-entry-badge">${isFish ? 'รายการขายปลา' : 'รายการขายเป็ด'}</span>
+        <button class="remove-line-btn" type="button">ลบรายการ</button>
+      </div>
+      <div class="sale-manual-grid sale-manual-grid--top">
+        <div class="sale-grid-field sale-grid-field--wide">
+          <label class="field-label">รายการ</label>
+          <input class="sale-item-name" type="text" placeholder="${isFish ? 'เช่น ปลานิล ไซส์ใหญ่' : 'เช่น ขายเป็ด'}" value="${escapeAttr(seed.item_name || (isFish ? 'ขายปลา' : 'ขายเป็ด'))}" required>
+        </div>
+        <div class="sale-grid-field">
+          <label class="field-label">หน่วย</label>
+          <input class="sale-item-unit" type="text" value="${escapeAttr(seed.unit || (isFish ? 'กก.' : 'ตัว'))}" required>
+        </div>
+      </div>
+      <div class="sale-manual-grid sale-manual-grid--bottom">
+        <div class="sale-grid-field">
+          <label class="field-label">จำนวน</label>
+          <input class="sale-item-qty" type="number" min="0.01" step="0.01" value="${Number(seed.qty || 1)}" required>
+        </div>
+        <div class="sale-grid-field">
+          <label class="field-label">ราคาต่อหน่วย</label>
+          <input class="sale-item-price" type="number" min="0" step="0.01" value="${Number(seed.unit_price || 0) || ''}" required>
+        </div>
+        <div class="sale-grid-field">
+          <label class="field-label">เป็นเงิน</label>
+          <div class="line-total-badge sale-line-total-badge">0.00 ฿</div>
+        </div>
+      </div>
+    `;
+    bindSaleRowEvents(wrap);
+  }
+
+  function bindSaleRowEvents(wrap) {
+    wrap.querySelectorAll('input, select').forEach((input) => {
+      input.addEventListener('input', () => syncSaleItemRow(wrap));
+      input.addEventListener('change', () => {
+        if (state.saleType === 'egg' && input.classList.contains('sale-item-name')) applyEggDefaultPrice(wrap);
+        syncSaleItemRow(wrap);
+      });
+    });
+    wrap.querySelector('.remove-line-btn')?.addEventListener('click', () => {
+      if (document.querySelectorAll('#saleItemsList .sale-item-card').length <= 1) return alert('ต้องมีอย่างน้อย 1 รายการ');
+      wrap.remove();
+    });
+  }
+
+  function applyEggDefaultPrice(row) {
+    const itemName = row.querySelector('.sale-item-name')?.value || '';
+    const priceItem = getPriceItemByName(itemName);
+    const priceInput = row.querySelector('.sale-item-price');
+    if (priceItem && priceInput) priceInput.value = Number(priceItem.current_price || 0);
+  }
+
+  function syncSaleItemRow(row) {
+    const type = state.saleType;
+    const qty = Number(row.querySelector('.sale-item-qty')?.value || 0);
+    let unitPrice = Number(row.querySelector('.sale-item-price')?.value || 0);
+    let totalQty = qty;
+    if (type === 'egg') {
+      const itemName = row.querySelector('.sale-item-name')?.value || '';
+      const unit = row.querySelector('.sale-item-unit')?.value || 'piece';
+      totalQty = qty * saleUnitMultiplier(unit);
+      const qtyBadge = row.querySelector('.sale-total-qty-badge');
+      if (qtyBadge) qtyBadge.textContent = `${formatCompactNumber(totalQty)} ฟอง`;
+    }
+    const lineTotal = round2(totalQty * unitPrice);
+    const totalBadge = row.querySelector('.sale-line-total-badge') || row.querySelector('.line-total-badge');
+    if (totalBadge) totalBadge.textContent = `${formatMoney(lineTotal)} ฿`;
+  }
+
+  function getPriceItemByName(itemName) {
+    return state.salePriceItems.find((item) => String(item.item_name || '') === String(itemName || '')) || null;
+  }
+  function saleUnitMultiplier(unit) { return unit === 'full_set' ? 300 : (unit === 'tray' ? 30 : 1); }
+  function saleUnitLabel(unit) { return unit === 'full_set' ? 'ตั้ง' : (unit === 'tray' ? 'แผง' : (unit === 'piece' ? 'ฟอง' : (unit || ''))); }
+
+  async function onPreviewBillSubmit(event) {
+    event.preventDefault();
+    const draft = collectBillDraft();
+    if (!draft) return;
+    state.billDraft = draft;
+    const dataUrl = await renderBillImage(draft);
+    state.billPreviewImage = dataUrl;
+    document.getElementById('billPreviewImage').src = dataUrl;
+    document.getElementById('billPreviewImage').classList.remove('hidden');
+    document.getElementById('billPreviewMeta').textContent = `ก่อนหักส่วนลด ${formatMoney(draft.sub_total)} บาท • ส่วนลด ${formatMoney(draft.discount || 0)} บาท • สุทธิ ${formatMoney(draft.grand_total)} บาท`;
+    hideSheet(document.getElementById('saleBillSheet'));
+    showSheet(document.getElementById('billPreviewSheet'));
+  }
+
+  function collectBillDraft() {
+    const logDate = document.getElementById('saleBillDate').value;
+    if (!logDate) { alert('กรุณาเลือกวันที่ขาย'); return null; }
+    const buyerName = document.getElementById('saleBuyerName').value.trim();
+    const remark = document.getElementById('saleBillRemark').value.trim();
+    const billDiscount = Math.max(0, Number(document.getElementById('saleDiscount')?.value || 0));
+    const rows = [...document.querySelectorAll('#saleItemsList .sale-item-card')];
+    if (!rows.length) { alert('กรุณาเพิ่มรายการขาย'); return null; }
+    const items = [];
+    let totalQty = 0;
+    let subTotal = 0;
+    for (const row of rows) {
+      const rawItemName = row.querySelector('.sale-item-name')?.value?.trim() || '';
+      const unit = row.querySelector('.sale-item-unit')?.value?.trim() || 'ตัว';
+      const qty = Number(row.querySelector('.sale-item-qty')?.value || 0);
+      let unitPrice = Number(row.querySelector('.sale-item-price')?.value || 0);
+      if (!rawItemName || qty <= 0) { alert('กรุณากรอกข้อมูลรายการขายให้ครบ'); return null; }
+      let itemName = rawItemName;
+      let displayName = rawItemName;
+      let totalQtyLine = qty;
+      if (state.saleType === 'egg') {
+        const priceItem = getPriceItemByName(rawItemName);
+        if (!priceItem) { alert('ไม่พบราคาของรายการไข่ที่เลือก'); return null; }
+        itemName = priceItem.item_name;
+        displayName = priceItem.display_name || priceItem.item_name;
+        totalQtyLine = qty * saleUnitMultiplier(unit);
+      }
+      const lineTotal = round2(totalQtyLine * unitPrice);
+      totalQty += totalQtyLine;
+      subTotal += lineTotal;
+      items.push({ item_name: itemName, display_name: displayName, unit, unit_label: saleUnitLabel(unit), qty, total_qty: round2(totalQtyLine), unit_price: unitPrice, discount: 0, line_total: lineTotal });
+    }
+    if (state.saleType === 'duck' && totalQty > Number(state.batch.current_qty || 0)) { alert('จำนวนขายเป็ดรวมมากกว่าคงเหลือปัจจุบัน'); return null; }
+    const grandTotal = Math.max(0, round2(subTotal - billDiscount));
+    return { batch_id: state.batch.id, bill_id: state.saleEditBillId || '', mode: state.saleEditBillId ? 'replace_bill' : 'create', sale_type: state.saleType, bill_title: 'บิลเงินสด', farm_name: state.data?.farm_name || state.batch?.owner_name || 'FARM', logo_url: state.logoUrl, batch_name: state.batch.name, log_date: logDate, issue_date: nowDateTimeDisplay(), sale_name: buyerName, remark, items, total_qty: round2(totalQty), sub_total: round2(subTotal), discount: round2(billDiscount), grand_total: grandTotal };
+  }
+
+  async function renderBillImage(draft) {
+    const width = 430, padding = 22, lineGap = 18, itemBlockHeight = 62, headerHeight = 188;
+    const footerHeight = (draft.remark ? 78 : 48) + 50;
+    const discountRows = Number(draft.discount || 0) > 0 ? 2 : 1;
+    const height = headerHeight + footerHeight + (draft.items.length * itemBlockHeight) + 120 + (discountRows * 20);
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = '#111827'; ctx.textBaseline = 'top';
+    let y = padding;
+    try { const logo = await loadImage(draft.logo_url); const logoSize = 54; ctx.drawImage(logo, (width - logoSize) / 2, y, logoSize, logoSize); y += logoSize + 8; } catch (_) {}
+    ctx.font = 'bold 20px system-ui'; ctx.textAlign = 'center'; ctx.fillText(draft.farm_name || 'FARM', width / 2, y); y += 28;
+    ctx.font = 'bold 17px system-ui'; ctx.fillText('บิลเงินสด', width / 2, y); y += 28;
+    ctx.textAlign = 'left'; ctx.font = '13px system-ui';
+    ctx.fillText('วันที่ขาย: ' + formatThaiDate(draft.log_date), padding, y); y += lineGap;
+    ctx.fillText('เวลาออกบิล: ' + draft.issue_date, padding, y); y += lineGap;
+    ctx.fillText('ชุดสัตว์: ' + draft.batch_name, padding, y); y += 22;
+    ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke(); y += 12;
+    draft.items.forEach((item) => {
+      ctx.textAlign = 'left'; ctx.font = 'bold 14px system-ui'; ctx.fillText(item.display_name || item.item_name, padding, y); y += 18;
+      ctx.font = '13px system-ui';
+      const unitText = draft.sale_type === 'egg' ? `${formatNumber(item.qty)} ${item.unit_label} (${formatNumber(item.total_qty)} ฟอง) x ${formatMoney(item.unit_price)}` : `${formatNumber(item.qty)} ${item.unit} x ${formatMoney(item.unit_price)}`;
+      ctx.fillText(unitText, padding, y); ctx.textAlign = 'right'; ctx.fillText(formatMoney(item.line_total), width - padding, y); y += itemBlockHeight - 18;
+    });
+    ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke(); y += 12;
+    ctx.font = '14px system-ui'; ctx.textAlign = 'left'; ctx.fillText('รวมก่อนหักส่วนลด', padding, y); ctx.textAlign = 'right'; ctx.fillText(formatMoney(draft.sub_total), width - padding, y); y += lineGap;
+    if (Number(draft.discount || 0) > 0) { ctx.textAlign = 'left'; ctx.fillText('ส่วนลด', padding, y); ctx.textAlign = 'right'; ctx.fillText('-' + formatMoney(draft.discount), width - padding, y); y += lineGap; }
+    ctx.font = 'bold 16px system-ui'; ctx.textAlign = 'left'; ctx.fillText('สุทธิ', padding, y); ctx.textAlign = 'right'; ctx.fillText(formatMoney(draft.grand_total), width - padding, y); y += lineGap + 14;
+    if (draft.remark) { ctx.textAlign = 'left'; ctx.font = '13px system-ui'; wrapText(ctx, 'หมายเหตุ: ' + draft.remark, padding, y, width - (padding * 2), 18); }
+    return canvas.toDataURL('image/png');
+  }
+
+  async function confirmBill() {
+    if (!state.billDraft) return;
+    const button = document.getElementById('billConfirmBtn');
+    const original = button.textContent;
+    button.disabled = true; button.textContent = 'กำลังบันทึก...';
+    const response = await AppApi.post({ action: 'saveBatchSaleBill', batch_id: state.billDraft.batch_id, bill_id: state.billDraft.bill_id || '', mode: state.billDraft.mode || 'create', log_date: state.billDraft.log_date, sale_name: state.billDraft.sale_name, remark: state.billDraft.remark, sale_type: state.billDraft.sale_type, discount: state.billDraft.discount || 0, items: state.billDraft.items });
+    button.disabled = false; button.textContent = original;
+    if (!response || response.status !== 'ok') return alert(response?.message || 'บันทึกบิลไม่สำเร็จ');
+    closeBillPreview(); closeSaleBillSheet();
+    clearModuleCaches(state.batch.id, ['sale_manage']);
+    state.month = String(state.billDraft.log_date || state.month).slice(0, 7);
+    await load(state.batch.id);
+    alert(`บันทึกบิลสำเร็จ เลขที่ ${response.bill?.bill_id || '-'}`);
+  }
+
+  function downloadBillImage() { if (!state.billPreviewImage) return; const link = document.createElement('a'); link.href = state.billPreviewImage; link.download = `cash-bill-${state.batch.id}-${Date.now()}.png`; link.click(); }
+  function ensureSaleDiscountField() {
+    const form = document.getElementById('saleBillForm');
+    if (!form || document.getElementById('saleDiscount')) return;
+    const stockNote = document.getElementById('saleBillStockNote');
+    const discountWrap = document.createElement('div');
+    discountWrap.className = 'sale-discount-wrap';
+    discountWrap.innerHTML = `<label class="field-label" for="saleDiscount">ส่วนลดรวม</label><input id="saleDiscount" type="number" min="0" step="0.01" placeholder="ส่วนลดรวม (บาท)" value="0" />`;
+    if (stockNote && stockNote.parentNode === form) form.insertBefore(discountWrap, stockNote); else form.appendChild(discountWrap);
+  }
+  function normalizeSaleLayout() {
+    const addBtn = document.getElementById('addSaleItemBtn'); const footer = document.querySelector('#saleBillSheet .sheet-footer');
+    if (!addBtn || !footer) return;
+    let row = footer.querySelector('.sale-bill-footer-row');
+    if (!row) { row = document.createElement('div'); row.className = 'sale-bill-footer-row'; footer.prepend(row); }
+    const submitBtn = footer.querySelector('#salePreviewBtn'); addBtn.type = 'button';
+    if (!row.contains(addBtn)) row.appendChild(addBtn);
+    if (submitBtn && !row.contains(submitBtn)) row.appendChild(submitBtn);
+  }
+
+
+  function initSaleRangeSummaryDefaults() {
+    if (state.moduleType !== 'sale_manage' || !state.batch) return;
+    const start = document.getElementById('saleRangeStartDate');
+    const end = document.getElementById('saleRangeEndDate');
+    if (start && !start.value) start.value = state.month + '-01';
+    if (end && !end.value) {
+      const [y, m] = state.month.split('-').map(Number);
+      end.value = state.month + '-' + String(new Date(y, m, 0).getDate()).padStart(2, '0');
+    }
+  }
+
+  async function searchSaleRangeSummary() {
+    if (!state.batch) return;
+    const startDate = document.getElementById('saleRangeStartDate')?.value || '';
+    const endDate = document.getElementById('saleRangeEndDate')?.value || '';
+    const buyerSearch = document.getElementById('saleRangeBuyerSearch')?.value?.trim() || '';
+    if (!startDate || !endDate) return alert('กรุณาเลือกวันที่เริ่มและวันที่สิ้นสุด');
+    if (startDate > endDate) return alert('วันที่เริ่มต้องไม่เกินวันที่สิ้นสุด');
+    const btn = document.getElementById('saleRangeSearchBtn');
+    const original = btn?.textContent || 'ค้นหา';
+    if (btn) { btn.disabled = true; btn.textContent = 'กำลังค้นหา...'; }
+    const response = await AppApi.post({ action: 'getSaleBillRangeSummary', batch_id: state.batch.id, start_date: startDate, end_date: endDate, buyer_search: buyerSearch });
+    if (btn) { btn.disabled = false; btn.textContent = original; }
+    if (!response || response.status !== 'ok') return alert(response?.message || 'โหลดสรุปบิลไม่สำเร็จ');
+    state.saleRangeRows = (Array.isArray(response.rows) ? response.rows : []).map((row) => ({ ...row, selected: true }));
+    state.saleRangeTotals = calculateSelectedSaleRangeTotals();
+    renderSaleRangeSummary({ rows: state.saleRangeRows, totals: state.saleRangeTotals });
+  }
+
+  function onSaleRangeListClick(event) {
+    const card = event.target.closest('[data-sale-range-bill-id]');
+    if (!card) return;
+    const billId = card.dataset.saleRangeBillId;
+    state.saleRangeRows = (state.saleRangeRows || []).map((row) => String(row.bill_id) === String(billId) ? { ...row, selected: !row.selected } : row);
+    state.saleRangeTotals = calculateSelectedSaleRangeTotals();
+    renderSaleRangeSummary({ rows: state.saleRangeRows, totals: state.saleRangeTotals });
+  }
+
+  function calculateSelectedSaleRangeTotals() {
+    const selected = (state.saleRangeRows || []).filter((row) => row.selected !== false);
+    const totals = selected.reduce((acc, row) => {
+      acc.bill_count += 1;
+      acc.gross_total += Number(row.gross_total || 0);
+      acc.discount_total += Number(row.discount_total || 0);
+      acc.grand_total += Number(row.grand_total || 0);
+      return acc;
+    }, { bill_count: 0, gross_total: 0, discount_total: 0, grand_total: 0 });
+    totals.gross_total = round2(totals.gross_total);
+    totals.discount_total = round2(totals.discount_total);
+    totals.grand_total = round2(totals.grand_total);
+    return totals;
+  }
+
+  function renderSaleRangeSummary(response) {
+    const list = document.getElementById('saleRangeSummaryList');
+    const badge = document.getElementById('saleRangeSummaryBadge');
+    const footer = document.getElementById('saleRangeSummaryFooter');
+    const grand = document.getElementById('saleRangeGrandTotal');
+    if (!list) return;
+    const rows = Array.isArray(response.rows) ? response.rows : [];
+    const selectedRows = rows.filter((row) => row.selected !== false);
+    const totals = response.totals || calculateSelectedSaleRangeTotals();
+    if (badge) badge.textContent = rows.length ? (`เลือก ${selectedRows.length}/${rows.length} บิล`) : 'ไม่พบข้อมูล';
+    if (grand) grand.textContent = formatMoney(totals.grand_total || 0) + ' ฿';
+    footer?.classList.toggle('hidden', !rows.length);
+    if (!rows.length) {
+      list.innerHTML = '<div class="empty-state">ไม่พบข้อมูลบิลในช่วงวันที่เลือก</div>';
+      return;
+    }
+    list.innerHTML = rows.map((row) => {
+      const selected = row.selected !== false;
+      const icon = row.sale_type === 'egg' ? '🥚' : (row.sale_type === 'fish' ? '🐟' : (row.sale_type === 'duck' ? '🦆' : '🧾'));
+      const buyer = row.buyer || row.sale_name || 'ไม่ระบุผู้ซื้อ';
+      const itemText = (row.items || []).slice(0, 3).map((item) => `${item.sale_item || item.item_name || '-'} ${formatCompactNumber(item.sale_qty || item.qty || 0)} ${saleUnitLabel(item.sale_unit || item.unit || '')}`).join(' • ');
+      const moreText = (row.items || []).length > 3 ? ` • +${(row.items || []).length - 3} รายการ` : '';
+      return `
+        <button type="button" class="sale-range-bill-card${selected ? ' is-selected' : ' is-deselected'}" data-sale-range-bill-id="${escapeAttr(row.bill_id)}">
+          <div class="sale-range-bill-icon">${icon}</div>
+          <div class="sale-range-bill-main">
+            <div class="sale-range-bill-head">
+              <strong class="sale-range-bill-date">${escapeHtml(formatThaiDate(row.log_date))}</strong>
+              <span class="sale-range-bill-buyer">${escapeHtml(buyer)}</span>
+            </div>
+            <div class="sale-range-bill-body">
+              <div class="sale-range-bill-detail">ยอดเต็ม ${escapeHtml(formatMoney(row.gross_total || 0))} ฿ • ส่วนลด ${escapeHtml(formatMoney(row.discount_total || 0))} ฿</div>
+              <div class="sale-range-bill-items">${escapeHtml(itemText || 'ไม่มีรายละเอียดรายการ')}${escapeHtml(moreText)}</div>
+            </div>
+          </div>
+          <div class="sale-range-bill-side">
+            <span class="sale-range-bill-id">${escapeHtml(row.bill_id || '-')}</span>
+            <strong class="sale-range-bill-total">${escapeHtml(formatMoney(row.grand_total || 0))} ฿</strong>
+          </div>
+        </button>`;
+    }).join('');
+  }
+
+  async function previewSaleRangeSummaryImage() {
+    const selected = (state.saleRangeRows || []).filter((row) => row.selected !== false);
+    if (!selected.length) return alert('กรุณาเลือกอย่างน้อย 1 บิล');
+    const startDate = document.getElementById('saleRangeStartDate')?.value || '';
+    const endDate = document.getElementById('saleRangeEndDate')?.value || '';
+    const totals = calculateSelectedSaleRangeTotals();
+    const img = await renderSaleRangeSummaryImage({ startDate, endDate, rows: selected, totals });
+    state.saleRangeImage = img;
+    const image = document.getElementById('saleRangePreviewImage');
+    if (image) { image.src = img; image.classList.remove('hidden'); }
+    const meta = document.getElementById('saleRangePreviewMeta');
+    if (meta) meta.textContent = `เลือก ${selected.length} บิล • สุทธิ ${formatMoney(totals.grand_total)} บาท`;
+    showSheet(document.getElementById('saleRangePreviewSheet'));
+  }
+
+  function closeSaleRangePreview() { hideSheet(document.getElementById('saleRangePreviewSheet')); }
+
+  function downloadSaleRangeSummaryImage() {
+    if (!state.saleRangeImage) return alert('กรุณา Preview สรุปยอดก่อน');
+    const startDate = document.getElementById('saleRangeStartDate')?.value || '';
+    const endDate = document.getElementById('saleRangeEndDate')?.value || '';
+    const link = document.createElement('a');
+    link.href = state.saleRangeImage;
+    link.download = `bill-summary-${state.batch?.id || 'batch'}-${startDate}-${endDate}.png`;
+    link.click();
+  }
+
+  async function renderSaleRangeSummaryImage(payload) {
+    const rows = payload.rows || [];
+    const totals = payload.totals || {};
+    const width = 430, padding = 22, lineGap = 20;
+    const height = 194 + rows.length * 58 + 102;
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = '#111827'; ctx.textBaseline = 'top';
+    let y = padding;
+    try { const logo = await loadImage(state.logoUrl); const logoSize = 48; ctx.drawImage(logo, (width - logoSize) / 2, y, logoSize, logoSize); y += logoSize + 8; } catch (_) {}
+    ctx.font = 'bold 20px system-ui'; ctx.textAlign = 'center'; ctx.fillText(state.data?.farm_name || state.batch?.owner_name || 'FARM', width / 2, y); y += 28;
+    ctx.font = 'bold 16px system-ui'; ctx.fillText('สรุปยอดบิล', width / 2, y); y += 24;
+    ctx.font = '13px system-ui'; ctx.fillText(formatThaiDate(payload.startDate) + ' ถึง ' + formatThaiDate(payload.endDate), width / 2, y); y += 26;
+    ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke(); y += 12;
+    rows.forEach((row) => {
+      const icon = row.sale_type === 'egg' ? 'ไข่' : (row.sale_type === 'fish' ? 'ปลา' : (row.sale_type === 'duck' ? 'เป็ด' : 'บิล'));
+      ctx.textAlign = 'left'; ctx.font = 'bold 13px system-ui'; ctx.fillStyle = '#111827'; ctx.fillText(formatThaiDate(row.log_date) + ' • ' + icon, padding, y);
+      ctx.textAlign = 'right'; ctx.fillText(formatMoney(row.grand_total || 0), width - padding, y); y += 18;
+      ctx.textAlign = 'left'; ctx.font = '12px system-ui'; ctx.fillStyle = '#6b7280';
+      const buyer = row.buyer || row.sale_name || 'ไม่ระบุผู้ซื้อ';
+      ctx.fillText(buyer, padding, y); y += 16;
+      ctx.fillText('ยอดเต็ม ' + formatMoney(row.gross_total || 0) + ' • ส่วนลด ' + formatMoney(row.discount_total || 0), padding, y);
+      y += 24;
+    });
+    ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke(); y += 14;
+    ctx.fillStyle = '#111827'; ctx.font = '14px system-ui'; ctx.textAlign = 'left'; ctx.fillText('ยอดเต็มรวม', padding, y); ctx.textAlign = 'right'; ctx.fillText(formatMoney(totals.gross_total || 0), width - padding, y); y += lineGap;
+    ctx.textAlign = 'left'; ctx.fillText('ส่วนลดรวม', padding, y); ctx.textAlign = 'right'; ctx.fillText('-' + formatMoney(totals.discount_total || 0), width - padding, y); y += lineGap;
+    ctx.font = 'bold 17px system-ui'; ctx.textAlign = 'left'; ctx.fillText('ยอดสุทธิรวม', padding, y); ctx.textAlign = 'right'; ctx.fillText(formatMoney(totals.grand_total || 0), width - padding, y);
+    return canvas.toDataURL('image/png');
+  }
+
+  function round2(value) { return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100; }
+  function formatMoney(value) { return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function formatNumber(value) { return Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+  function nowDateTimeDisplay() { const now = new Date(); return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; }
+  function formatThaiDate(dateStr) { if (!dateStr) return '-'; const [year, month, day] = String(dateStr).split('-').map(Number); const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']; return `${day} ${months[(month || 1) - 1]} ${year + 543}`; }
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight) { const words = String(text || '').split(' '); let line = ''; for (let n = 0; n < words.length; n += 1) { const testLine = line + words[n] + ' '; const metrics = ctx.measureText(testLine); if (metrics.width > maxWidth && n > 0) { ctx.fillText(line, x, y); line = words[n] + ' '; y += lineHeight; } else { line = testLine; } } ctx.fillText(line, x, y); }
+  function loadImage(src) { return new Promise((resolve, reject) => { if (!src) return reject(new Error('missing image')); const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = src; }); }
+
   function showSheet(sheet) {
     if (!sheet) return;
     sheet.classList.remove('hidden');
@@ -623,7 +1197,7 @@ function openFeedSheet(mode) {
     }
     document.getElementById('moduleSummaryCards').innerHTML = '<div class="empty-state">ไม่มีข้อมูลสำหรับโมดูลนี้</div>';
     document.querySelector('.module-calendar-panel')?.classList.add('hidden');
-    document.getElementById('recentLogList').innerHTML = '<div class="empty-state">ไม่มีข้อมูลสำหรับโมดูลนี้</div>';
+    document.getElementById('recentLogList') && (document.getElementById('recentLogList').innerHTML = '<div class="empty-state">ไม่มีข้อมูลสำหรับโมดูลนี้</div>');
     document.getElementById('moduleFabRoot')?.replaceChildren();
   }
 

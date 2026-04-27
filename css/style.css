@@ -694,7 +694,7 @@ body.drawer-open { overflow: hidden; }
 .inline-note {
   font-size: 12px;
   color: var(--text-sub);
-  margin-bottom: 6px;
+  margin-bottom: 0px;
 }
 .sheet {
   position: fixed;
@@ -1851,4 +1851,599 @@ input#saleDiscount {
   .module-entry-row {
     grid-template-columns: 1fr;
   }
+}
+/* v51 items price manage FAB + sheet layout */
+body[data-page="items_price_manage"] .item-price-page-layout {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+}
+body[data-page="items_price_manage"] .item-price-hero-card,
+body[data-page="items_price_manage"] .item-price-list-card {
+  gap: 8px;
+}
+body[data-page="items_price_manage"] .item-price-selected-note {
+  margin-top: -2px;
+  margin-bottom: 2px;
+}
+body[data-page="items_price_manage"] .price-set-list {
+  display: grid;
+  gap: 10px;
+}
+body[data-page="items_price_manage"] .price-set-card {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--bg-soft);
+  padding: 14px;
+  box-shadow: none;
+  display: grid;
+  gap: 10px;
+}
+body[data-page="items_price_manage"] .price-set-card.is-active {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border-soft));
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-soft));
+}
+body[data-page="items_price_manage"] .price-set-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+body[data-page="items_price_manage"] .price-set-card__title {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+body[data-page="items_price_manage"] .price-set-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+body[data-page="items_price_manage"] .price-set-card__meta span {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  color: var(--text-sub);
+}
+body[data-page="items_price_manage"] .item-price-form {
+  gap: 6px;
+}
+body[data-page="items_price_manage"] .item-price-top-grid {
+  align-items: end;
+}
+body[data-page="items_price_manage"] .item-price-form input,
+body[data-page="items_price_manage"] .item-price-form select,
+body[data-page="items_price_manage"] .item-price-form textarea,
+body[data-page="items_price_manage"] #bindingSheet input,
+body[data-page="items_price_manage"] #bindingSheet select {
+  font-size: 16px;
+  border-radius: 16px;
+  min-height: 48px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-soft);
+  color: var(--text-main);
+}
+body[data-page="items_price_manage"] .item-price-form textarea {
+  min-height: 96px;
+}
+body[data-page="items_price_manage"] .sheet-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 2px;
+}
+body[data-page="items_price_manage"] .small-btn {
+  width: auto;
+  min-width: 122px;
+  min-height: 42px;
+  padding: 10px 14px !important;
+}
+body[data-page="items_price_manage"] .price-item-list,
+body[data-page="items_price_manage"] .price-binding-list {
+  display: grid;
+  gap: 6px;
+}
+body[data-page="items_price_manage"] .price-item-row {
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--bg-soft);
+  padding: 12px;
+}
+body[data-page="items_price_manage"] .price-item-field {
+  min-width: 0;
+}
+body[data-page="items_price_manage"] .price-item-remove-wrap {
+  display: flex;
+  align-items: end;
+}
+body[data-page="items_price_manage"] .price-item-remove {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 16px;
+  color: var(--danger) !important;
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border-soft)) !important;
+  background: var(--bg-card) !important;
+  font-weight: 700;
+}
+body[data-page="items_price_manage"] .price-binding-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--bg-soft);
+  padding: 12px;
+}
+body[data-page="items_price_manage"] .price-binding-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+body[data-page="items_price_manage"] .price-binding-remove {
+  width: auto;
+  min-width: 116px;
+  min-height: 42px;
+}
+body[data-page="items_price_manage"] .item-price-danger-btn {
+  color: var(--danger) !important;
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--border-soft)) !important;
+  background: var(--bg-card) !important;
+}
+body[data-page="items_price_manage"] .sheet-footer--single {
+  display: grid;
+  margin-top: 8px;
+}
+body[data-page="items_price_manage"] .module-fab-action.is-disabled {
+  opacity: .55;
+}
+@media (max-width: 520px) {
+  body[data-page="items_price_manage"] .item-price-top-grid,
+  body[data-page="items_price_manage"] .price-item-grid,
+  body[data-page="items_price_manage"] .price-binding-card {
+    grid-template-columns: 1fr;
+  }
+  body[data-page="items_price_manage"] .small-btn {
+    min-width: 0;
+  }
+}
+
+body[data-page="items_price_manage"] .price-item-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 8px;
+  align-items: end;
+}
+
+
+/* === v52 sale manage price-set integration === */
+#saleBillSheet .sale-item-card {
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--bg-soft);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+#saleBillSheet .sale-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+#saleBillSheet .sale-egg-grid,
+#saleBillSheet .sale-item-grid,
+#saleBillSheet .sale-item-grid-3 {
+  display: grid;
+  gap: 6px;
+}
+#saleBillSheet .sale-egg-grid--top,
+#saleBillSheet .sale-item-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+}
+#saleBillSheet .sale-egg-grid--bottom,
+#saleBillSheet .sale-item-grid-3 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+#saleBillSheet .line-total-badge {
+  min-height: 45px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  font-size: 13px;
+}
+#saleBillSheet .remove-line-btn {
+  width: auto;
+  min-width: 92px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--danger) 36%, var(--border-soft));
+  background: color-mix(in srgb, var(--danger) 7%, var(--bg-card));
+  color: var(--danger);
+  font-weight: 700;
+}
+#saleBillSheet .sale-item-card select,
+#saleBillSheet .sale-item-card input,
+#saleBillSheet #saleDiscount {
+  font-size: 16px;
+}
+#saleBillSheet .sale-total-qty-badge,
+#saleBillSheet .sale-line-total-badge { text-align: center; }
+@media (max-width: 430px) {
+  #saleBillSheet .sale-egg-grid--top,
+  #saleBillSheet .sale-item-grid { 
+    /* grid-template-columns: 1fr;  */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #saleBillSheet .sale-egg-grid--bottom,
+  #saleBillSheet .sale-item-grid-3 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+#saleBillSheet .sale-item-card select {
+  padding: 12px 2px;
+}
+/* === v55 sale bill UI + selectable bill summary === */
+.module-day-icons {
+  display: grid;
+  gap: 0;
+  justify-items: end;
+  align-content: end;
+  line-height: 1;
+}
+.module-day-icon-line {
+  font-size: 13px;
+  line-height: 1.05;
+  min-height: 14px;
+}
+.module-day-total--icon {
+  font-size: 13px;
+  line-height: 1.05;
+}
+
+#saleBillSheet .sale-item-card {
+  gap: 10px;
+}
+#saleBillSheet .sale-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+#saleBillSheet .sale-grid-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+#saleBillSheet .sale-grid-field .field-label {
+  min-height: 32px;
+  display: flex;
+  align-items: flex-end;
+  line-height: 1.18;
+  margin-top: 0;
+}
+#saleBillSheet .sale-item-card input,
+#saleBillSheet .sale-item-card select,
+#saleBillSheet .line-total-badge {
+  min-height: 44px;
+  width: 100%;
+}
+#saleBillSheet .sale-egg-grid,
+#saleBillSheet .sale-manual-grid {
+  display: grid;
+  gap: 8px;
+  align-items: end;
+}
+#saleBillSheet .sale-egg-grid--top {
+  grid-template-columns: minmax(0, 1.8fr) minmax(86px, .62fr);
+}
+#saleBillSheet .sale-egg-grid--bottom {
+  grid-template-columns: .72fr .92fr .94fr 1fr;
+}
+#saleBillSheet .sale-manual-grid--top {
+  grid-template-columns: minmax(0, 2fr) minmax(74px, .8fr);
+}
+#saleBillSheet .sale-manual-grid--bottom {
+  grid-template-columns: .8fr .95fr 1fr;
+}
+#saleBillSheet .sale-item-unit {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+#saleBillSheet .remove-line-btn {
+  width: auto;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 999px;
+}
+
+.sale-range-search-grid.sale-range-search-grid--with-buyer {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr) 84px;
+}
+.sale-range-summary-list {
+  gap: 8px;
+}
+.sale-range-bill-card {
+  width: 100%;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--bg-soft);
+  color: var(--text-main);
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 10px;
+  text-align: left;
+  align-items: center;
+  cursor: pointer;
+}
+.sale-range-bill-card.is-selected {
+  border-color: color-mix(in srgb, var(--primary) 36%, var(--border-soft));
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-soft));
+}
+.sale-range-bill-card.is-deselected {
+  opacity: .48;
+  filter: grayscale(.55);
+}
+.sale-range-bill-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  font-size: 15px;
+}
+.sale-range-bill-main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.sale-range-bill-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.sale-range-bill-id {
+  color: var(--text-sub);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.sale-range-bill-buyer {
+  font-size: 12px;
+  font-weight: 700;
+}
+.sale-range-bill-detail,
+.sale-range-bill-items {
+  color: var(--text-sub);
+  font-size: 10.5px;
+  line-height: 1.25;
+}
+.sale-range-bill-total {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+@media (max-width: 430px) {
+  #saleBillSheet .sale-egg-grid--top {
+    grid-template-columns: minmax(0, 1.75fr) minmax(78px, .58fr) !important;
+  }
+  #saleBillSheet .sale-egg-grid--bottom {
+    grid-template-columns: .68fr .86fr .86fr .98fr !important;
+    gap: 6px;
+  }
+  #saleBillSheet .sale-manual-grid--top {
+    grid-template-columns: minmax(0, 1.8fr) minmax(66px, .7fr) !important;
+  }
+  #saleBillSheet .sale-manual-grid--bottom {
+    grid-template-columns: .75fr .9fr 1fr !important;
+    gap: 6px;
+  }
+  #saleBillSheet .sale-grid-field .field-label {
+    min-height: 31px;
+    font-size: 11px;
+  }
+  #saleBillSheet .line-total-badge {
+    font-size: 11px;
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+  .sale-range-search-grid.sale-range-search-grid--with-buyer {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .sale-range-field--buyer,
+  .sale-range-field--action {
+    grid-column: span 1;
+  }
+  .sale-range-bill-card {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+  .sale-range-bill-total {
+    grid-column: 2;
+    justify-self: end;
+  }
+}
+
+/* === v56 sale range summary layout polish === */
+.sale-range-summary-panel .muted {
+  font-size: 12px;
+  line-height: 1.35;
+}
+.sale-range-search-grid.sale-range-search-grid--with-buyer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 8px;
+  align-items: end;
+}
+.sale-range-search-grid .sale-range-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.sale-range-search-grid .field-label {
+  margin-top: 0;
+  min-height: 18px;
+  display: flex;
+  align-items: flex-end;
+  font-size: 12px;
+  line-height: 1.15;
+}
+.sale-range-search-grid input,
+.sale-range-search-grid button {
+  min-height: 38px;
+  border-radius: 12px;
+  padding-left: 6px;
+  padding-right: 6px;
+  font-size: 14px;
+  border: 1px solid #e5e7eb;
+}
+.sale-range-search-grid button {
+  width: 100%;
+  /* border: none; */
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  font-weight: 700;
+}
+.sale-range-summary-list {
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+}
+.sale-range-bill-card {
+  width: 100%;
+  border: 1px solid var(--border-soft);
+  border-radius: 15px;
+  background: var(--bg-soft);
+  color: var(--text-main);
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) minmax(92px, auto);
+  gap: 8px;
+  padding: 9px;
+  text-align: left;
+  align-items: stretch;
+  cursor: pointer;
+  box-shadow: none;
+}
+.sale-range-bill-card.is-selected {
+  border-color: color-mix(in srgb, var(--primary) 38%, var(--border-soft));
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-soft));
+}
+.sale-range-bill-card.is-deselected {
+  opacity: .48;
+  filter: grayscale(.55);
+}
+.sale-range-bill-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: start;
+  justify-self: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  font-size: 15px;
+  line-height: 1;
+  margin-top: 2px;
+}
+.sale-range-bill-main {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 4px;
+}
+.sale-range-bill-head {
+  display: grid;
+  gap: 1px;
+  align-content: start;
+}
+.sale-range-bill-date {
+  font-size: 13px;
+  line-height: 1.15;
+}
+.sale-range-bill-buyer {
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sale-range-bill-body {
+  display: grid;
+  gap: 2px;
+  align-content: end;
+}
+.sale-range-bill-detail,
+.sale-range-bill-items {
+  color: var(--text-sub);
+  font-size: 9.8px;
+  line-height: 1.22;
+}
+.sale-range-bill-items {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sale-range-bill-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 3px;
+  height: auto;
+}
+.sale-range-bill-id {
+  color: var(--text-sub);
+  font-size: 9.2px;
+  line-height: 1.1;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sale-range-bill-total {
+  align-self: auto;
+  white-space: nowrap;
+  margin-top: auto;
+  font-size: 13px;
+  line-height: 1.1;
+  /* justify-content: end; */
+}
+.sale-range-summary-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.sale-range-summary-footer button {
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: 12px;
+}
+@media (max-width: 380px) {
+  .sale-range-bill-card {
+    grid-template-columns: 32px minmax(0, 1fr) minmax(82px, auto);
+    gap: 6px;
+    padding: 8px;
+  }
+  .sale-range-bill-id { max-width: 82px; }
+  .sale-range-bill-total { font-size: 12px; }
 }
