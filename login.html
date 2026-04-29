@@ -2,22 +2,23 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Login | Ducky Management Pro</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/login.css" />
 </head>
-<body class="login-page">
-  <main class="container">
-    <section class="sheet-panel login-panel">
-      <div class="sheet-header">
-        <span>เข้าสู่ระบบ</span>
-      </div>
-      <form id="loginForm" class="sheet-body">
-        <p class="muted">กรอกอีเมลเพื่อเข้าใช้งาน</p>
-        <input type="email" id="email" placeholder="your@email.com" required />
-        <input type="text" id="deviceName" placeholder="ชื่ออุปกรณ์ (ไม่บังคับ)" />
-        <button id="submitLogin" type="submit">เข้าสู่ระบบ</button>
-        <p id="status" class="muted"></p>
+<body class="dm-login-page">
+  <main class="dm-login-shell">
+    <section class="dm-login-card" aria-labelledby="loginTitle">
+      <header class="dm-login-header">
+        <span id="loginTitle" class="dm-login-title">เข้าสู่ระบบ</span>
+      </header>
+
+      <form id="loginForm" class="dm-login-form">
+        <p class="dm-login-note">กรอกอีเมลเพื่อเข้าใช้งาน</p>
+        <input class="dm-login-input" type="email" id="email" placeholder="your@email.com" autocomplete="email" required />
+        <input class="dm-login-input dm-hidden" type="text" id="deviceName" placeholder="ชื่ออุปกรณ์ (ไม่บังคับ)" autocomplete="off" />
+        <button class="dm-login-submit" id="submitLogin" type="submit">เข้าสู่ระบบ</button>
+        <p id="status" class="dm-login-status"></p>
       </form>
     </section>
   </main>
@@ -26,6 +27,7 @@
   <script src="js/core/state.js"></script>
   <script src="js/core/api.js"></script>
   <script src="js/core/auth.js"></script>
+  <script src="js/core/zoom-lock.js"></script>
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       AppAuth.bootstrapLoginPage();

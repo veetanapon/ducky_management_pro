@@ -68,6 +68,9 @@ function bindBaseEvents() {
     document.getElementById('billBackToEditBtn')?.addEventListener('click', backToEditBill);
     document.getElementById('billDownloadBtn')?.addEventListener('click', downloadBillImage);
     document.getElementById('billConfirmBtn')?.addEventListener('click', confirmBill);
+    document.getElementById('saleBillPickerCloseBtn')?.addEventListener('click', closeSaleBillPicker);
+    document.getElementById('saleBillPickerBackdrop')?.addEventListener('click', closeSaleBillPicker);
+    document.getElementById('saleBillPickerList')?.addEventListener('click', onSaleBillPickerClick);
     document.getElementById('saleRangeSearchBtn')?.addEventListener('click', searchSaleRangeSummary);
     document.getElementById('saleRangePreviewBtn')?.addEventListener('click', previewSaleRangeSummaryImage);
     document.getElementById('saleRangeSummaryList')?.addEventListener('click', onSaleRangeListClick);
@@ -502,10 +505,83 @@ function openFeedSheet(mode) {
     if (state.moduleType === 'sale_manage') {
       const ok = confirm(`ต้องการแก้ไขบิลประจำวันที่ ${logDate} ใช่หรือไม่`);
       if (!ok) return;
-      const response = await AppApi.post({ action: 'getSaleBillRecord', batch_id: state.batch.id, log_date: logDate });
-      if (!response || response.status !== 'ok') return alert(response?.message || 'โหลดบิลไม่สำเร็จ');
-      await openSaleBillSheetForEdit(response.bill, response.items || []);
+      const response = await AppApi.post({ action: 'getSaleBillsForDate', batch_id: state.batch.id, log_date: logDate });
+      if (!response || response.status !== 'ok') return alert(response?.message || 'โหลดรายการบิลไม่สำเร็จ');
+      const bills = Array.isArray(response.bills) ? response.bills : [];
+      if (!bills.length) return alert('ไม่พบบิลของวันที่เลือก');
+      if (bills.length === 1) {
+        await loadAndOpenSaleBillById(bills[0].bill_id);
+        return;
+      }
+      openSaleBillPicker(logDate, bills);
     }
+  }
+
+
+  function openSaleBillPicker(logDate, bills) {
+    const sheet = document.getElementById('saleBillPickerSheet');
+    const hint = document.getElementById('saleBillPickerHint');
+    const list = document.getElementById('saleBillPickerList');
+    if (!sheet || !list) return;
+    if (hint) hint.textContent = `พบ ${bills.length} บิลในวันที่ ${logDate} กรุณาเลือกบิลที่ต้องการแก้ไข`;
+    list.innerHTML = bills.map((bill) => {
+      const icon = saleTypeIcon(bill.sale_type);
+      const buyer = bill.buyer || bill.sale_name || 'ไม่ระบุผู้ซื้อ';
+      const itemText = (bill.items || []).slice(0, 2).map((item) => {
+        const name = item.display_name || item.item_name || item.sale_item || '-';
+        const qty = item.sale_qty != null ? item.sale_qty : item.qty;
+        const unit = item.sale_unit || item.unit || '';
+        return `${name} ${formatNumber(qty)} ${saleUnitLabel(unit)}`;
+      }).join(' • ');
+      const more = (bill.items || []).length > 2 ? ` +${(bill.items || []).length - 2} รายการ` : '';
+      return `
+        <button type="button" class="sale-bill-picker-card" data-bill-id="${escapeAttr(bill.bill_id)}">
+          <div class="sale-bill-picker-icon">${escapeHtml(icon)}</div>
+          <div class="sale-bill-picker-main">
+            <div class="sale-bill-picker-head">
+              <strong>${escapeHtml(formatThaiDate(bill.log_date))}</strong>
+              <span>${escapeHtml(saleTypeLabel(bill.sale_type))}</span>
+            </div>
+            <div class="sale-bill-picker-buyer">${escapeHtml(buyer)}</div>
+            <div class="sale-bill-picker-items">${escapeHtml(itemText || 'ไม่มีรายละเอียดรายการ')}${escapeHtml(more)}</div>
+          </div>
+          <div class="sale-bill-picker-side">
+            <span>${escapeHtml(bill.bill_id || '-')}</span>
+            <strong>${escapeHtml(formatMoney(bill.grand_total || 0))} ฿</strong>
+          </div>
+        </button>`;
+    }).join('');
+    showSheet(sheet);
+  }
+
+  function closeSaleBillPicker() { hideSheet(document.getElementById('saleBillPickerSheet')); }
+
+  async function onSaleBillPickerClick(event) {
+    const card = event.target.closest('[data-bill-id]');
+    if (!card) return;
+    const billId = card.dataset.billId;
+    closeSaleBillPicker();
+    await loadAndOpenSaleBillById(billId);
+  }
+
+  async function loadAndOpenSaleBillById(billId) {
+    if (!billId) return alert('ไม่พบรหัสบิล');
+    const response = await AppApi.post({ action: 'getSaleBillRecord', batch_id: state.batch.id, bill_id: billId });
+    if (!response || response.status !== 'ok') return alert(response?.message || 'โหลดบิลไม่สำเร็จ');
+    await openSaleBillSheetForEdit(response.bill, response.items || []);
+  }
+
+  function saleTypeIcon(type) {
+    if (type === 'egg') return '🥚';
+    if (type === 'fish') return '🐟';
+    return '🦆';
+  }
+
+  function saleTypeLabel(type) {
+    if (type === 'egg') return 'ขายไข่';
+    if (type === 'fish') return 'ขายปลา';
+    if (type === 'duck') return 'ขายเป็ด';
+    return 'บิลขาย';
   }
 
   function openEggDailySheet(record = null) {
@@ -668,7 +744,10 @@ function openFeedSheet(mode) {
     const isDuck = String(state.batch?.specie || '').toLowerCase() === 'duck';
     document.getElementById('saleTypeWrap')?.classList.toggle('hidden', !isDuck);
     const billType = bill.sale_type || (state.batch?.specie === 'fish' ? 'fish' : 'duck');
-    if (billType === 'egg') await loadEffectiveEggPriceSet(true);
+    if (billType === 'egg') {
+      await loadEffectiveEggPriceSet(true);
+      ensureSalePriceItemsFromBill(items || []);
+    }
     setSaleType(billType, false);
     document.getElementById('saleItemsList').innerHTML = '';
     (items || []).forEach((item) => appendSaleItemRow({
@@ -714,6 +793,23 @@ function openFeedSheet(mode) {
     }
   }
 
+
+  function ensureSalePriceItemsFromBill(items) {
+    if (!Array.isArray(state.salePriceItems)) state.salePriceItems = [];
+    const existing = new Set(state.salePriceItems.map((item) => String(item.item_name || '')));
+    (items || []).forEach((item) => {
+      const name = String(item.item_name || item.sale_item || '').trim();
+      if (!name || existing.has(name)) return;
+      existing.add(name);
+      state.salePriceItems.push({
+        item_name: name,
+        display_name: item.display_name || name,
+        current_price: Number(item.unit_price || 0),
+        from_bill: true
+      });
+    });
+  }
+
   function setSaleType(type, resetItems = true) {
     state.saleType = type;
     document.getElementById('saleTypeEggBtn')?.classList.toggle('is-active', type === 'egg');
@@ -721,10 +817,12 @@ function openFeedSheet(mode) {
     const stockNote = document.getElementById('saleBillStockNote');
     const priceNote = document.getElementById('salePriceSetNote');
     if (type === 'egg') {
-      if (stockNote) stockNote.textContent = `ขายไข่เป็นการเก็บ log และออกบิลเท่านั้น ไม่ผูกกับจำนวนไข่ที่เก็บได้ • ฟาร์มบนบิล: ${state.data?.farm_name || state.batch?.owner_name || '-'}`;
+      // ขายไข่เป็นการเก็บ log และออกบิลเท่านั้น ไม่ผูกกับจำนวนไข่ที่เก็บได้ 
+      if (stockNote) stockNote.textContent = `• ฟาร์มบนบิล: ${state.data?.farm_name || state.batch?.owner_name || '-'}`;
       priceNote?.classList.remove('hidden');
     } else if (type === 'fish') {
-      if (stockNote) stockNote.textContent = `ขายปลาเป็นการเก็บ log และออกบิลเท่านั้น ไม่หักจำนวนสัตว์ใน batch เพราะขายเหมาเป็นน้ำหนักกิโล • ฟาร์มบนบิล: ${state.data?.farm_name || '-'}`;
+      // ขายปลาเป็นการเก็บ log และออกบิลเท่านั้น ไม่หักจำนวนสัตว์ใน batch เพราะขายเหมาเป็นน้ำหนักกิโล 
+      if (stockNote) stockNote.textContent = `• ฟาร์มบนบิล: ${state.data?.farm_name || '-'}`;
       priceNote?.classList.add('hidden');
     } else {
       if (stockNote) stockNote.textContent = `คงเหลือปัจจุบัน ${formatCompactNumber(state.batch.current_qty || 0)} ตัว • ขายเป็ดจะหักจำนวนคงเหลือใน batch`;

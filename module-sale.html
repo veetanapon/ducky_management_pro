@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Sale Manage | Ducky Management Pro</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -92,6 +92,23 @@
   <div id="moduleFabRoot"></div>
 
 
+  <div id="saleBillPickerSheet" class="sheet hidden">
+    <div class="sheet-backdrop" id="saleBillPickerBackdrop"></div>
+    <div class="sheet-panel">
+      <div class="sheet-header">
+        <span>เลือกบิลที่ต้องการแก้ไข</span>
+        <button id="saleBillPickerCloseBtn" type="button">&times;</button>
+      </div>
+      <div class="sheet-body form-stack">
+        <div class="inline-note" id="saleBillPickerHint">พบหลายบิลในวันที่เลือก กรุณาเลือกบิลที่ต้องการแก้ไข</div>
+        <div id="saleBillPickerList" class="sale-bill-picker-list">
+          <div class="empty-state">ยังไม่มีบิลให้เลือก</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <div id="saleBillSheet" class="sheet hidden">
     <div class="sheet-backdrop" id="saleBillBackdrop"></div>
     <div class="sheet-panel">
@@ -170,6 +187,7 @@
   <script src="js/core/auth.js"></script>
   <script src="js/modules/nav.js"></script>
   <script src="js/modules/module-calendar-page.js"></script>
+  <script src="js/core/zoom-lock.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
