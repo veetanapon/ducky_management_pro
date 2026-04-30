@@ -6,6 +6,8 @@ window.AppConfig = {
   },
   CACHE_MAX_AGE_MS: 5 * 60 * 1000,
   DEFAULT_IMAGE_ID: '1to1v80nOpqY5lOvh74CUciJKEsW-hULj',
+  LIFF_ID: '2008564821-LAqYMk32',
+  LIFF_WORKER_URL: 'https://liff.line.me/2008564821-LAqYMk32',
   imageUrlFromId(fileId) {
     if (!fileId) return 'https://via.placeholder.com/400x200?text=No+Image';
     return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w400`;

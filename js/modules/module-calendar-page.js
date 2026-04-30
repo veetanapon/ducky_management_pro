@@ -1,5 +1,5 @@
 window.ModuleCalendarPage = (() => {
-  const state = { batch: null, moduleType: '', month: '', permission: 'none', data: null, feedLots: [], feedLotMap: {}, feedEditDate: '', feedEditRows: [], saleType: '', salePriceSet: null, salePriceItems: [], salePriceLoaded: false, billDraft: null, billPreviewImage: '', saleEditBillId: '', saleRangeRows: [], saleRangeTotals: null, saleRangeImage: '', logoUrl: 'assets/farm-logo.png' };
+  const state = { batch: null, moduleType: '', month: '', permission: 'none', data: null, feedLots: [], feedLotMap: {}, feedEditDate: '', feedEditRows: [], saleType: '', salePriceSet: null, salePriceItems: [], salePriceLoaded: false, billDraft: null, billPreviewImage: '', saleEditBillId: '', saleRangeRows: [], saleRangeTotals: null, saleRangeImage: '', preBillReviewId: '', priceLoadPromise: null, logoUrl: 'assets/farm-logo.png' };
   const CACHE_TTL_MS = 60 * 1000;
   const EGG_TYPE_OPTIONS = [
     { key: 'qty_all', label: 'ไข่รวม' },
@@ -118,6 +118,7 @@ function bindBaseEvents() {
     initSaleRangeSummaryDefaults();
     // renderRecentLogs();
     renderFab();
+    if (state.moduleType === 'sale_manage' && String(state.batch?.specie || '').toLowerCase() === 'duck') warmSalePriceCache();
     if (window.NavDrawer) {
       NavDrawer.setBatchContext({
         id: state.batch.id,
@@ -508,23 +509,22 @@ function openFeedSheet(mode) {
       const response = await AppApi.post({ action: 'getSaleBillsForDate', batch_id: state.batch.id, log_date: logDate });
       if (!response || response.status !== 'ok') return alert(response?.message || 'โหลดรายการบิลไม่สำเร็จ');
       const bills = Array.isArray(response.bills) ? response.bills : [];
-      if (!bills.length) return alert('ไม่พบบิลของวันที่เลือก');
-      if (bills.length === 1) {
-        await loadAndOpenSaleBillById(bills[0].bill_id);
-        return;
-      }
-      openSaleBillPicker(logDate, bills);
+      const prebills = Array.isArray(response.prebills) ? response.prebills : [];
+      if (!bills.length && !prebills.length) return alert('ไม่พบบิลหรือ PreBill ของวันที่เลือก');
+      if (bills.length === 1 && !prebills.length) { await loadAndOpenSaleBillById(bills[0].bill_id); return; }
+      if (!bills.length && prebills.length === 1) { await loadAndOpenPreBillById(prebills[0].pre_bill_id || prebills[0].id); return; }
+      openSaleBillPicker(logDate, bills, prebills);
     }
   }
 
 
-  function openSaleBillPicker(logDate, bills) {
+  function openSaleBillPicker(logDate, bills = [], prebills = []) {
     const sheet = document.getElementById('saleBillPickerSheet');
     const hint = document.getElementById('saleBillPickerHint');
     const list = document.getElementById('saleBillPickerList');
     if (!sheet || !list) return;
-    if (hint) hint.textContent = `พบ ${bills.length} บิลในวันที่ ${logDate} กรุณาเลือกบิลที่ต้องการแก้ไข`;
-    list.innerHTML = bills.map((bill) => {
+    if (hint) hint.textContent = `พบ ${bills.length} บิลจริง และ ${prebills.length} PreBill รอตรวจ ในวันที่ ${logDate}`;
+    const billCards = bills.map((bill) => {
       const icon = saleTypeIcon(bill.sale_type);
       const buyer = bill.buyer || bill.sale_name || 'ไม่ระบุผู้ซื้อ';
       const itemText = (bill.items || []).slice(0, 2).map((item) => {
@@ -550,13 +550,22 @@ function openFeedSheet(mode) {
             <strong>${escapeHtml(formatMoney(bill.grand_total || 0))} ฿</strong>
           </div>
         </button>`;
-    }).join('');
+    });
+    const preBillCards = prebills.map((bill) => `
+        <button type="button" class="sale-bill-picker-card sale-bill-picker-card--prebill" data-prebill-id="${escapeAttr(bill.pre_bill_id || bill.id)}">
+          <div class="sale-bill-picker-icon">🧾</div>
+          <div class="sale-bill-picker-main"><div class="sale-bill-picker-head"><strong>${escapeHtml(formatThaiDate(bill.log_date))}</strong><span>PreBill รอตรวจ</span></div><div class="sale-bill-picker-buyer">${escapeHtml(bill.buyer || bill.sale_name || bill.line_display_name || 'ไม่ระบุผู้ซื้อ')}</div><div class="sale-bill-picker-items">${escapeHtml(bill.raw_message || 'แตะเพื่อตรวจ PreBill')}</div></div>
+          <div class="sale-bill-picker-side"><span>${escapeHtml(bill.pre_bill_id || bill.id || '-')}</span><strong>${escapeHtml(formatMoney(bill.grand_total || 0))} ฿</strong></div>
+        </button>`);
+    list.innerHTML = [...preBillCards, ...billCards].join('');
     showSheet(sheet);
   }
 
   function closeSaleBillPicker() { hideSheet(document.getElementById('saleBillPickerSheet')); }
 
   async function onSaleBillPickerClick(event) {
+    const preBillCard = event.target.closest('[data-prebill-id]');
+    if (preBillCard) { closeSaleBillPicker(); await loadAndOpenPreBillById(preBillCard.dataset.prebillId); return; }
     const card = event.target.closest('[data-bill-id]');
     if (!card) return;
     const billId = card.dataset.billId;
@@ -569,6 +578,32 @@ function openFeedSheet(mode) {
     const response = await AppApi.post({ action: 'getSaleBillRecord', batch_id: state.batch.id, bill_id: billId });
     if (!response || response.status !== 'ok') return alert(response?.message || 'โหลดบิลไม่สำเร็จ');
     await openSaleBillSheetForEdit(response.bill, response.items || []);
+  }
+
+
+  async function loadAndOpenPreBillById(preBillId) {
+    if (!preBillId) return alert('ไม่พบรหัส PreBill');
+    const response = await AppApi.post({ action: 'getPreBillRecord', batch_id: state.batch.id, pre_bill_id: preBillId });
+    if (!response || response.status !== 'ok') return alert(response?.message || 'โหลด PreBill ไม่สำเร็จ');
+    await openSaleBillSheetForPreBill(response.bill, response.items || []);
+  }
+
+  async function openSaleBillSheetForPreBill(bill, items) {
+    state.preBillReviewId = bill.pre_bill_id || bill.id || ''; state.saleEditBillId = '';
+    document.getElementById('saleBillDate').value = bill.log_date || todayString();
+    document.getElementById('saleBuyerName').value = bill.buyer || bill.sale_name || '';
+    document.getElementById('saleBillRemark').value = bill.raw_message ? `PreBill: ${bill.raw_message}` : '';
+    if (document.getElementById('saleDiscount')) document.getElementById('saleDiscount').value = Number(bill.discount || 0);
+    document.getElementById('saleItemsList').innerHTML = '';
+    document.getElementById('saleTypeWrap')?.classList.toggle('hidden', false);
+    await loadEffectiveEggPriceSet(false);
+    ensureSalePriceItemsFromBill(items || []);
+    setSaleType('egg', false);
+    document.getElementById('saleItemsList').innerHTML = '';
+    (items || []).forEach((item) => appendSaleItemRow({ item_name: item.item_name || item.sale_item || '', unit: item.unit || item.sale_unit || '', qty: item.qty != null ? item.qty : item.sale_qty, unit_price: item.unit_price, total_qty: item.total_qty, display_name: item.display_name || item.sale_item || '' }));
+    if (!document.querySelector('#saleItemsList .sale-item-card')) appendSaleItemRow();
+    const note = document.getElementById('salePriceSetNote'); if (note) { note.classList.remove('hidden'); note.textContent = `กำลังตรวจ PreBill ${state.preBillReviewId} • แก้ไขได้ก่อนกดยืนยัน`; }
+    normalizeSaleLayout(); showSheet(document.getElementById('saleBillSheet'));
   }
 
   function saleTypeIcon(type) {
@@ -707,6 +742,7 @@ function openFeedSheet(mode) {
   async function openSaleBillSheet() {
     if (!state.batch) return;
     state.saleEditBillId = '';
+    state.preBillReviewId = '';
     document.getElementById('saleBillDate').value = todayString();
     document.getElementById('saleBuyerName').value = '';
     document.getElementById('saleBillRemark').value = '';
@@ -719,8 +755,12 @@ function openFeedSheet(mode) {
     typeWrap?.classList.toggle('hidden', !isDuck);
 
     if (isDuck) {
-      await loadEffectiveEggPriceSet();
       setSaleType('egg', false);
+      normalizeSaleLayout();
+      showSheet(document.getElementById('saleBillSheet'));
+      await loadEffectiveEggPriceSet(false);
+      if (!document.querySelector('#saleItemsList .sale-item-card')) appendSaleItemRow();
+      return;
     } else if (isFish) {
       setSaleType('fish', false);
     } else {
@@ -768,29 +808,38 @@ function openFeedSheet(mode) {
   function backToEditBill() { hideSheet(document.getElementById('billPreviewSheet')); showSheet(document.getElementById('saleBillSheet')); }
 
   async function loadEffectiveEggPriceSet(force = false) {
-    if (state.salePriceLoaded && !force) return;
-    state.salePriceLoaded = true;
-    state.salePriceSet = null;
-    state.salePriceItems = [];
+    const batchId = state.batch?.id || '';
+    const cacheKey = `ducky:price:egg:${batchId}`;
+    const maxAgeMs = 12 * 60 * 60 * 1000;
     const note = document.getElementById('salePriceSetNote');
-    if (note) {
-      note.classList.remove('hidden');
-      note.textContent = 'กำลังโหลดชุดราคาไข่...';
-    }
-    const response = await AppApi.post({ action: 'getEffectiveEggPriceSet', batch_id: state.batch.id });
-    if (!response || response.status !== 'ok') {
-      if (note) note.textContent = response?.message || 'โหลดชุดราคาไข่ไม่สำเร็จ';
-      return;
-    }
-    state.salePriceSet = response.price_set || null;
-    state.salePriceItems = Array.isArray(response.items) ? response.items : [];
-    if (note) {
-      if (state.salePriceSet && state.salePriceItems.length) {
-        note.textContent = `ใช้ชุดราคาไข่: ${state.salePriceSet.name || '-'} • ${state.salePriceItems.length} รายการราคา`;
-      } else {
-        note.textContent = 'ยังไม่พบชุดราคาไข่ที่ผูกกับ batch/user นี้ กรุณาให้ admin ผูกชุดราคาก่อนขายไข่';
+    if (!force && batchId) {
+      const cached = AppCache?.read?.(cacheKey, null);
+      const fresh = cached?.fetchedAt && (Date.now() - Number(cached.fetchedAt) < maxAgeMs);
+      if (cached?.items?.length) {
+        state.salePriceLoaded = true; state.salePriceSet = cached.price_set || null; state.salePriceItems = cached.items || [];
+        renderSalePriceNote(fresh ? 'cached' : 'stale');
+        if (fresh) return;
       }
     }
+    if (state.priceLoadPromise && !force) return state.priceLoadPromise;
+    if (note) { note.classList.remove('hidden'); note.textContent = state.salePriceItems.length ? 'กำลังตรวจสอบราคาใหม่...' : 'กำลังโหลดชุดราคาไข่...'; }
+    state.priceLoadPromise = (async () => {
+      const response = await AppApi.post({ action: 'getEffectiveEggPriceSet', batch_id: state.batch.id });
+      if (!response || response.status !== 'ok') { if (note && !state.salePriceItems.length) note.textContent = response?.message || 'โหลดชุดราคาไข่ไม่สำเร็จ'; return; }
+      state.salePriceLoaded = true; state.salePriceSet = response.price_set || null; state.salePriceItems = Array.isArray(response.items) ? response.items : [];
+      AppCache?.write?.(cacheKey, { price_set: state.salePriceSet, items: state.salePriceItems, fetchedAt: Date.now() });
+      renderSalePriceNote('fresh');
+    })().finally(() => { state.priceLoadPromise = null; });
+    return state.priceLoadPromise;
+  }
+
+  function warmSalePriceCache() { if (state.batch) loadEffectiveEggPriceSet(false); }
+  function renderSalePriceNote(source = '') {
+    const note = document.getElementById('salePriceSetNote'); if (!note) return; note.classList.remove('hidden');
+    if (state.salePriceSet && state.salePriceItems.length) {
+      const suffix = source === 'cached' ? ' • จาก cache' : (source === 'stale' ? ' • แสดงจาก cache ระหว่างอัปเดต' : '');
+      note.textContent = `ใช้ชุดราคาไข่: ${state.salePriceSet.name || '-'} • ${state.salePriceItems.length} รายการราคา${suffix}`;
+    } else note.textContent = 'ยังไม่พบชุดราคาไข่ที่ผูกกับ batch/user นี้ กรุณาให้ admin ผูกชุดราคาก่อนขายไข่';
   }
 
 
@@ -1068,14 +1117,16 @@ function openFeedSheet(mode) {
     const button = document.getElementById('billConfirmBtn');
     const original = button.textContent;
     button.disabled = true; button.textContent = 'กำลังบันทึก...';
-    const response = await AppApi.post({ action: 'saveBatchSaleBill', batch_id: state.billDraft.batch_id, bill_id: state.billDraft.bill_id || '', mode: state.billDraft.mode || 'create', log_date: state.billDraft.log_date, sale_name: state.billDraft.sale_name, remark: state.billDraft.remark, sale_type: state.billDraft.sale_type, discount: state.billDraft.discount || 0, items: state.billDraft.items });
+    const action = state.preBillReviewId ? 'approvePreBill' : 'saveBatchSaleBill';
+    const response = await AppApi.post({ action, pre_bill_id: state.preBillReviewId || '', batch_id: state.billDraft.batch_id, bill_id: state.billDraft.bill_id || '', mode: state.billDraft.mode || 'create', log_date: state.billDraft.log_date, sale_name: state.billDraft.sale_name, remark: state.billDraft.remark, sale_type: state.billDraft.sale_type, discount: state.billDraft.discount || 0, items: state.billDraft.items });
     button.disabled = false; button.textContent = original;
     if (!response || response.status !== 'ok') return alert(response?.message || 'บันทึกบิลไม่สำเร็จ');
     closeBillPreview(); closeSaleBillSheet();
     clearModuleCaches(state.batch.id, ['sale_manage']);
     state.month = String(state.billDraft.log_date || state.month).slice(0, 7);
     await load(state.batch.id);
-    alert(`บันทึกบิลสำเร็จ เลขที่ ${response.bill?.bill_id || '-'}`);
+    alert(`${state.preBillReviewId ? 'อนุมัติ PreBill และสร้างบิลสำเร็จ' : 'บันทึกบิลสำเร็จ'} เลขที่ ${response.bill?.bill_id || '-'}`);
+    state.preBillReviewId = '';
   }
 
   function downloadBillImage() { if (!state.billPreviewImage) return; const link = document.createElement('a'); link.href = state.billPreviewImage; link.download = `cash-bill-${state.batch.id}-${Date.now()}.png`; link.click(); }

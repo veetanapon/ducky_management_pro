@@ -2722,3 +2722,69 @@ textarea {
     transform: translateZ(0);
   }
 }
+
+
+.sale-bill-picker-card--prebill {
+  border-color: color-mix(in srgb, var(--warning) 42%, var(--border-soft));
+  background: color-mix(in srgb, var(--warning) 9%, var(--bg-card));
+}
+.sale-bill-picker-card--prebill .sale-bill-picker-head span {
+  background: color-mix(in srgb, var(--warning) 18%, var(--bg-card));
+  color: var(--text-main);
+}
+
+
+/* ===== LIFF route manager ===== */
+.liff-route-url-input {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-card);
+  color: var(--text-main);
+  padding: 10px 12px;
+  font-size: 13px;
+}
+.price-set-card.is-disabled {
+  opacity: .68;
+}
+
+body[data-page="liff_routes"] .price-set-list {
+  display: grid;
+  gap: 10px;
+}
+body[data-page="liff_routes"] .price-set-card {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--bg-soft);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+body[data-page="liff_routes"] .price-set-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+body[data-page="liff_routes"] .price-set-card__title {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+body[data-page="liff_routes"] .price-set-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+body[data-page="liff_routes"] .price-set-card__meta span {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  color: var(--text-sub);
+}

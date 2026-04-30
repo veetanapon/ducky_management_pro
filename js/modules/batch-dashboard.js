@@ -70,6 +70,7 @@ window.BatchDashboardPage = (() => {
       egg_daily: `module-egg-daily.html?bid=${bid}`,
       sale_manage: `module-sale.html?bid=${bid}`,
       batch_access: `batch-access.html?bid=${bid}`,
+      liff_routes: `liff-routes.html?bid=${bid}`,
       report: `report.html?bid=${bid}`
     };
 

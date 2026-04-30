@@ -1,4 +1,3 @@
-
 window.addEventListener('DOMContentLoaded', async () => {
   const theme = localStorage.getItem('theme');
   if (theme === 'theme-dark') {
@@ -36,5 +35,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   if (page === 'items_price_manage' && window.ItemsPriceManagePage) {
     await ItemsPriceManagePage.bootstrap();
+    return;
+  }
+  if (page === 'liff_routes' && window.LiffRoutesPage) {
+    await LiffRoutesPage.bootstrap();
   }
 });

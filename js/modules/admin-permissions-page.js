@@ -239,6 +239,7 @@ window.AdminPermissionsPage = (() => {
           { key: 'fish_feed_manage', label: 'จัดการอาหาร' },
           { key: 'fish_sale', label: 'ขายออก / บิล' },
           { key: 'batch_access', label: 'สิทธิ์การเข้าถึง batch' },
+          { key: 'liff_routes', label: 'จัดการลิงก์ LIFF' },
           { key: 'report', label: 'รายงาน' }
         ]
       : [
@@ -247,6 +248,7 @@ window.AdminPermissionsPage = (() => {
           { key: 'egg_daily', label: 'บันทึกไข่รายวัน' },
           { key: 'egg_sale', label: 'ขายออก / บิล' },
           { key: 'batch_access', label: 'สิทธิ์การเข้าถึง batch' },
+          { key: 'liff_routes', label: 'จัดการลิงก์ LIFF' },
           { key: 'report', label: 'รายงาน' }
         ];
   }

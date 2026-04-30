@@ -1,6 +1,6 @@
 window.AppAuth = (() => {
   const REFRESH_BEFORE_MS = 5 * 60 * 1000;
-  let refreshing = false;
+  let refreshPromise = null;
 
   function getSession(name = 'session_token') {
     try {
@@ -63,25 +63,16 @@ window.AppAuth = (() => {
   }
 
   async function silentRefreshSession() {
-    if (refreshing) return false;
-    refreshing = true;
-
-    try {
-      const json = await AppApi.postPublic({
-        action: 'refresh_session',
-        session_token: getSession()
-      });
-
-      if (json?.status === 'ok' && json.session_token) {
-        setSession(json);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      return false;
-    } finally {
-      refreshing = false;
-    }
+    if (refreshPromise) return refreshPromise;
+    refreshPromise = (async () => {
+      try {
+        const json = await AppApi.postPublic({ action: 'refresh_session', session_token: getSession() });
+        if (json?.status === 'ok' && json.session_token) { setSession(json); return true; }
+        return false;
+      } catch (error) { return false; }
+      finally { refreshPromise = null; }
+    })();
+    return refreshPromise;
   }
 
   function redirectLogin() {
