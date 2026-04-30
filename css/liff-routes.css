@@ -1,0 +1,233 @@
+/* LIFF Route Manager - isolated styles for web/liff-routes.html */
+body[data-page="liff_routes"] {
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 10%, transparent), transparent 34%),
+    linear-gradient(180deg, var(--bg-app) 0%, color-mix(in srgb, var(--bg-app) 80%, var(--bg-card)) 100%);
+}
+
+body[data-page="liff_routes"] .page-body {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  padding-bottom: calc(104px + env(safe-area-inset-bottom));
+}
+
+body[data-page="liff_routes"] .app-header {
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .05);
+}
+
+body[data-page="liff_routes"] .card-panel {
+  border: 1px solid color-mix(in srgb, var(--border-soft) 80%, transparent);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--bg-card) 96%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+body[data-page="liff_routes"] .module-page-intro,
+body[data-page="liff_routes"] #liffRouteEditorCard,
+body[data-page="liff_routes"] main > section.card-panel:last-child {
+  padding: 16px;
+}
+
+body[data-page="liff_routes"] .section-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body[data-page="liff_routes"] .section-card-head h3 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+body[data-page="liff_routes"] #liffRouteForm {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+body[data-page="liff_routes"] .field-label {
+  margin: 2px 0 -3px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  color: var(--text-main);
+}
+
+body[data-page="liff_routes"] #liffRouteForm input[type="text"],
+body[data-page="liff_routes"] #liffRouteForm textarea,
+body[data-page="liff_routes"] .liff-route-url-input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 88%, var(--primary));
+  border-radius: 16px;
+  background: var(--bg-soft);
+  color: var(--text-main);
+  padding: 12px 14px;
+  font-size: 16px;
+  line-height: 1.35;
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+
+body[data-page="liff_routes"] #liffRouteForm input[type="text"]:focus,
+body[data-page="liff_routes"] #liffRouteForm textarea:focus,
+body[data-page="liff_routes"] .liff-route-url-input:focus {
+  border-color: var(--primary);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+body[data-page="liff_routes"] #liffRouteForm textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+body[data-page="liff_routes"] #liffRouteForm .grid-2 {
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: 8px;
+  align-items: stretch;
+}
+
+body[data-page="liff_routes"] #generateRouteKeyBtn,
+body[data-page="liff_routes"] #newLiffRouteBtn,
+body[data-page="liff_routes"] .access-action-row .secondary-btn {
+  border-radius: 14px;
+  min-height: 44px;
+  font-weight: 800;
+}
+
+body[data-page="liff_routes"] #generateRouteKeyBtn {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  white-space: nowrap;
+}
+
+body[data-page="liff_routes"] #newLiffRouteBtn {
+  width: auto;
+  min-width: 82px;
+  padding: 9px 12px !important;
+  background: var(--bg-soft);
+}
+
+body[data-page="liff_routes"] #liffRouteForm .field-label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  margin: 2px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--primary) 5%, var(--bg-soft));
+  font-size: 14px;
+  font-weight: 800;
+}
+
+body[data-page="liff_routes"] #liffRouteActive {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+body[data-page="liff_routes"] #saveLiffRouteBtn {
+  min-height: 48px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 900;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+body[data-page="liff_routes"] .price-set-list {
+  display: grid;
+  gap: 12px;
+}
+
+body[data-page="liff_routes"] .price-set-card {
+  border-radius: 20px;
+  padding: 14px;
+  gap: 12px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-card) 98%, var(--primary)) 0%, var(--bg-soft) 100%);
+  border: 1px solid color-mix(in srgb, var(--border-soft) 82%, var(--primary));
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .06);
+}
+
+body[data-page="liff_routes"] .price-set-card__head {
+  align-items: flex-start;
+}
+
+body[data-page="liff_routes"] .price-set-card__title {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--text-main);
+}
+
+body[data-page="liff_routes"] .price-set-card__head .muted {
+  margin-top: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+body[data-page="liff_routes"] .price-set-card__meta {
+  gap: 6px;
+}
+
+body[data-page="liff_routes"] .price-set-card__meta span {
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  color: var(--text-sub);
+  font-size: 11px;
+  line-height: 1.15;
+}
+
+body[data-page="liff_routes"] .liff-route-url-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px !important;
+  background: var(--bg-card);
+  min-height: 46px;
+}
+
+body[data-page="liff_routes"] .access-action-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 0;
+}
+
+body[data-page="liff_routes"] .access-action-row .secondary-btn {
+  width: 100%;
+  padding: 10px 12px !important;
+  background: var(--bg-card);
+}
+
+body[data-page="liff_routes"] .badge-inline.success {
+  background: color-mix(in srgb, var(--primary) 16%, var(--bg-card));
+  color: var(--primary-dark);
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border-soft));
+}
+
+body[data-page="liff_routes"] .price-set-card.is-disabled {
+  opacity: .7;
+  filter: grayscale(.15);
+}
+
+@media (max-width: 390px) {
+  body[data-page="liff_routes"] .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  body[data-page="liff_routes"] #liffRouteForm .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="liff_routes"] #generateRouteKeyBtn {
+    width: 100%;
+  }
+}

@@ -1,3 +1,95 @@
 <!DOCTYPE html>
-<html lang="th"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/><title>กรอกข้อมูลฟาร์ม</title><script src="https://cdn.tailwindcss.com"></script><script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script></head>
-<body class="min-h-screen bg-emerald-50 text-slate-900 px-4 py-5"><main class="mx-auto w-full max-w-md rounded-3xl bg-white shadow-xl p-5"><header class="mb-5 text-center"><p id="routeBadge" class="text-xs font-semibold text-emerald-600">กำลังโหลดลิงก์...</p><h1 class="text-2xl font-extrabold text-emerald-700">บันทึกไข่ / ส่ง PreBill</h1><p id="batchName" class="mt-1 text-sm text-slate-500">-</p></header><form id="liffWorkerForm" class="space-y-4"><div><label class="font-semibold">วันที่บันทึก</label><input id="logDate" type="date" required class="mt-1 w-full rounded-xl border p-3 text-base"/></div><section class="rounded-2xl bg-slate-50 p-3 space-y-3"><h2 class="font-bold text-slate-700">จำนวนไข่วันนี้</h2><div class="grid grid-cols-2 gap-3"><input id="qty_all" type="number" min="0" step="1" placeholder="ไข่รวม" class="rounded-xl border p-3 text-base"/><input id="qty_cracked" type="number" min="0" step="1" placeholder="ไข่บุบ" class="rounded-xl border p-3 text-base"/><input id="qty_big" type="number" min="0" step="1" placeholder="ไข่ใหญ่/แฝด" class="rounded-xl border p-3 text-base"/><input id="qty_small" type="number" min="0" step="1" placeholder="ไข่เล็ก" class="rounded-xl border p-3 text-base"/><input id="qty_broken" type="number" min="0" step="1" placeholder="ไข่แตก" class="rounded-xl border p-3 text-base"/><input id="qty_remain" type="number" min="0" step="1" placeholder="ไข่คงเหลือ/เศษ" class="rounded-xl border p-3 text-base"/></div></section><section class="rounded-2xl bg-amber-50 p-3 space-y-3"><h2 class="font-bold text-amber-700">ส่งขาย / PreBill</h2><input id="buyer" type="text" placeholder="ชื่อผู้ซื้อ (ไม่บังคับ)" class="w-full rounded-xl border p-3 text-base"/><textarea id="rawMessage" rows="4" placeholder="เช่น&#10;23.9=6ตั้ง&#10;23.8=1ตั้ง&#10;ศ.23.6=3แผง&#10;บุบ=99ฟอง" class="w-full rounded-xl border p-3 text-lg"></textarea><p id="priceNote" class="text-xs text-slate-500">ราคาจะอ้างอิงจากชุดราคาที่ผูกกับ batch</p></section><button id="submitBtn" type="submit" class="w-full rounded-xl bg-emerald-600 py-3 font-bold text-white active:scale-[.99]">บันทึกข้อมูล</button><p id="statusText" class="text-center text-sm text-slate-500"></p></form></main><script src="js/config.js"></script><script src="js/core/api.js"></script><script src="js/modules/liff-worker.js"></script></body></html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>กรอกข้อมูลรายวัน | Ducky Management Pro</title>
+  <link rel="stylesheet" href="css/worker-liff.css" />
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body class="worker-liff-page">
+  <main class="liff-shell">
+    <header class="liff-header-card">
+      <div class="liff-header-top">
+        <span id="routeBadge" class="route-badge">กำลังโหลดลิงก์...</span>
+        <span class="route-status-dot" aria-hidden="true"></span>
+      </div>
+      <h1>บันทึกไข่ / ส่งบิล</h1>
+      <p id="batchName" class="liff-subtitle">ลิงก์นี้ใช้สำหรับบันทึกข้อมูลเข้าฟาร์มโดยตรง</p>
+    </header>
+
+    <form id="liffWorkerForm" class="liff-form-card">
+      <section class="liff-section liff-section--date">
+        <div class="section-title-row">
+          <div>
+            <h2>วันที่บันทึก</h2>
+            <!-- <p>ใช้วันที่ขายหรือวันที่เก็บไข่จริง</p> -->
+          </div>
+        </div>
+        <!-- <label class="field-label" for="logDate">วันที่</label> -->
+        <input id="logDate" type="date" required />
+      </section>
+
+      <section class="liff-section">
+        <div class="section-title-row">
+          <div>
+            <h2>จำนวนไข่วันนี้</h2>
+            <p>กรอกเท่าที่มีข้อมูล ถ้าไม่มีให้เว้นว่างได้</p>
+          </div>
+          <span class="mini-badge">Daily</span>
+        </div>
+
+        <div class="egg-grid">
+          <!-- <label class="egg-field" for="qty_all"> -->
+            <!-- <span>ไข่รวม</span> -->
+            <input id="qty_all" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่รวม" />
+          <!-- </label> -->
+          <!-- <label class="egg-field" for="qty_cracked"> -->
+            <!-- <span>ไข่บุบ</span> -->
+            <input id="qty_cracked" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่บุบ" />
+          <!-- </label> -->
+          <!-- <label class="egg-field" for="qty_big"> -->
+            <!-- <span>ไข่ใหญ่/แฝด</span> -->
+            <input id="qty_big" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่ใหญ่/แฝด" />
+          <!-- </label> -->
+          <!-- <label class="egg-field" for="qty_small"> -->
+            <!-- <span>ไข่เล็ก</span> -->
+            <input id="qty_small" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่เล็ก" />
+          <!-- </label> -->
+          <!-- <label class="egg-field" for="qty_broken"> -->
+            <!-- <span>ไข่แตก</span> -->
+            <input id="qty_broken" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่แตก" />
+          <!-- </label> -->
+          <!-- <label class="egg-field" for="qty_remain"> -->
+            <!-- <span>ไข่คงเหลือ/เศษ</span> -->
+            <input id="qty_remain" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่คงเหลือ/เศษ" />
+          <!-- </label> -->
+        </div>
+      </section>
+
+      <section class="liff-section liff-section--prebill">
+        <div class="section-title-row">
+          <div>
+            <h2>ส่งขาย</h2>
+            <p>กรอกรายการขาย</p>
+          </div>
+          <span class="mini-badge warning">PreBill</span>
+        </div>
+
+        <label class="field-label" for="rawMessage">รายการขาย</label>
+        <textarea id="rawMessage" rows="5" placeholder="เช่น&#10;23.9=6ตั้ง&#10;23.8=1ตั้ง&#10;ศ.23.6=3แผง&#10;บุบ=99ฟอง"></textarea>
+        <!-- <p id="prebillNote" class="inline-note">ส่งรายการให้เจ้าของตรวจสอบก่อนออกบิลจริง</p> -->
+      </section>
+
+      <div class="submit-card">
+        <button id="submitBtn" type="submit">บันทึกข้อมูล</button>
+        <p id="statusText" class="status-text"></p>
+      </div>
+    </form>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/modules/liff-worker.js"></script>
+</body>
+</html>
