@@ -306,6 +306,10 @@ textarea::placeholder {
   text-align: center;
 }
 
+input #log-date {
+  width:100%;
+}
+
 @media (max-width: 360px) {
   body.worker-liff-page {
     padding-left: 10px;

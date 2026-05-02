@@ -56,7 +56,7 @@
     }
 
     qs('routeBadge').textContent = 'พร้อมบันทึก';
-    qs('batchName').textContent = 'ข้อมูลจะถูกส่งไปตรวจสอบ';
+    qs('batchName').textContent = 'ข้อมูลจะถูกส่งให้เจ้าของตรวจสอบ';
     setStatus('');
 
     // Do not block the form with route/batch/price loading. Backend resolves those on submit.

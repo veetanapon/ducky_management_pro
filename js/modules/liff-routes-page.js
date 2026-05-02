@@ -97,6 +97,9 @@ window.LiffRoutesPage = (() => {
           </div>
           <div class="price-set-card__meta">
             <span>อัปเดต ${escapeHtml(route.last_update || '-')}</span>
+            ${route.line_to_id ? `<span>LINE: ${escapeHtml(route.line_to_id)}</span>` : '<span>ยังไม่ตั้ง LINE</span>'}
+            ${route.line_to_id ? '<span>แจ้งสำเร็จ: เปิดอัตโนมัติ</span>' : '<span>แจ้งสำเร็จ: ต้องใส่ LINE ID</span>'}
+            <span>error: ส่งเมลหา admin</span>
             ${route.remark ? `<span>${escapeHtml(route.remark)}</span>` : ''}
           </div>
           <input type="text" readonly value="${escapeHtml(url)}" class="liff-route-url-input" />
@@ -133,6 +136,9 @@ window.LiffRoutesPage = (() => {
       route_name: document.getElementById('liffRouteName').value,
       route_key: document.getElementById('liffRouteKey').value,
       remark: document.getElementById('liffRouteRemark').value,
+      line_to_id: document.getElementById('liffLineToId')?.value || '',
+      notify_success: 1,
+      notify_error: 0,
       is_active: document.getElementById('liffRouteActive').checked ? 1 : 0
     });
     button.disabled = false;
@@ -174,6 +180,7 @@ window.LiffRoutesPage = (() => {
     document.getElementById('liffRouteId').value = route.id || '';
     document.getElementById('liffRouteName').value = route.route_name || '';
     document.getElementById('liffRouteKey').value = route.route_key || '';
+    document.getElementById('liffLineToId').value = route.line_to_id || '';
     document.getElementById('liffRouteRemark').value = route.remark || '';
     document.getElementById('liffRouteActive').checked = Number(route.is_active) === 1;
     document.getElementById('liffRouteEditorCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

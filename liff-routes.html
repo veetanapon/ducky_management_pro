@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>จัดการลิงก์ LIFF | Ducky Management Pro</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/liff-routes.css" />
 </head>
 <body data-page="liff_routes">
   <header class="app-header container">
@@ -44,9 +45,18 @@
           <input type="text" id="liffRouteKey" placeholder="rt_xxxxxxxxxxxxxxxx" required />
           <button type="button" class="secondary-btn" id="generateRouteKeyBtn">สุ่ม key</button>
         </div>
+        <label class="field-label">LINE group/user ID สำหรับแจ้งเตือน</label>
+        <input type="text" id="liffLineToId" placeholder="เช่น Cxxxxxxxxxxxxxxxx หรือ Uxxxxxxxxxxxxxxxx" />
+        <div class="inline-note">ใส่ groupId ของกลุ่ม LINE ที่ต้องการให้ bot ส่ง badge บันทึกสำเร็จ วันละ 1 ครั้ง</div>
+
         <label class="field-label">หมายเหตุ</label>
         <textarea id="liffRouteRemark" rows="2" placeholder="optional"></textarea>
-        <label class="field-label"><input type="checkbox" id="liffRouteActive" checked /> เปิดใช้งานลิงก์นี้</label>
+
+        <label class="liff-route-toggle-row field-label">
+          <input type="checkbox" id="liffRouteActive" checked />
+          <span>เปิดใช้งานลิงก์นี้</span>
+        </label>
+        <div class="inline-note">ระบบจะส่ง LINE เมื่อบันทึกสำเร็จแบบอัตโนมัติวันละ 1 ครั้งต่อ route ถ้ามีการใส่ LINE group/user ID ส่วน error จะส่งเมลหา admin ของระบบเท่านั้น</div>
         <button type="submit" id="saveLiffRouteBtn">บันทึกลิงก์</button>
       </form>
     </section>

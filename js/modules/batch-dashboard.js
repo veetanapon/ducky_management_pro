@@ -86,17 +86,11 @@ window.BatchDashboardPage = (() => {
 
     container.innerHTML = visibleCards.map((card) => {
       const href = links[card.key] || `batch.html?bid=${bid}`;
-      const lines = (card.lines || []).map((line) => `<div class="module-card-line">${escapeHtml(line)}</div>`).join('');
       return `
-        <a class="module-card" href="${href}">
-          <div class="module-card-head">
-            <div>
-              <div class="module-card-title">${escapeHtml(card.title)}</div>
-              <div class="muted">${escapeHtml(card.subtitle || '')}</div>
-            </div>
-            <span class="badge-inline ${badgeClass(card.permission)}">${permissionLabel(card.permission)}</span>
-          </div>
-          <div class="module-card-body">${lines}</div>
+        <a class="module-card module-menu-card" href="${href}" aria-label="${escapeHtml(compactTitle(card))} - ${escapeHtml(permissionLabel(card.permission))}">
+          <span class="module-card-permission-icon ${badgeClass(card.permission)}" title="${escapeHtml(permissionLabel(card.permission))}" aria-hidden="true">${permissionIcon(card.permission)}</span>
+          <span class="module-menu-icon" aria-hidden="true">${moduleIcon(card.key)}</span>
+          <span class="module-card-title">${escapeHtml(compactTitle(card))}</span>
         </a>
       `;
     }).join('');
@@ -118,6 +112,55 @@ window.BatchDashboardPage = (() => {
     try {
       localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data }));
     } catch (_) {}
+  }
+
+
+  function compactTitle(card) {
+    const titles = {
+      batch_manage: 'จัดการชุดสัตว์',
+      feed_manage: 'อาหาร',
+      egg_daily: 'บันทึกไข่',
+      sale_manage: 'ขาย / บิล',
+      batch_access: 'สิทธิ์ Batch',
+      liff_routes: 'ลิงก์ LIFF',
+      report: 'รายงาน'
+    };
+    return titles[card.key] || card.title || 'โมดูล';
+  }
+
+  function moduleIcon(key) {
+    const icons = {
+      batch_manage: iconSvg('batch'),
+      feed_manage: iconSvg('feed'),
+      egg_daily: iconSvg('egg'),
+      sale_manage: iconSvg('sale'),
+      batch_access: iconSvg('shield'),
+      liff_routes: iconSvg('link'),
+      report: iconSvg('report')
+    };
+    return icons[key] || iconSvg('grid');
+  }
+
+  function permissionIcon(value) {
+    if (value === 'write') return iconSvg('pencil');
+    if (value === 'view') return iconSvg('eye');
+    return '';
+  }
+
+  function iconSvg(name) {
+    const icons = {
+      batch: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l1 3h3v13H4V7h3l1-3Z"/><path d="M9 11h6"/><path d="M9 15h6"/><path d="M9 19h4"/></svg>`,
+      feed: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M12 8C8 8 6 6 5 3c4 0 6 2 7 5Z"/><path d="M12 13c4 0 6-2 7-5-4 0-6 2-7 5Z"/><path d="M12 18c-4 0-6-2-7-5 4 0 6 2 7 5Z"/></svg>`,
+      egg: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c4.2 0 7 6.2 7 11.1A7 7 0 0 1 5 14.1C5 9.2 7.8 3 12 3Z"/><path d="M9.4 14.7c.6 1.2 1.5 1.8 2.6 1.8"/></svg>`,
+      sale: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V3Z"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>`,
+      report: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4"/><path d="M4 20h16"/><path d="M8 17v-5"/><path d="M12 17V7"/><path d="M16 17v-8"/></svg>`,
+      shield: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6l8-3Z"/><path d="m9 12 2 2 4-5"/></svg>`,
+      link: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1 0l1.4-1.4a5 5 0 0 0-7.1-7.1L10.5 5.4"/><path d="M14 11a5 5 0 0 0-7.1 0l-1.4 1.4a5 5 0 0 0 7.1 7.1l.9-.9"/></svg>`,
+      grid: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4Z"/><path d="M13 4h7v7h-7Z"/><path d="M4 13h7v7H4Z"/><path d="M13 13h7v7h-7Z"/></svg>`,
+      pencil: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m14 6 4 4"/></svg>`,
+      eye: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.6-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.6 6.5-9.5 6.5S2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>`
+    };
+    return icons[name] || icons.grid;
   }
 
   function displaySpecie(value) { return value === 'duck' ? 'เป็ด' : (value === 'fish' ? 'ปลา' : (value || '-')); }
