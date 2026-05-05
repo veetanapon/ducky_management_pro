@@ -13,20 +13,26 @@
     meta.setAttribute('content', viewportContent);
   }
 
+  function preventIfCancelable(event) {
+    // Chrome/Safari can fire non-cancelable touch events while scrolling.
+    // Calling preventDefault() on those events causes console Intervention warnings.
+    if (event && event.cancelable) event.preventDefault();
+  }
+
   lockViewport();
 
-  document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
-  document.addEventListener('gesturechange', (event) => event.preventDefault(), { passive: false });
-  document.addEventListener('gestureend', (event) => event.preventDefault(), { passive: false });
+  document.addEventListener('gesturestart', preventIfCancelable, { passive: false });
+  document.addEventListener('gesturechange', preventIfCancelable, { passive: false });
+  document.addEventListener('gestureend', preventIfCancelable, { passive: false });
 
   let lastTouchEnd = 0;
   document.addEventListener('touchend', (event) => {
     const now = Date.now();
-    if (now - lastTouchEnd <= 320) event.preventDefault();
+    if (now - lastTouchEnd <= 320) preventIfCancelable(event);
     lastTouchEnd = now;
   }, { passive: false });
 
   document.addEventListener('wheel', (event) => {
-    if (event.ctrlKey) event.preventDefault();
+    if (event.ctrlKey) preventIfCancelable(event);
   }, { passive: false });
 })();

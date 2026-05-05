@@ -21,6 +21,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     await BatchManagePage.bootstrap();
     return;
   }
+  if (page === 'report' && window.ReportPage) {
+    await ReportPage.bootstrap();
+    return;
+  }
   if (page === 'module_calendar' && window.ModuleCalendarPage) {
     await ModuleCalendarPage.bootstrap();
     return;

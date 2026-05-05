@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Report | Ducky Management Pro</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/report.css" />
 </head>
-<body data-page="module_calendar" data-module="report">
-  <header class="app-header container">
+<body data-page="report" data-module="report">
+  <header class="app-header container report-app-header">
     <div class="header-leading">
       <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
       <div>
-        <h1 id="moduleTitle">รายงาน</h1>
-        <p class="muted" id="moduleSubtitle">กำลังโหลดข้อมูล...</p>
+        <h1 id="reportTitle">รายงาน</h1>
+        <p class="muted" id="reportSubtitle">กำลังโหลดข้อมูล...</p>
       </div>
     </div>
     <div class="header-actions">
@@ -21,46 +22,81 @@
     </div>
   </header>
 
-  <main class="container page-body module-page-layout">
-    <section class="card-panel module-page-intro">
+  <main class="container page-body report-page">
+    <section class="report-hero card-panel">
       <div class="section-card-head">
-        <h3>ภาพรวมรายงาน</h3>
-        <span class="badge-inline muted-badge" id="modulePermissionBadge">กำลังโหลด</span>
+        <h3>รายงานของ batch นี้</h3>
+        <span class="badge-inline muted-badge" id="reportPermissionBadge">กำลังโหลด</span>
       </div>
-      <p class="muted" id="moduleHint">กำลังโหลดข้อมูลสรุป...</p>
+      <p class="muted" id="reportHint">อ่านข้อมูลจากชีทสรุปที่เตรียมไว้ เพื่อให้เปิดเร็วบนมือถือ</p>
+      <div id="reportSummaryCards" class="report-summary-grid"></div>
     </section>
 
-    <section id="moduleSummaryCards" class="module-summary-grid"></section>
+    <section class="report-toolbar card-panel">
+      <div class="report-toolbar-row">
+        <label class="field-label" for="reportMonthSelect">เลือกเดือน</label>
+        <select id="reportMonthSelect"></select>
+      </div>
+      <div class="report-action-row">
+        <button type="button" class="secondary-btn" id="reportRebuildBtn">โหลดข้อมูลใหม่</button>
+        <button type="button" class="secondary-btn" id="reportExportBtn">Export Excel</button>
+      </div>
+      <div class="report-tab-row" role="tablist">
+        <button type="button" class="report-tab is-active" data-report-tab="table">ตาราง</button>
+        <button type="button" class="report-tab" data-report-tab="chart">กราฟ</button>
+      </div>
+    </section>
 
-    <section class="card-panel module-calendar-panel">
-      <div class="section-card-head">
-        <h3 id="calendarTitle">ปฏิทินการบันทึก</h3>
-        <div class="module-calendar-nav">
-          <button type="button" class="secondary-btn calendar-nav-btn" id="calendarPrevBtn">‹</button>
-          <span class="badge-inline muted-badge" id="calendarMonthLabel">-</span>
-          <button type="button" class="secondary-btn calendar-nav-btn" id="calendarNextBtn">›</button>
+    <section id="reportTablePanel" class="report-panel card-panel">
+      <div class="section-card-head report-panel-head">
+        <div>
+          <h3 id="reportTableTitle">ตารางสรุปรายวัน</h3>
+          <p class="muted" id="reportPageHint">แสดงทีละเดือน เพื่อลดการเลื่อนยาว</p>
+        </div>
+        <button type="button" class="secondary-btn report-wide-btn" id="reportFullscreenBtn">ดูเต็มจอ</button>
+      </div>
+
+      <div id="reportMonthPager" class="report-month-pager"></div>
+      <div id="reportCompactTable" class="report-compact-table"></div>
+      <div id="reportEmptyState" class="empty-state hidden">ยังไม่มีข้อมูลรายงาน กด “โหลดข้อมูลใหม่” เพื่อสร้างข้อมูลของ batch นี้</div>
+    </section>
+
+    <section id="reportChartPanel" class="report-panel card-panel hidden">
+      <div class="section-card-head report-panel-head">
+        <div>
+          <h3>กราฟรายวัน</h3>
+          <p class="muted">แสดงข้อมูลของเดือนที่เลือก / หน้าปัจจุบัน</p>
         </div>
       </div>
-      <div class="module-calendar-legend">
-        <span><i class="legend-swatch legend-swatch--filled"></i> มีบันทึก</span>
-        <span><i class="legend-swatch legend-swatch--empty"></i> ยังไม่บันทึก</span>
+      <div class="report-chart-card">
+        <h4>จำนวนไข่รายวันและ % ไข่</h4>
+        <div class="report-chart-canvas"><canvas id="eggChart"></canvas></div>
       </div>
-      <div class="module-calendar-weekdays">
-        <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+      <div class="report-chart-card">
+        <h4>การกินอาหาร แยกตาม Feed lot</h4>
+        <div class="report-chart-canvas"><canvas id="feedChart"></canvas></div>
       </div>
-      <div id="moduleCalendarGrid" class="module-calendar-grid"></div>
-    </section>
-
-    <section class="card-panel">
-      <div class="section-card-head">
-        <h3>บันทึกล่าสุด</h3>
-        <span class="badge-inline muted-badge" id="recentCountBadge">0 รายการ</span>
+      <div class="report-chart-card">
+        <h4>จำนวนเป็ดตายรายวัน</h4>
+        <div class="report-chart-canvas"><canvas id="duckChart"></canvas></div>
       </div>
-      <div id="recentLogList" class="log-list"></div>
     </section>
   </main>
 
-  <div id="moduleFabRoot"></div>
+  <div id="reportFullscreen" class="report-fullscreen hidden" aria-hidden="true">
+    <div class="report-fullscreen-toolbar">
+      <div>
+        <strong id="reportFullscreenTitle">ตารางสรุปรายวัน</strong>
+        <p id="reportFullscreenSubtitle">-</p>
+      </div>
+      <div class="report-fullscreen-actions">
+        <button type="button" class="secondary-btn" id="reportRotateBtn">หมุนตาราง</button>
+        <button type="button" class="secondary-btn" id="reportFullscreenCloseBtn">ปิด</button>
+      </div>
+    </div>
+    <div id="reportRotateHint" class="report-rotate-hint">ถ้าจอยังแคบ ให้กด “หมุนตาราง” เพื่อดูแบบแนวนอนจำลอง</div>
+    <div id="reportFullTableWrap" class="report-full-table-wrap"></div>
+  </div>
 
   <script src="js/config.js"></script>
   <script src="js/core/state.js"></script>
@@ -68,7 +104,7 @@
   <script src="js/core/api.js"></script>
   <script src="js/core/auth.js"></script>
   <script src="js/modules/nav.js"></script>
-  <script src="js/modules/module-calendar-page.js"></script>
+  <script src="js/modules/report-page.js"></script>
   <script src="js/core/zoom-lock.js"></script>
   <script src="js/app.js"></script>
 </body>
