@@ -2922,3 +2922,15 @@ body[data-page="batch_dashboard"] .module-card-permission-icon.muted-badge {
     font-size: 11px;
   }
 }
+
+.sheet input[type="date"] {
+  inline-size: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 52px;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: center;
+  overflow: hidden;
+}
