@@ -2923,14 +2923,126 @@ body[data-page="batch_dashboard"] .module-card-permission-icon.muted-badge {
   }
 }
 
+/* ===== FAB sheet date/input width fix (mobile Safari / LIFF browser) ===== */
+.sheet,
+.sheet * {
+  box-sizing: border-box;
+}
+
+.sheet {
+  overflow-x: hidden;
+}
+
+.sheet-panel {
+  width: min(100%, 460px);
+  max-width: calc(100dvw - env(safe-area-inset-left) - env(safe-area-inset-right));
+  overflow-x: hidden;
+}
+
+.sheet-header,
+.sheet-body,
+.sheet-footer,
+.sheet-body > *,
+.sheet form,
+.sheet .form-stack,
+.sheet .sheet-field-grid,
+.sheet .grid-2 {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sheet input,
+.sheet select,
+.sheet textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .sheet input[type="date"] {
   inline-size: 100%;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   height: 52px;
+  line-height: 1.35;
   -webkit-appearance: none;
   appearance: none;
   text-align: center;
   overflow: hidden;
+}
+
+.sheet input[type="date"]::-webkit-date-and-time-value {
+  min-width: 0;
+  max-width: 100%;
+  text-align: center;
+}
+
+.sheet input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-inline-start: 0;
+}
+
+@media (max-width: 420px) {
+  .sheet-panel {
+    width: 100dvw;
+    max-width: 100dvw;
+  }
+
+  .sheet-body,
+  .sheet-header,
+  .sheet-footer {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+}
+
+
+/* ===== Bill preview mobile alignment fix ===== */
+#billPreviewSheet .bill-preview-panel,
+#saleRangePreviewSheet .bill-preview-panel {
+  width: min(100dvw, 520px);
+  max-width: min(100dvw, 520px);
+  overflow-x: hidden;
+}
+
+#billPreviewSheet .bill-preview-body,
+#saleRangePreviewSheet .bill-preview-body {
+  align-items: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right));
+}
+
+#billPreviewImage,
+#saleRangePreviewImage,
+.bill-preview-image {
+  display: block;
+  inline-size: min(100%, 360px);
+  width: min(100%, 360px);
+  max-inline-size: 100%;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center center;
+  margin-inline: auto;
+}
+
+#billPreviewMeta,
+#saleRangePreviewMeta {
+  width: 100%;
+  max-width: 360px;
+  margin-inline: auto;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 380px) {
+  #billPreviewImage,
+  #saleRangePreviewImage,
+  .bill-preview-image,
+  #billPreviewMeta,
+  #saleRangePreviewMeta {
+    max-width: calc(100dvw - 32px);
+  }
 }
