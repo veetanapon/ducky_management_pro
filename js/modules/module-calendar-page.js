@@ -1091,18 +1091,18 @@ function openFeedSheet(mode) {
     ctx.fillStyle = '#111827'; ctx.textBaseline = 'top';
     let y = padding;
     try { const logo = await loadImage(draft.logo_url); const logoSize = 54; ctx.drawImage(logo, (width - logoSize) / 2, y, logoSize, logoSize); y += logoSize + 8; } catch (_) {}
-    ctx.font = 'bold 20px system-ui'; ctx.textAlign = 'center'; ctx.fillText(draft.farm_name || 'FARM', width / 2, y); y += 28;
-    ctx.font = 'bold 17px system-ui'; ctx.fillText('บิลเงินสด', width / 2, y); y += 28;
+    drawCenteredFitText(ctx, draft.farm_name || 'FARM', width / 2, y, width - (padding * 2), 'bold', 20, 13); y += 28;
+    drawCenteredFitText(ctx, draft.bill_title || 'บิลเงินสด', width / 2, y, width - (padding * 2), 'bold', 17, 13); y += 28;
     ctx.textAlign = 'left'; ctx.font = '13px system-ui';
-    ctx.fillText('วันที่ขาย: ' + formatThaiDate(draft.log_date), padding, y); y += lineGap;
-    ctx.fillText('เวลาออกบิล: ' + draft.issue_date, padding, y); y += lineGap;
-    ctx.fillText('ชุดสัตว์: ' + draft.batch_name, padding, y); y += 22;
+    ctx.fillText('วันที่ขาย: ' + formatThaiDate(draft.log_date), padding, y, width - (padding * 2)); y += lineGap;
+    ctx.fillText('เวลาออกบิล: ' + draft.issue_date, padding, y, width - (padding * 2)); y += lineGap;
+    ctx.fillText('ชุดสัตว์: ' + draft.batch_name, padding, y, width - (padding * 2)); y += 22;
     ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke(); y += 12;
     draft.items.forEach((item) => {
-      ctx.textAlign = 'left'; ctx.font = 'bold 14px system-ui'; ctx.fillText(item.display_name || item.item_name, padding, y); y += 18;
+      ctx.textAlign = 'left'; ctx.font = 'bold 14px system-ui'; ctx.fillText(item.display_name || item.item_name, padding, y, width - (padding * 2)); y += 18;
       ctx.font = '13px system-ui';
       const unitText = draft.sale_type === 'egg' ? `${formatNumber(item.qty)} ${item.unit_label} (${formatNumber(item.total_qty)} ฟอง) x ${formatMoney(item.unit_price)}` : `${formatNumber(item.qty)} ${item.unit} x ${formatMoney(item.unit_price)}`;
-      ctx.fillText(unitText, padding, y); ctx.textAlign = 'right'; ctx.fillText(formatMoney(item.line_total), width - padding, y); y += itemBlockHeight - 18;
+      ctx.fillText(unitText, padding, y, width - (padding * 2) - 104); ctx.textAlign = 'right'; ctx.fillText(formatMoney(item.line_total), width - padding, y, 100); y += itemBlockHeight - 18;
     });
     ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke(); y += 12;
     ctx.font = '14px system-ui'; ctx.textAlign = 'left'; ctx.fillText('รวมก่อนหักส่วนลด', padding, y); ctx.textAlign = 'right'; ctx.fillText(formatMoney(draft.sub_total), width - padding, y); y += lineGap;
@@ -1311,6 +1311,23 @@ function openFeedSheet(mode) {
   function formatNumber(value) { return Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
   function nowDateTimeDisplay() { const now = new Date(); return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; }
   function formatThaiDate(dateStr) { if (!dateStr) return '-'; const [year, month, day] = String(dateStr).split('-').map(Number); const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']; return `${day} ${months[(month || 1) - 1]} ${year + 543}`; }
+
+  function drawCenteredFitText(ctx, text, centerX, y, maxWidth, weight, baseSize, minSize) {
+    text = String(text || '');
+    weight = weight || 'bold';
+    baseSize = Number(baseSize || 18);
+    minSize = Number(minSize || 12);
+    var size = baseSize;
+    do {
+      ctx.font = weight + ' ' + size + 'px system-ui';
+      if (ctx.measureText(text).width <= maxWidth || size <= minSize) break;
+      size -= 1;
+    } while (size >= minSize);
+    ctx.textAlign = 'center';
+    ctx.fillText(text, centerX, y, maxWidth);
+    return size;
+  }
+
   function wrapText(ctx, text, x, y, maxWidth, lineHeight) { const words = String(text || '').split(' '); let line = ''; for (let n = 0; n < words.length; n += 1) { const testLine = line + words[n] + ' '; const metrics = ctx.measureText(testLine); if (metrics.width > maxWidth && n > 0) { ctx.fillText(line, x, y); line = words[n] + ' '; y += lineHeight; } else { line = testLine; } } ctx.fillText(line, x, y); }
   function loadImage(src) { return new Promise((resolve, reject) => { if (!src) return reject(new Error('missing image')); const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = src; }); }
 

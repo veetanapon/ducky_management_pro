@@ -1062,6 +1062,23 @@ window.BatchPage = (() => {
     ctx.lineTo(x2, y);
     ctx.stroke();
   }
+
+  function drawCenteredFitText(ctx, text, centerX, y, maxWidth, weight, baseSize, minSize) {
+    text = String(text || '');
+    weight = weight || 'bold';
+    baseSize = Number(baseSize || 18);
+    minSize = Number(minSize || 12);
+    var size = baseSize;
+    do {
+      ctx.font = weight + ' ' + size + 'px system-ui';
+      if (ctx.measureText(text).width <= maxWidth || size <= minSize) break;
+      size -= 1;
+    } while (size >= minSize);
+    ctx.textAlign = 'center';
+    ctx.fillText(text, centerX, y, maxWidth);
+    return size;
+  }
+
   function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     const words = String(text || '').split(' ');
     let line = '';
