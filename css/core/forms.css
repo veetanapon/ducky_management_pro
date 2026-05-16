@@ -1,0 +1,216 @@
+/* ===== 03 Forms / inputs ===== */
+
+.search-bar input,
+.sheet input,
+.sheet select,
+.sheet textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  color: var(--text-main);
+  font-size: 15px;
+}
+
+.sheet textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.upload input[type="file"] {
+  display: block;
+}
+
+textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  color: var(--text-main);
+  margin-bottom: 6px;
+  font-size: 15px;
+  resize: vertical;
+}
+
+.form-stack textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  color: var(--text-main);
+  margin-bottom: 0px;
+  font-size: 15px;
+  resize: vertical;
+}
+
+.secondary-btn {
+  background: var(--bg-soft) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-soft) !important;
+}
+
+.upload {
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  display: block;
+  border: 1px dashed var(--border-soft);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: var(--bg-soft);
+  text-align: center;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.upload input {
+  display: none;
+}
+
+.image-preview {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+}
+
+.inline-note {
+  margin-bottom: 0px;
+  font-size: 12px;
+  color: var(--text-sub);
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.sale-item-card input {
+  background: #fff;
+}
+
+input#saleDiscount {
+  margin-top: 6px;
+}
+
+.permission-card__select {
+  width: 100%;
+}
+
+#accessAdminFormCard .form-stack,
+#adminPermissionForm.form-stack {
+  gap: 10px;
+}
+
+#eggDailySheet .inline-note,
+#feedLogSheet .inline-note {
+  margin-bottom: 0;
+}
+
+#saleBillSheet .sale-item-card select,
+#saleBillSheet .sale-item-card input,
+#saleBillSheet #saleDiscount {
+  font-size: 16px;
+}
+
+#saleBillSheet .sale-item-card select {
+  padding: 12px 2px;
+}
+
+#saleBillSheet .sale-grid-field .field-label {
+  min-height: 32px;
+  display: flex;
+  align-items: flex-end;
+  line-height: 1.18;
+  margin-top: 0;
+}
+
+#saleBillSheet .sale-item-card input,
+#saleBillSheet .sale-item-card select,
+#saleBillSheet .line-total-badge {
+  min-height: 44px;
+  width: 100%;
+}
+
+.sale-range-search-grid .field-label {
+  margin-top: 0;
+  min-height: 18px;
+  display: flex;
+  align-items: flex-end;
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.sale-range-search-grid input,
+.sale-range-search-grid button {
+  min-height: 38px;
+  border-radius: 12px;
+  padding-left: 6px;
+  padding-right: 6px;
+  font-size: 14px;
+  border: 1px solid #e5e7eb;
+}
+
+.sale-range-bill-card.is-selected {
+  border-color: color-mix(in srgb, var(--primary) 38%, var(--border-soft));
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-soft));
+}
+
+.sale-range-bill-card.is-deselected {
+  opacity: .48;
+  filter: grayscale(.55);
+}
+
+input,
+select,
+textarea,
+button,
+.input,
+.form-control,
+.sheet input,
+.sheet select,
+.sheet textarea,
+.search-bar input,
+#saleBillSheet input,
+#saleBillSheet select,
+#saleBillSheet textarea,
+#feedLogSheet input,
+#feedLogSheet select,
+#feedLogSheet textarea,
+#eggDailySheet input,
+#eggDailySheet select,
+#eggDailySheet textarea,
+body[data-page="items_price_manage"] input,
+body[data-page="items_price_manage"] select,
+body[data-page="items_price_manage"] textarea {
+  font-size: 16px !important;
+}
+
+input[type="date"],
+input[type="search"],
+input[type="number"],
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="url"],
+select,
+textarea {
+  font-size: 16px;
+}

@@ -376,6 +376,17 @@ function openFeedSheet(mode) {
           <input class="feed-entry-unit-price" type="number" min="0" step="0.01" placeholder="ราคาต่อหน่วย" value="${entry.unit_price != null ? escapeAttr(entry.unit_price) : ''}" />
         </div>
       </div>
+      <div class="feed-entry-consume-grid">
+        <div>
+          <label class="field-label">เหลือ</label>
+          <input class="feed-entry-leftover" type="number" min="0" step="0.01" placeholder="เหลือ (ลูก)" value="${entry.leftover_qty != null ? escapeAttr(entry.leftover_qty) : ''}" />
+        </div>
+        <div>
+          <label class="field-label">เสีย/หก</label>
+          <input class="feed-entry-waste" type="number" min="0" step="0.01" placeholder="เสีย/หก (ลูก)" value="${entry.waste_qty != null ? escapeAttr(entry.waste_qty) : ''}" />
+        </div>
+        <div class="feed-consumed-note">กินจริงจะคำนวณจาก จำนวนที่ตัดจ่าย - เหลือ - เสีย</div>
+      </div>
     `;
     list.appendChild(row);
     syncFeedEntryRow(row);
@@ -411,7 +422,9 @@ function openFeedSheet(mode) {
     const feedIdInput = row.querySelector('.feed-entry-feed-id');
     const unitInput = row.querySelector('.feed-entry-unit-price');
     const info = row.querySelector('.feed-entry-lot-info');
+    const consumeGrid = row.querySelector('.feed-entry-consume-grid');
     const matched = state.feedLotMap[nameInput.value] || null;
+    if (consumeGrid) consumeGrid.classList.toggle('hidden', type !== 'out');
     if (matched) {
       feedIdInput.value = matched.id || '';
       if (type === 'out') {
@@ -452,10 +465,13 @@ function openFeedSheet(mode) {
       const feedName = matched?.name || label;
       const qty = Number(row.querySelector('.feed-entry-qty')?.value || 0);
       const unitPrice = Number(row.querySelector('.feed-entry-unit-price')?.value || 0);
+      const leftoverQty = Number(row.querySelector('.feed-entry-leftover')?.value || 0);
+      const wasteQty = Number(row.querySelector('.feed-entry-waste')?.value || 0);
       if (!feedName) return alert('กรุณาระบุชื่ออาหาร / lot ทุกรายการ');
       if (!(qty > 0)) return alert('จำนวนอาหารต้องมากกว่า 0');
       if (transType === 'out' && !feedId) return alert('รายการตัดจ่ายต้องเลือก lot ที่มีอยู่จากรายการ');
-      entries.push({ trans_type: transType, feed_id: feedId, feed_name: feedName, qty, unit_price: unitPrice });
+      if (transType === 'out' && leftoverQty + wasteQty > qty) return alert('จำนวนเหลือ + เสีย ต้องไม่มากกว่าจำนวนที่ตัดจ่าย');
+      entries.push({ trans_type: transType, feed_id: feedId, feed_name: feedName, qty, unit_price: unitPrice, leftover_qty: leftoverQty, waste_qty: wasteQty });
     }
     const payload = {
       action: 'saveFeedLog',
@@ -1285,18 +1301,18 @@ function openFeedSheet(mode) {
     ctx.fillStyle = '#111827'; ctx.textBaseline = 'top';
     let y = padding;
     try { const logo = await loadImage(state.logoUrl); const logoSize = 48; ctx.drawImage(logo, (width - logoSize) / 2, y, logoSize, logoSize); y += logoSize + 8; } catch (_) {}
-    ctx.font = 'bold 20px system-ui'; ctx.textAlign = 'center'; ctx.fillText(state.data?.farm_name || state.batch?.owner_name || 'FARM', width / 2, y); y += 28;
-    ctx.font = 'bold 16px system-ui'; ctx.fillText('สรุปยอดบิล', width / 2, y); y += 24;
-    ctx.font = '13px system-ui'; ctx.fillText(formatThaiDate(payload.startDate) + ' ถึง ' + formatThaiDate(payload.endDate), width / 2, y); y += 26;
+    drawCenteredFitText(ctx, state.data?.farm_name || state.batch?.owner_name || 'FARM', width / 2, y, width - (padding * 2), 'bold', 20, 13); y += 28;
+    drawCenteredFitText(ctx, 'สรุปยอดบิล', width / 2, y, width - (padding * 2), 'bold', 16, 13); y += 24;
+    drawCenteredFitText(ctx, formatThaiDate(payload.startDate) + ' ถึง ' + formatThaiDate(payload.endDate), width / 2, y, width - (padding * 2), '', 13, 11); y += 26;
     ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke(); y += 12;
     rows.forEach((row) => {
       const icon = row.sale_type === 'egg' ? 'ไข่' : (row.sale_type === 'fish' ? 'ปลา' : (row.sale_type === 'duck' ? 'เป็ด' : 'บิล'));
-      ctx.textAlign = 'left'; ctx.font = 'bold 13px system-ui'; ctx.fillStyle = '#111827'; ctx.fillText(formatThaiDate(row.log_date) + ' • ' + icon, padding, y);
-      ctx.textAlign = 'right'; ctx.fillText(formatMoney(row.grand_total || 0), width - padding, y); y += 18;
+      ctx.textAlign = 'left'; ctx.font = 'bold 13px system-ui'; ctx.fillStyle = '#111827'; ctx.fillText(formatThaiDate(row.log_date) + ' • ' + icon, padding, y, width - (padding * 2) - 112);
+      ctx.textAlign = 'right'; ctx.fillText(formatMoney(row.grand_total || 0), width - padding, y, 108); y += 18;
       ctx.textAlign = 'left'; ctx.font = '12px system-ui'; ctx.fillStyle = '#6b7280';
       const buyer = row.buyer || row.sale_name || 'ไม่ระบุผู้ซื้อ';
-      ctx.fillText(buyer, padding, y); y += 16;
-      ctx.fillText('ยอดเต็ม ' + formatMoney(row.gross_total || 0) + ' • ส่วนลด ' + formatMoney(row.discount_total || 0), padding, y);
+      ctx.fillText(buyer, padding, y, width - (padding * 2)); y += 16;
+      ctx.fillText('ยอดเต็ม ' + formatMoney(row.gross_total || 0) + ' • ส่วนลด ' + formatMoney(row.discount_total || 0), padding, y, width - (padding * 2));
       y += 24;
     });
     ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke(); y += 14;
@@ -1313,19 +1329,42 @@ function openFeedSheet(mode) {
   function formatThaiDate(dateStr) { if (!dateStr) return '-'; const [year, month, day] = String(dateStr).split('-').map(Number); const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']; return `${day} ${months[(month || 1) - 1]} ${year + 543}`; }
 
   function drawCenteredFitText(ctx, text, centerX, y, maxWidth, weight, baseSize, minSize) {
-    text = String(text || '');
+    text = String(text || '').trim();
     weight = weight || 'bold';
     baseSize = Number(baseSize || 18);
     minSize = Number(minSize || 12);
+    maxWidth = Number(maxWidth || 0);
+
     var size = baseSize;
     do {
-      ctx.font = weight + ' ' + size + 'px system-ui';
-      if (ctx.measureText(text).width <= maxWidth || size <= minSize) break;
+      ctx.font = weight + ' ' + size + 'px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+      if (!maxWidth || ctx.measureText(text).width <= maxWidth || size <= minSize) break;
       size -= 1;
     } while (size >= minSize);
+
+    // Do not pass maxWidth to fillText for centered headers.
+    // Some mobile/LIFF WebViews visually scale centered canvas text with maxWidth,
+    // which makes subtitle/date lines look off-center even when textAlign is center.
+    if (maxWidth && ctx.measureText(text).width > maxWidth) {
+      text = truncateCanvasText_(ctx, text, maxWidth);
+    }
+
     ctx.textAlign = 'center';
-    ctx.fillText(text, centerX, y, maxWidth);
+    ctx.textBaseline = 'top';
+    if ('direction' in ctx) ctx.direction = 'ltr';
+    ctx.fillText(text, Math.round(centerX), Math.round(y));
     return size;
+  }
+
+  function truncateCanvasText_(ctx, text, maxWidth) {
+    text = String(text || '');
+    if (!maxWidth || ctx.measureText(text).width <= maxWidth) return text;
+    var ellipsis = '…';
+    var next = text;
+    while (next.length > 1 && ctx.measureText(next + ellipsis).width > maxWidth) {
+      next = next.slice(0, -1);
+    }
+    return next + ellipsis;
   }
 
   function wrapText(ctx, text, x, y, maxWidth, lineHeight) { const words = String(text || '').split(' '); let line = ''; for (let n = 0; n < words.length; n += 1) { const testLine = line + words[n] + ' '; const metrics = ctx.measureText(testLine); if (metrics.width > maxWidth && n > 0) { ctx.fillText(line, x, y); line = words[n] + ' '; y += lineHeight; } else { line = testLine; } } ctx.fillText(line, x, y); }

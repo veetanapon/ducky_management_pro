@@ -35,6 +35,7 @@ window.ReportPage = (() => {
     document.getElementById('reportMonthSelect')?.addEventListener('change', onMonthChange);
     document.getElementById('reportRebuildBtn')?.addEventListener('click', rebuildReport);
     document.getElementById('reportExportBtn')?.addEventListener('click', exportExcel);
+    document.getElementById('reportCreateViewLinkBtn')?.addEventListener('click', createReportViewLink);
     document.getElementById('reportFullscreenBtn')?.addEventListener('click', openFullscreen);
     document.getElementById('reportFullscreenCloseBtn')?.addEventListener('click', closeFullscreen);
     document.getElementById('reportRotateBtn')?.addEventListener('click', toggleRotate);
@@ -50,12 +51,25 @@ window.ReportPage = (() => {
 
   async function load() {
     setBusy(true, 'กำลังโหลดรายงาน...');
+    const reportCacheKey = `ducky:report:${state.batchId}`;
+    const cachedReport = window.AppCache ? AppCache.readEnvelope(reportCacheKey, 2 * 60 * 1000, null) : null;
+    if (cachedReport && cachedReport.status === 'ok') {
+      hydrateFromResponse(cachedReport);
+      setBusy(true, 'กำลังซิงก์รายงานล่าสุด...');
+    }
     const response = await AppApi.post({ action: 'getReportPageData', batch_id: state.batchId });
     if (!response || response.status !== 'ok') {
       setBusy(false, response?.message || 'โหลดรายงานไม่สำเร็จ');
       setText('reportSubtitle', response?.message || 'โหลดรายงานไม่สำเร็จ');
       return;
     }
+    if (window.AppCache) AppCache.writeEnvelope(reportCacheKey, response);
+    hydrateFromResponse(response);
+    setBusy(false, state.rows.length ? 'ข้อมูลอ่านจากชีทสรุปที่เตรียมไว้แล้ว' : 'ยังไม่มีข้อมูลรายงาน กด “โหลดข้อมูลใหม่” เพื่อสร้างข้อมูลของ batch นี้');
+  }
+
+
+  function hydrateFromResponse(response) {
     state.batch = response.batch;
     state.permission = response.permission || 'none';
     state.rows = Array.isArray(response.rows) ? response.rows : [];
@@ -67,7 +81,6 @@ window.ReportPage = (() => {
     renderMonthSelect(previousMonth);
     normalizePageIndex();
     renderAll();
-    setBusy(false, state.rows.length ? 'ข้อมูลอ่านจากชีทสรุปที่เตรียมไว้แล้ว' : 'ยังไม่มีข้อมูลรายงาน กด “โหลดข้อมูลใหม่” เพื่อสร้างข้อมูลของ batch นี้');
   }
 
   function renderHeader(response) {
@@ -431,6 +444,21 @@ window.ReportPage = (() => {
     await load();
     setButtonLoading('reportRebuildBtn', false);
     setBusy(false, 'โหลดข้อมูลรายงานล่าสุดแล้ว');
+  }
+
+
+  async function createReportViewLink() {
+    setButtonLoading('reportCreateViewLinkBtn', true, 'กำลังสร้างลิงก์...');
+    const response = await AppApi.post({ action: 'createReportViewLink', batch_id: state.batchId });
+    setButtonLoading('reportCreateViewLinkBtn', false);
+    if (!response || response.status !== 'ok') {
+      alert(response?.message || 'สร้างลิงก์ไม่สำเร็จ');
+      return;
+    }
+    const key = response.view_key || response.key || '';
+    const url = `${location.origin}${location.pathname.replace(/report\.html$/, '')}report-view.html?key=${encodeURIComponent(key)}`;
+    try { await navigator.clipboard.writeText(url); alert('สร้างลิงก์และคัดลอกแล้ว\n' + url); }
+    catch (_) { prompt('คัดลอกลิงก์นี้', url); }
   }
 
   async function exportExcel() {

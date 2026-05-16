@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Report View | Ducky Management Pro</title>
+  <link rel="stylesheet" href="css/modules/report-view.css" />
+</head>
+<body data-page="report_view">
+  <main class="rv-app">
+    <header class="rv-topbar">
+      <div class="rv-title-block">
+        <span class="rv-eyebrow">Read-only analytics</span>
+        <h1 id="rvTitle">รายงานวิเคราะห์</h1>
+        <p id="rvSubtitle">กำลังโหลดข้อมูล...</p>
+      </div>
+      <div class="rv-topbar-actions">
+        <select id="rvMonthSelect" aria-label="เลือกช่วงเดือน"><option value="all">ทั้งหมด</option></select>
+        <button type="button" class="rv-icon-btn" id="rvRefreshBtn" title="โหลดข้อมูลใหม่">↻</button>
+      </div>
+    </header>
+
+
+    <section id="rvSummary" class="rv-summary-grid"></section>
+
+    <section class="rv-layout">
+      <article class="rv-card rv-card--main" data-chart-card="main">
+        <div class="rv-card-head">
+          <div>
+            <h2>ภาพรวมไข่ × อาหาร × เหตุการณ์</h2>
+            <p>กราฟบน: ไข่รายวัน + %ไข่ + icon เหตุการณ์ • กราฟล่าง: เทอาหาร / กินจริง • แตะหรือชี้เพื่อดูรายละเอียดรายวัน</p>
+          </div>
+          <button type="button" class="rv-secondary-btn" data-fullscreen-chart="main">เต็มจอ</button>
+        </div>
+
+        <section class="rv-filterbar rv-filterbar--in-card" aria-label="ตัวกรองกราฟ">
+          <label><input type="checkbox" data-rv-filter="egg" checked /> ไข่</label>
+          <label><input type="checkbox" data-rv-filter="eggPercent" checked /> %ไข่</label>
+          <label><input type="checkbox" data-rv-filter="feed" checked /> อาหาร</label>
+          <label><input type="checkbox" data-rv-filter="events" checked /> เหตุการณ์</label>
+          <label><input type="checkbox" data-rv-filter="feedMarkers" checked /> อาหารเข้า</label>
+        </section>
+        <div class="rv-main-chart-wrap">
+          <canvas id="rvMainChart"></canvas>
+          <div id="rvTooltip" class="rv-tooltip hidden"></div>
+        </div>
+        <div class="rv-legend" id="rvMainLegend"></div>
+      </article>
+
+      <aside class="rv-side-panel">
+        <article class="rv-card rv-day-inspector">
+          <div class="rv-card-head rv-card-head--compact">
+            <h2>รายละเอียดวันที่เลือก</h2>
+            <span id="rvSelectedDateBadge" class="rv-pill">แตะกราฟ</span>
+          </div>
+          <div id="rvInspector" class="rv-inspector-empty">แตะจุดบนกราฟเพื่อดูว่าในวันนั้นกินอาหารเท่าไหร่ ไข่เท่าไหร่ และมีเหตุการณ์อะไรบ้าง</div>
+        </article>
+        <article class="rv-card rv-events-card">
+          <div class="rv-card-head rv-card-head--compact">
+            <h2>Timeline เหตุการณ์</h2>
+            <span id="rvEventCount" class="rv-pill">0</span>
+          </div>
+          <div id="rvEvents" class="rv-event-list"></div>
+        </article>
+      </aside>
+    </section>
+
+    <section class="rv-small-grid">
+      <article class="rv-card" data-chart-card="egg">
+        <div class="rv-card-head rv-card-head--compact"><h2>ไข่รายวัน / %ไข่</h2><button type="button" class="rv-secondary-btn" data-fullscreen-chart="egg">เต็มจอ</button></div>
+        <div class="rv-small-chart-wrap"><canvas id="rvEggChart"></canvas></div>
+      </article>
+      <article class="rv-card" data-chart-card="feed">
+        <div class="rv-card-head rv-card-head--compact"><h2>เทอาหาร / กินจริง</h2><button type="button" class="rv-secondary-btn" data-fullscreen-chart="feed">เต็มจอ</button></div>
+        <div class="rv-small-chart-wrap"><canvas id="rvFeedChart"></canvas></div>
+      </article>
+      <article class="rv-card" data-chart-card="event">
+        <div class="rv-card-head rv-card-head--compact"><h2>Timeline เหตุการณ์</h2><button type="button" class="rv-secondary-btn" data-fullscreen-chart="event">เต็มจอ</button></div>
+        <div class="rv-small-chart-wrap"><canvas id="rvEventChart"></canvas></div>
+      </article>
+      <article class="rv-card" data-chart-card="cost">
+        <div class="rv-card-head rv-card-head--compact"><h2>ทุน / ขาย / สุทธิ</h2><button type="button" class="rv-secondary-btn" data-fullscreen-chart="cost">เต็มจอ</button></div>
+        <div class="rv-small-chart-wrap"><canvas id="rvCostChart"></canvas></div>
+      </article>
+    </section>
+  </main>
+
+  <div id="rvFullscreen" class="rv-fullscreen hidden" aria-hidden="true">
+    <div class="rv-fullscreen-head">
+      <div><strong id="rvFullscreenTitle">กราฟ</strong><p id="rvFullscreenSub">-</p></div>
+      <button type="button" class="rv-secondary-btn" id="rvFullscreenCloseBtn">ปิด</button>
+    </div>
+    <div class="rv-fullscreen-canvas-wrap"><canvas id="rvFullscreenCanvas"></canvas></div>
+    <div id="rvFullscreenLegend" class="rv-legend"></div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/modules/report-view-page.js"></script>
+</body>
+</html>

@@ -1,0 +1,429 @@
+/* Farm Events page: scoped to batch-events.html only */
+body[data-page="farm_events"] {
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 10%, transparent), transparent 34%),
+    var(--bg-app);
+}
+
+body[data-page="farm_events"] .event-page {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  padding-bottom: calc(112px + env(safe-area-inset-bottom));
+}
+
+body[data-page="farm_events"] .card-panel {
+  border: 1px solid color-mix(in srgb, var(--border-soft) 85%, transparent);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--bg-card) 96%, transparent);
+}
+
+body[data-page="farm_events"] .event-hero,
+body[data-page="farm_events"] .event-guide-card {
+  display: grid;
+  gap: 10px;
+}
+
+.event-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.event-summary-card {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  border-radius: 16px;
+  padding: 10px;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.event-summary-card span {
+  color: var(--text-sub);
+  font-size: 11px;
+}
+
+.event-summary-card strong {
+  font-size: 18px;
+  line-height: 1.12;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-summary-card small {
+  color: var(--text-sub);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.skeleton-card-lite {
+  min-height: 76px;
+  background: linear-gradient(90deg, var(--bg-soft), var(--border-soft), var(--bg-soft));
+  background-size: 300% 100%;
+  animation: eventPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes eventPulse {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.event-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.event-guide-item {
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--bg-soft);
+  padding: 10px 8px;
+  display: grid;
+  gap: 4px;
+  text-align: center;
+  min-width: 0;
+}
+
+.event-guide-item span {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.event-guide-item strong {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.event-guide-item small {
+  color: var(--text-sub);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.event-timeline {
+  display: grid;
+  gap: 8px;
+}
+
+.event-timeline-card {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  border-radius: 18px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.event-timeline-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  font-size: 19px;
+}
+
+.event-timeline-main {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.event-timeline-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.event-timeline-card__head span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-timeline-card__head span:last-child {
+  color: var(--text-sub);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.event-timeline-card__meta,
+.event-timeline-detail {
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+body[data-page="farm_events"] #eventSheet .sheet-panel {
+  max-width: 460px;
+}
+
+body[data-page="farm_events"] #eventSheet input,
+body[data-page="farm_events"] #eventSheet select,
+body[data-page="farm_events"] #eventSheet textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  font-size: 16px;
+  border-radius: 16px;
+}
+
+body[data-page="farm_events"] .module-fab-action {
+  min-width: 134px;
+}
+
+@media (max-width: 380px) {
+  .event-guide-grid { grid-template-columns: 1fr; }
+  .event-summary-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* v5.5 Event action sheets */
+body[data-page="farm_events"] .event-dynamic-fields {
+  display: grid;
+  gap: 6px;
+}
+
+body[data-page="farm_events"] .event-fab .module-fab-actions {
+  gap: 6px;
+  bottom: 72px;
+}
+
+body[data-page="farm_events"] .event-fab .module-fab-action {
+  min-width: 132px;
+  justify-content: flex-start !important;
+  gap: 8px;
+  padding-inline: 12px !important;
+}
+
+body[data-page="farm_events"] .event-fab .module-fab-action span {
+  width: 22px;
+  text-align: center;
+}
+
+body[data-page="farm_events"] .event-cost-grid {
+  gap: 6px;
+}
+
+body[data-page="farm_events"] .event-row-icon--injection { background: color-mix(in srgb, #3b82f6 14%, var(--bg-card)); }
+body[data-page="farm_events"] .event-row-icon--rain { background: color-mix(in srgb, #0ea5e9 14%, var(--bg-card)); }
+body[data-page="farm_events"] .event-row-icon--duck_cull { background: color-mix(in srgb, #f59e0b 16%, var(--bg-card)); }
+body[data-page="farm_events"] .event-row-icon--vitamin { background: color-mix(in srgb, #a855f7 14%, var(--bg-card)); }
+body[data-page="farm_events"] .event-row-icon--medicine { background: color-mix(in srgb, #ef4444 12%, var(--bg-card)); }
+body[data-page="farm_events"] .event-row-icon--feed_swap { background: color-mix(in srgb, var(--primary) 14%, var(--bg-card)); }
+
+body[data-page="farm_events"] #eventSheet .inline-note {
+  margin: 0;
+}
+
+@media (max-width: 380px) {
+  body[data-page="farm_events"] .event-fab .module-fab-action {
+    min-width: 118px;
+    font-size: 12px !important;
+  }
+}
+
+/* v5.6 medical inventory + date range */
+body[data-page="farm_events"] .event-date-range-grid {
+  gap: 6px;
+}
+body[data-page="farm_events"] .event-distribute-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-soft));
+  margin: 0;
+}
+body[data-page="farm_events"] .event-distribute-row input {
+  width: 18px !important;
+  height: 18px;
+  accent-color: var(--primary);
+}
+body[data-page="farm_events"] .event-distribute-row span {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+body[data-page="farm_events"] .event-guide-grid {
+  gap: 6px;
+}
+body[data-page="farm_events"] #medicalItemId {
+  min-height: 48px;
+}
+@media (max-width: 380px) {
+  body[data-page="farm_events"] .event-date-range-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* v5.7: practical activity page = summary + vertical timeline only */
+body[data-page="farm_events"] .event-page {
+  gap: 8px;
+}
+body[data-page="farm_events"] .event-guide-card {
+  display: none !important;
+}
+body[data-page="farm_events"] .event-timeline {
+  position: relative;
+  display: grid;
+  gap: 0;
+  padding: 10px 0 4px;
+}
+body[data-page="farm_events"] .event-timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 116px;
+}
+body[data-page="farm_events"] .event-timeline-item:last-child {
+  min-height: 92px;
+}
+body[data-page="farm_events"] .event-timeline-rail {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+body[data-page="farm_events"] .event-timeline-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 25%, var(--border-soft));
+}
+body[data-page="farm_events"] .event-timeline-item:first-child .event-timeline-line {
+  top: 18px;
+}
+body[data-page="farm_events"] .event-timeline-item:last-child .event-timeline-line {
+  bottom: calc(100% - 48px);
+}
+body[data-page="farm_events"] .event-timeline-bubble {
+  position: relative;
+  z-index: 2;
+  width: 58px;
+  height: 58px;
+  margin-top: 18px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-card));
+  border: 7px solid var(--bg-card);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, .10);
+  font-size: 21px;
+  font-weight: 900;
+}
+body[data-page="farm_events"] .event-timeline-content {
+  min-width: 0;
+  padding: 4px 0 16px;
+}
+body[data-page="farm_events"] .event-date-pill {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  margin: 0 0 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  border: 1px solid color-mix(in srgb, var(--border-soft) 80%, transparent);
+  color: var(--text-sub);
+  font-size: 13px;
+  font-weight: 900;
+}
+body[data-page="farm_events"] .event-card {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  border-radius: 20px;
+  padding: 14px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .04);
+  display: grid;
+  gap: 6px;
+}
+body[data-page="farm_events"] .event-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+body[data-page="farm_events"] .event-card-head strong {
+  min-width: 0;
+  color: var(--text-main);
+  font-size: 16px;
+  line-height: 1.25;
+  word-break: break-word;
+}
+body[data-page="farm_events"] .event-type-pill,
+body[data-page="farm_events"] .event-cost-pill {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  color: var(--text-sub);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+body[data-page="farm_events"] .event-cost-pill {
+  color: #b45309;
+  background: color-mix(in srgb, #f59e0b 12%, var(--bg-card));
+  border-color: color-mix(in srgb, #f59e0b 30%, var(--border-soft));
+}
+body[data-page="farm_events"] .event-card-meta,
+body[data-page="farm_events"] .event-card-detail {
+  margin: 0;
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.4;
+}
+body[data-page="farm_events"] .event-card-detail {
+  color: var(--text-main);
+  opacity: .76;
+}
+body[data-page="farm_events"] .event-row-icon--medical_in { background: color-mix(in srgb, var(--primary) 14%, var(--bg-card)); }
+body[data-page="farm_events"] .event-row-icon--other { background: color-mix(in srgb, var(--text-sub) 12%, var(--bg-card)); }
+
+@media (max-width: 420px) {
+  body[data-page="farm_events"] .event-timeline-item {
+    grid-template-columns: 62px minmax(0, 1fr);
+    gap: 8px;
+    min-height: 108px;
+  }
+  body[data-page="farm_events"] .event-timeline-bubble {
+    width: 50px;
+    height: 50px;
+    border-width: 6px;
+    font-size: 18px;
+  }
+  body[data-page="farm_events"] .event-card {
+    padding: 12px;
+    border-radius: 18px;
+  }
+  body[data-page="farm_events"] .event-card-head strong {
+    font-size: 15px;
+  }
+  body[data-page="farm_events"] .event-date-pill {
+    min-height: 30px;
+    font-size: 12px;
+  }
+}

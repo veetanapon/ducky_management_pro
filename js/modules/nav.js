@@ -19,7 +19,8 @@ window.NavDrawer = (() => {
     admin_permissions: 'จัดการสิทธิ์',
     items_price_manage: 'จัดการราคาไข่',
     liff_routes: 'จัดการลิงก์ LIFF',
-    report: 'รายงาน'
+    report: 'รายงาน',
+    farm_events: 'กิจกรรม'
   };
 
   function ensureShell() {
@@ -64,6 +65,8 @@ window.NavDrawer = (() => {
     if (bodyPage === 'batch' || bodyPage === 'batch_dashboard') return 'batch_dashboard';
     if (bodyPage === 'items_price_manage') return 'items_price_manage';
     if (bodyPage === 'liff_routes') return 'liff_routes';
+    if (bodyPage === 'farm_events') return 'farm_events';
+    if (bodyPage === 'report_view') return 'report_view';
     return bodyPage || 'index';
   }
 
@@ -309,6 +312,13 @@ window.NavDrawer = (() => {
           active: state.page === 'module_sale'
         });
       }
+      if (canAccess('farm_events', modulePermissions, isOwner, isAdmin, specie)) {
+        batchItems.push({
+          label: 'กิจกรรม',
+          href: `batch-events.html?bid=${encodeURIComponent(batchId)}`,
+          active: state.page === 'farm_events'
+        });
+      }
       if (canAccess('report', modulePermissions, isOwner, isAdmin, specie)) {
         batchItems.push({
           label: 'รายงาน',
@@ -355,6 +365,7 @@ window.NavDrawer = (() => {
   function canAccess(moduleKey, modulePermissions, isOwner, isAdmin, specie) {
     if (moduleKey === 'batch_access') return isAdmin || isOwner || modulePermissions.batch_access === 'view' || modulePermissions.batch_access === 'write';
     if (moduleKey === 'liff_routes') return isAdmin || isOwner || modulePermissions.liff_routes === 'view' || modulePermissions.liff_routes === 'write';
+    if (moduleKey === 'farm_events') return isAdmin || isOwner || modulePermissions.farm_events === 'view' || modulePermissions.farm_events === 'write';
     if (isAdmin || isOwner) return true;
     if (moduleKey === 'sale_manage') {
       const fishKey = specie === 'fish' ? 'fish_sale' : 'egg_sale';

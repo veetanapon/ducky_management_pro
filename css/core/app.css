@@ -1,0 +1,9 @@
+/* Ducky Management Pro v5.2 core bundle. Page-specific CSS lives in css/modules/*.css */
+@import url("base.css");
+@import url("components.css");
+@import url("forms.css");
+@import url("sheets.css");
+@import url("nav.css");
+@import url("fab.css");
+@import url("calendar.css");
+@import url("bill-preview.css");

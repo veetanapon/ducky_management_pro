@@ -1,0 +1,1 @@
+window.BillPreview = window.BillPreview || {};

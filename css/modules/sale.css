@@ -1,0 +1,428 @@
+/* ===== 12 Sale / bill ===== */
+
+.sale-items-head {
+  margin-top: 0px;
+}
+
+.sale-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sale-item-card {
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 12px;
+  background: var(--bg-soft);
+  display: grid;
+  gap: 6px;
+}
+
+.sale-item-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 10px;
+}
+
+.sale-item-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.sale-item-card .remove-line-btn {
+  justify-self: end;
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-weight: 700;
+}
+
+#saleBillSheet .sale-bill-footer-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+  align-items: stretch;
+}
+
+#saleBillSheet .sale-bill-footer-row > button {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+#saleBillSheet #addSaleItemBtn,
+#saleBillSheet #salePreviewBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sale-discount-wrap label {
+  margin-top: 0px;
+}
+
+.sale-type-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sale-type-toggle button {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  color: var(--text-main);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-weight: 700;
+}
+
+.sale-type-toggle button.is-active {
+  background: color-mix(in srgb, var(--primary) 14%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-soft));
+  color: var(--text-main);
+}
+
+#saleBillSheet .sale-egg-grid,
+#saleBillSheet .sale-item-grid,
+#saleBillSheet .sale-item-grid-3 {
+  display: grid;
+  gap: 6px;
+}
+
+#saleBillSheet .sale-egg-grid--top,
+#saleBillSheet .sale-item-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+}
+
+#saleBillSheet .sale-egg-grid--bottom,
+#saleBillSheet .sale-item-grid-3 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#saleBillSheet .line-total-badge {
+  min-height: 45px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  font-size: 13px;
+}
+
+#saleBillSheet .sale-total-qty-badge,
+#saleBillSheet .sale-line-total-badge {
+  text-align: center;
+}
+
+#saleBillSheet .sale-item-card {
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--bg-soft);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+#saleBillSheet .sale-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#saleBillSheet .sale-grid-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+#saleBillSheet .sale-egg-grid,
+#saleBillSheet .sale-manual-grid {
+  display: grid;
+  gap: 8px;
+  align-items: end;
+}
+
+#saleBillSheet .sale-egg-grid--top {
+  grid-template-columns: minmax(0, 1.8fr) minmax(86px, .62fr);
+}
+
+#saleBillSheet .sale-egg-grid--bottom {
+  grid-template-columns: .72fr .92fr .94fr 1fr;
+}
+
+#saleBillSheet .sale-manual-grid--top {
+  grid-template-columns: minmax(0, 2fr) minmax(74px, .8fr);
+}
+
+#saleBillSheet .sale-manual-grid--bottom {
+  grid-template-columns: .8fr .95fr 1fr;
+}
+
+#saleBillSheet .sale-item-unit {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+#saleBillSheet .remove-line-btn {
+  min-width: 92px;
+  border: 1px solid color-mix(in srgb, var(--danger) 36%, var(--border-soft));
+  background: color-mix(in srgb, var(--danger) 7%, var(--bg-card));
+  color: var(--danger);
+  font-weight: 700;
+  width: auto;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 999px;
+}
+
+.sale-range-search-grid.sale-range-search-grid--with-buyer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 8px;
+  align-items: end;
+}
+
+.sale-range-search-grid .sale-range-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.sale-range-search-grid button {
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  font-weight: 700;
+}
+
+.sale-range-summary-list {
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.sale-range-bill-card {
+  width: 100%;
+  border: 1px solid var(--border-soft);
+  border-radius: 15px;
+  background: var(--bg-soft);
+  color: var(--text-main);
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) minmax(92px, auto);
+  gap: 8px;
+  padding: 9px;
+  text-align: left;
+  align-items: stretch;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.sale-range-bill-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: start;
+  justify-self: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  font-size: 15px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.sale-range-bill-main {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 4px;
+}
+
+.sale-range-bill-head {
+  align-items: baseline;
+  justify-content: space-between;
+  display: grid;
+  gap: 1px;
+  align-content: start;
+}
+
+.sale-range-bill-date {
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.sale-range-bill-buyer {
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sale-range-bill-body {
+  display: grid;
+  gap: 2px;
+  align-content: end;
+}
+
+.sale-range-bill-detail,
+.sale-range-bill-items {
+  color: var(--text-sub);
+  font-size: 9.8px;
+  line-height: 1.22;
+}
+
+.sale-range-bill-items {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sale-range-bill-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 3px;
+  height: auto;
+}
+
+.sale-range-bill-id {
+  color: var(--text-sub);
+  font-size: 9.2px;
+  line-height: 1.1;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sale-range-bill-total {
+  align-self: auto;
+  white-space: nowrap;
+  margin-top: auto;
+  font-size: 13px;
+  line-height: 1.1;
+}
+
+.sale-range-summary-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.sale-range-summary-footer button {
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: 12px;
+}
+
+.sale-bill-picker-list {
+  display: grid;
+  gap: 6px;
+}
+
+.sale-bill-picker-card {
+  width: 100%;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--primary) 7%, var(--bg-soft));
+  color: var(--text-main);
+  border-radius: 16px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) minmax(92px, auto);
+  gap: 10px;
+  align-items: stretch;
+  text-align: left;
+  box-shadow: none;
+}
+
+.sale-bill-picker-card:active,
+.sale-bill-picker-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border-soft));
+}
+
+.sale-bill-picker-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  align-self: start;
+  font-size: 17px;
+}
+
+.sale-bill-picker-main {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.sale-bill-picker-head {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.sale-bill-picker-head strong {
+  font-size: 13px;
+}
+
+.sale-bill-picker-head span,
+.sale-bill-picker-buyer,
+.sale-bill-picker-items {
+  font-size: 11px;
+  color: var(--text-sub);
+  line-height: 1.25;
+}
+
+.sale-bill-picker-buyer {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.sale-bill-picker-items {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.sale-bill-picker-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sale-bill-picker-side span {
+  font-size: 9px;
+  color: var(--text-sub);
+  word-break: break-all;
+  text-align: right;
+}
+
+.sale-bill-picker-side strong {
+  font-size: 13px;
+  white-space: nowrap;
+}

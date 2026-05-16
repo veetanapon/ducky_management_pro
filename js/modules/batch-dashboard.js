@@ -71,7 +71,8 @@ window.BatchDashboardPage = (() => {
       sale_manage: `module-sale.html?bid=${bid}`,
       batch_access: `batch-access.html?bid=${bid}`,
       liff_routes: `liff-routes.html?bid=${bid}`,
-      report: `report.html?bid=${bid}`
+      report: `report.html?bid=${bid}`,
+      farm_events: `batch-events.html?bid=${bid}`
     };
 
     const visibleCards = (cards || []).filter((card) => {
@@ -123,7 +124,8 @@ window.BatchDashboardPage = (() => {
       sale_manage: 'ขาย / บิล',
       batch_access: 'สิทธิ์ Batch',
       liff_routes: 'ลิงก์ LIFF',
-      report: 'รายงาน'
+      report: 'รายงาน',
+      farm_events: 'กิจกรรม'
     };
     return titles[card.key] || card.title || 'โมดูล';
   }
@@ -136,7 +138,8 @@ window.BatchDashboardPage = (() => {
       sale_manage: iconSvg('sale'),
       batch_access: iconSvg('shield'),
       liff_routes: iconSvg('link'),
-      report: iconSvg('report')
+      report: iconSvg('report'),
+      farm_events: iconSvg('activity')
     };
     return icons[key] || iconSvg('grid');
   }
@@ -156,6 +159,7 @@ window.BatchDashboardPage = (() => {
       report: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4"/><path d="M4 20h16"/><path d="M8 17v-5"/><path d="M12 17V7"/><path d="M16 17v-8"/></svg>`,
       shield: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6l8-3Z"/><path d="m9 12 2 2 4-5"/></svg>`,
       link: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1 0l1.4-1.4a5 5 0 0 0-7.1-7.1L10.5 5.4"/><path d="M14 11a5 5 0 0 0-7.1 0l-1.4 1.4a5 5 0 0 0 7.1 7.1l.9-.9"/></svg>`,
+      activity: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h4l2-7 4 14 2-7h4"/><path d="M5 5h14v14H5Z"/></svg>`,
       grid: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4Z"/><path d="M13 4h7v7h-7Z"/><path d="M4 13h7v7H4Z"/><path d="M13 13h7v7h-7Z"/></svg>`,
       pencil: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m14 6 4 4"/></svg>`,
       eye: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.6-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.6 6.5-9.5 6.5S2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>`

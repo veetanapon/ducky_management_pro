@@ -1,0 +1,23 @@
+/* Module calendar page scoped extras. Shared calendar styles are in css/core/calendar.css. */
+
+/* Feed consumption fields live in the Feed module sheet, not Event page. */
+body[data-module="feed_manage"] .feed-entry-consume-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border-soft));
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-soft));
+}
+
+body[data-module="feed_manage"] .feed-entry-consume-grid.hidden {
+  display: none !important;
+}
+
+body[data-module="feed_manage"] .feed-consumed-note {
+  grid-column: 1 / -1;
+  color: var(--text-sub);
+  font-size: 12px;
+  line-height: 1.35;
+}

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>กิจกรรม | Ducky Management Pro</title>
+  <link rel="stylesheet" href="css/core/app.css" />
+  <link rel="stylesheet" href="css/modules/farm-events.css" />
+</head>
+<body data-page="farm_events">
+  <header class="app-header container">
+    <div class="header-leading">
+      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
+      <div>
+        <h1 id="eventTitle">กิจกรรม</h1>
+        <p class="muted" id="eventSubtitle">กำลังโหลดข้อมูล...</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="backBtn" type="button">←</button>
+      <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+    </div>
+  </header>
+
+  <main class="container page-body event-page">
+    <section class="card-panel event-hero">
+      <div class="section-card-head">
+        <div>
+          <h3>ภาพรวมกิจกรรม</h3>
+          <p class="muted">บันทึกเหตุการณ์สำคัญเพื่อเทียบกับไข่และการกินอาหารใน report-view</p>
+        </div>
+        <span class="badge-inline muted-badge" id="eventPermissionBadge">กำลังโหลด</span>
+      </div>
+      <div id="eventSummaryCards" class="event-summary-grid"></div>
+    </section>
+
+
+    <section class="card-panel">
+      <div class="section-card-head">
+        <h3>Timeline เหตุการณ์</h3>
+        <span class="badge-inline muted-badge" id="eventCountBadge">0 รายการ</span>
+      </div>
+      <div id="eventTimeline" class="event-timeline">
+        <div class="empty-state">กำลังโหลด...</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="eventFabRoot"></div>
+
+  <div id="eventSheet" class="sheet hidden" aria-hidden="true">
+    <div class="sheet-backdrop" id="eventSheetBackdrop"></div>
+    <div class="sheet-panel">
+      <div class="sheet-header">
+        <span id="eventSheetTitle">บันทึกกิจกรรม</span>
+        <button id="eventSheetCloseBtn" type="button">&times;</button>
+      </div>
+      <form id="batchEventForm" class="sheet-body form-stack">
+        <input type="hidden" id="eventActionType" />
+        <input type="hidden" id="eventEventType" />
+        <div class="sheet-field-grid sheet-field-grid--2 event-date-range-grid">
+          <div>
+            <label class="field-label">วันที่เริ่ม</label>
+            <input id="eventStartDate" type="date" required />
+          </div>
+          <div>
+            <label class="field-label">วันที่สิ้นสุด</label>
+            <input id="eventEndDate" type="date" required />
+          </div>
+        </div>
+        <label class="event-distribute-row field-label" id="eventDistributeWrap">
+          <input type="checkbox" id="eventDistributeCost" checked />
+          <span>กระจายต้นทุนตามจำนวนวัน</span>
+        </label>
+        <div id="eventDynamicFields" class="event-dynamic-fields"></div>
+      </form>
+      <div class="sheet-footer sheet-footer--dual">
+        <button class="secondary-btn" id="eventSheetCancelBtn" type="button">ยกเลิก</button>
+        <button id="eventSubmitBtn" form="batchEventForm" type="submit">บันทึกกิจกรรม</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/core/state.js"></script>
+  <script src="js/core/cache.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/core/auth.js"></script>
+  <script src="js/core/dom.js"></script>
+  <script src="js/core/format.js"></script>
+  <script src="js/core/image.js"></script>
+  <script src="js/services/batch.service.js"></script>
+  <script src="js/services/feed.service.js"></script>
+  <script src="js/services/egg.service.js"></script>
+  <script src="js/services/sale.service.js"></script>
+  <script src="js/services/price.service.js"></script>
+  <script src="js/services/permission.service.js"></script>
+  <script src="js/services/report.service.js"></script>
+  <script src="js/services/liff.service.js"></script>
+  <script src="js/services/event.service.js"></script>
+  <script src="js/components/bottom-sheet.js"></script>
+  <script src="js/components/calendar-grid.js"></script>
+  <script src="js/components/summary-cards.js"></script>
+  <script src="js/components/skeleton.js"></script>
+  <script src="js/components/fab.js"></script>
+  <script src="js/components/bill-preview.js"></script>
+  <script src="js/modules/nav.js"></script>
+  <script src="js/modules/batch-events-page.js"></script>
+  <script src="js/core/zoom-lock.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

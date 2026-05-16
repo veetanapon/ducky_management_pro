@@ -25,6 +25,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     await ReportPage.bootstrap();
     return;
   }
+  if (page === 'report_view' && window.ReportViewPage) {
+    await ReportViewPage.bootstrap();
+    return;
+  }
+  if (page === 'farm_events' && window.BatchEventsPage) {
+    await BatchEventsPage.bootstrap();
+    return;
+  }
   if (page === 'module_calendar' && window.ModuleCalendarPage) {
     await ModuleCalendarPage.bootstrap();
     return;

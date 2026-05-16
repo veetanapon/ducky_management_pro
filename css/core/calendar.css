@@ -1,0 +1,304 @@
+/* ===== 08 Module pages / calendar ===== */
+
+.module-summary-grid--single {
+  grid-template-columns: 1fr;
+}
+
+.module-card-grid,
+.module-summary-grid {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 6px;
+}
+
+.module-card {
+  display: block;
+  text-decoration: none;
+  color: var(--text-main);
+  background: var(--bg-card);
+  border-radius: 18px;
+  box-shadow: var(--shadow-sm);
+  padding: 14px;
+  border: 1px solid var(--border-soft);
+}
+
+.module-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.module-card-title {
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.module-card-body {
+  display: grid;
+  gap: 4px;
+}
+
+.module-card-line,
+.module-summary-label {
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
+.module-summary-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.module-summary-value {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.module-calendar-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.module-calendar-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-nav-btn {
+  width: 40px;
+  min-width: 40px;
+  padding: 8px 0 !important;
+}
+
+.module-calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.legend-swatch--filled {
+  background: color-mix(in srgb, var(--primary) 24%, var(--bg-soft));
+  border: 1px solid color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
+.legend-swatch--empty {
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, var(--danger) 55%, transparent);
+}
+
+.module-calendar-weekdays,
+.module-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.module-calendar-weekdays span {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
+.module-day {
+  min-height: 66px;
+  border-radius: 10px;
+  padding: 8px 2px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-card);
+  display: grid;
+  align-content: space-between;
+  gap: 2px;
+}
+
+.module-day--filled {
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-soft));
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-soft));
+}
+
+.module-day--missing {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--border-soft));
+}
+
+.module-day--empty {
+  background: transparent;
+  border: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.module-day-number {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.module-day-total {
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.module-day-total--plus {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.module-day-total--minus {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.module-summary-grid--2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.module-summary-grid--3 {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 12px;
+}
+
+.module-day-lines {
+  display: grid;
+  gap: 2px;
+  align-content: end;
+}
+
+.module-day-line {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.module-day-line--plus {
+  color: #15803d;
+}
+
+.module-day-line--minus {
+  color: #b91c1c;
+}
+
+.module-day-icon {
+  font-size: 18px;
+  line-height: 1;
+  justify-self: start;
+  align-self: end;
+}
+
+.module-entry-list {
+  display: grid;
+  gap: 10px;
+}
+
+.module-entry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--bg-soft);
+}
+
+.module-day-icons {
+  display: grid;
+  gap: 0;
+  justify-items: end;
+  align-content: end;
+  line-height: 1;
+}
+
+.module-day-icon-line {
+  font-size: 13px;
+  line-height: 1.05;
+  min-height: 14px;
+}
+
+.module-day-total--icon {
+  font-size: 13px;
+  line-height: 1.05;
+}
+
+/* ===== 10 Feed / egg daily forms ===== */
+
+.feed-entry-row {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, var(--border-soft));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-soft));
+}
+
+.feed-entry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.feed-entry-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  background: color-mix(in srgb, var(--primary) 14%, var(--bg-card));
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border-soft));
+}
+
+.feed-entry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.feed-entry-grid--unit {
+  grid-template-columns: 1fr;
+}
+
+.feed-entry-lot-info {
+  margin-top: 6px;
+}
+
+.entry-remove-btn--feed {
+  width: auto !important;
+  min-width: 104px;
+  padding: 10px 12px !important;
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--border-soft)) !important;
+  color: var(--danger) !important;
+  background: color-mix(in srgb, var(--danger) 8%, var(--bg-card)) !important;
+}
+
+.entry-add-btn {
+  width: 100%;
+}
+
+.entry-remove-btn {
+  min-width: 56px;
+  padding: 10px 12px !important;
+}
