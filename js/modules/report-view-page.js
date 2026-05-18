@@ -135,18 +135,17 @@ window.ReportViewPage = (() => {
 
   function renderSummary(daily) {
     const totalEgg = sum(daily, 'eggDaily');
-    const totalConsumed = sum(daily, 'consumedQty');
-    const totalLeftover = sum(daily, 'leftoverQty');
-        const totalFeedCost = sum(daily, 'feedCost');
+    const totalFeedUsed = sum(daily, 'feedOutQty');
+    const totalFeedCost = sum(daily, 'feedCost');
     const totalEventCost = sum(daily, 'eventCost');
     const totalIncome = sum(daily, 'eggIncome');
     const net = sum(daily, 'totalIncome') - totalEventCost;
-    const avgPercent = weightedEggPercent(daily);
+    const avgEggPercent15 = averageLatestEggPercent(daily, 15);
     const cards = [
-      ['ไข่รวม', `${fmt(totalEgg)} ฟอง`, avgPercent ? `เฉลี่ย ${fmt(avgPercent)}%` : '% ไข่ -'],
-      ['กินจริง', `${fmt(totalConsumed)} ลูก`, `เหลือ ${fmt(totalLeftover)} ลูก`],
-      ['ต้นทุนรวม', money(totalFeedCost + totalEventCost), `อาหาร ${money(totalFeedCost)} • กิจกรรม ${money(totalEventCost)}`],
-      ['สุทธิหลัง event', money(net), `ขาย ${money(totalIncome)}`]
+      ['ไข่รวม', `${fmt(totalEgg)} ฟอง`, avgEggPercent15 > 0 ? `เฉลี่ย %ไข่ 15 วันล่าสุด ${fmt(avgEggPercent15)}%` : 'เฉลี่ย %ไข่ 15 วันล่าสุด -'],
+      ['ใช้อาหาร', `${fmt(totalFeedUsed)} ลูก`, 'จากจำนวนที่เท/ตัดจ่าย'],
+      ['ต้นทุนรวม', money(totalFeedCost + totalEventCost), `อาหาร ${money(totalFeedCost)} + อื่นๆ ${money(totalEventCost)}`],
+      ['สุทธิ', money(net), `ยอดขาย ${money(totalIncome)}`]
     ];
     const target = document.getElementById('rvSummary');
     if (!target) return;
@@ -165,7 +164,7 @@ window.ReportViewPage = (() => {
     legend.innerHTML = [
       ['rv-dot rv-dot--egg', 'ไข่รายวัน: แกนซ้ายบน (ฟอง)'],
       ['rv-dot rv-dot--percent', '%ไข่: แกนขวาบน (%)'],
-      ['rv-dot rv-dot--feed', 'อาหาร: แท่งโปร่ง=เทต่อวัน / แท่งเข้ม=กินจริง (ลูก)'],
+      ['rv-dot rv-dot--feed', 'อาหาร: แท่งโปร่ง=ใช้อาหาร/เทต่อวัน / แท่งเข้ม=กินจริง (ลูก)'],
       ['rv-dot rv-dot--event', 'ไอคอนเหตุการณ์/อาหาร']
     ].map(([cls, text]) => `<span><i class="${cls}"></i>${esc(text)}</span>`).join('');
   }
@@ -209,9 +208,8 @@ window.ReportViewPage = (() => {
       <div class="rv-inspector-grid">
         <div><span>ไข่</span><strong>${fmt(selected.eggDaily)} ฟอง</strong></div>
         <div><span>%ไข่</span><strong>${fmt(selected.eggPercent)}%</strong></div>
-        <div><span>เทออก</span><strong>${fmt(selected.feedOutQty)} ลูก</strong></div>
+        <div><span>ใช้อาหารไป</span><strong>${fmt(selected.feedOutQty)} ลูก</strong></div>
         <div><span>กินจริง</span><strong>${fmt(selected.consumedQty)} ลูก</strong></div>
-        <div><span>เหลือ</span><strong>${fmt(selected.leftoverQty)} ลูก</strong></div>
         <div><span>เป็ดตาย</span><strong>${fmt(selected.duckDead)}</strong></div>
       </div>
       <div class="rv-inspector-events">
@@ -281,6 +279,9 @@ window.ReportViewPage = (() => {
     const xAt = makeXMapper(daily, top);
     const barW = Math.max(2, Math.min(20, top.w / Math.max(daily.length, 1) * 0.58));
 
+    drawSelectedWindow(ctx, daily, top, bottom);
+    drawMonthBoundaryLines(ctx, daily, top, xAt, top.y - 18, bottom.y + bottom.h, true);
+
     if (state.filters.egg) {
       ctx.fillStyle = 'rgba(245, 158, 11, 0.42)';
       daily.forEach((day, index) => {
@@ -302,9 +303,12 @@ window.ReportViewPage = (() => {
         const x = xAtBottom(index) - feedBarW / 2;
         const outH = (day.feedOutQty / feedMax) * bottom.h;
         const consumedH = (day.consumedQty / feedMax) * bottom.h;
-        ctx.fillStyle = 'rgba(14, 165, 164, 0.20)';
+        ctx.fillStyle = 'rgba(14, 165, 164, 0.18)';
         ctx.fillRect(x, bottom.y + bottom.h - outH, feedBarW, outH);
-        ctx.fillStyle = 'rgba(14, 165, 164, 0.72)';
+        ctx.strokeStyle = 'rgba(15, 118, 110, 0.62)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 0.5, bottom.y + bottom.h - outH + 0.5, Math.max(1, feedBarW - 1), Math.max(1, outH - 1));
+        ctx.fillStyle = 'rgba(14, 165, 164, 0.78)';
         ctx.fillRect(x + feedBarW * 0.17, bottom.y + bottom.h - consumedH, feedBarW * 0.66, consumedH);
       });
     }
@@ -369,6 +373,7 @@ window.ReportViewPage = (() => {
     drawEventPane(ctx, pane);
     drawDateAxis(ctx, daily, pane, true);
     const xAt = makeXMapper(daily, pane);
+    drawMonthBoundaryLines(ctx, daily, pane, xAt, pane.y, pane.y + pane.h, false);
     const rows = Math.max(1, Math.min(5, Math.max(...daily.map((day) => day.timeline.length), 1)));
     const rowGap = pane.h / (rows + 1);
     const markers = [];
@@ -439,6 +444,7 @@ window.ReportViewPage = (() => {
     drawDateAxis(ctx, daily, pane, true);
 
     const xAt = makeXMapper(daily, pane);
+    drawMonthBoundaryLines(ctx, daily, pane, xAt, pane.y, pane.y + pane.h, false);
     const yForLeft = (value) => valueToY(Number(value || 0), leftExtent.min, leftExtent.max, pane);
     const yForRight = (value) => valueToY(Number(value || 0), rightExtent ? rightExtent.min : 0, rightExtent ? rightExtent.max : 1, pane);
     const zeroLeft = yForLeft(0);
@@ -580,11 +586,14 @@ window.ReportViewPage = (() => {
         day.wasteQty = 0;
         day.feedCost = 0;
       }
-      day.feedOutQty += Number(row.feed_out_qty || 0);
+      const feedOutQty = Number(row.feed_out_qty || 0);
+      const unitPrice = Number(row.unit_price || 0);
+      day.feedOutQty += feedOutQty;
       day.consumedQty += Number(row.consumed_qty || 0);
       day.leftoverQty += Number(row.leftover_qty || 0);
       day.wasteQty += Number(row.waste_qty || 0);
-      if (row.feed_cost) day.feedCost += Number(row.feed_cost || 0);
+      // Cost must be based on the amount taken out/served, not the amount actually eaten.
+      day.feedCost += unitPrice ? (feedOutQty * unitPrice) : Number(row.feed_cost || 0);
       if (row.feed_name || row.feed_id) day.feedNames.add(String(row.feed_name || row.feed_id));
     });
 
@@ -641,6 +650,7 @@ window.ReportViewPage = (() => {
         day.wasteQty = 0;
       }
       day.eventCount = day.events.length + day.feedMarkers.length;
+      day.totalIncome = Number(day.eggIncome || 0) - Number(day.feedCost || 0);
       day.netAfterEvent = Number(day.totalIncome || 0) - Number(day.eventCost || 0);
       day.feedNameText = [...day.feedNames].filter(Boolean).join(', ');
       day.timeline.sort((a, b) => eventSortWeight(a.type) - eventSortWeight(b.type));
@@ -928,6 +938,51 @@ window.ReportViewPage = (() => {
     ctx.restore();
   }
 
+  function drawSelectedWindow(ctx, daily, top, bottom) {
+    if (state.selectedIndex < 0 || state.selectedIndex >= daily.length) return;
+    const idx = state.selectedIndex;
+    const xAt = makeXMapper(daily, top);
+    const step = daily.length > 1 ? Math.abs(xAt(1) - xAt(0)) : Math.min(32, top.w);
+    const start = Math.max(0, idx - 5);
+    const end = Math.min(daily.length - 1, idx + 5);
+    const x1 = Math.max(top.x, xAt(start) - step / 2);
+    const x2 = Math.min(top.x + top.w, xAt(end) + step / 2);
+    const y1 = Math.max(0, top.y - 26);
+    const y2 = bottom.y + bottom.h;
+    ctx.save();
+    ctx.fillStyle = 'rgba(236, 72, 153, .075)';
+    ctx.fillRect(x1, y1, Math.max(1, x2 - x1), y2 - y1);
+    ctx.strokeStyle = 'rgba(190, 24, 93, .58)';
+    ctx.setLineDash([6, 5]);
+    ctx.strokeRect(x1, y1, Math.max(1, x2 - x1), y2 - y1);
+    ctx.restore();
+  }
+
+  function drawMonthBoundaryLines(ctx, daily, pane, xAt, fromY, toY, withLabel) {
+    if (!daily || daily.length < 2) return;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100, 116, 139, .42)';
+    ctx.fillStyle = 'rgba(100, 116, 139, .82)';
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'left';
+    ctx.setLineDash([4, 5]);
+    for (let i = 1; i < daily.length; i += 1) {
+      if (daily[i].monthKey === daily[i - 1].monthKey) continue;
+      const x = (xAt(i - 1) + xAt(i)) / 2;
+      ctx.beginPath();
+      ctx.moveTo(x, fromY);
+      ctx.lineTo(x, toY);
+      ctx.stroke();
+      if (withLabel) {
+        ctx.save();
+        ctx.setLineDash([]);
+        ctx.fillText(thaiMonth(daily[i].monthKey).replace(/\s+\d+$/, ''), x + 5, Math.max(12, fromY + 12));
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
+
   function drawSelectedGuide(ctx, canvas, daily, top, bottom) {
     const idx = state.selectedIndex >= 0 ? state.selectedIndex : state.hoverIndex;
     if (idx < 0 || idx >= daily.length) return;
@@ -978,9 +1033,11 @@ window.ReportViewPage = (() => {
       const ratio = Math.max(0, Math.min(1, (x - pane.x) / Math.max(1, pane.w)));
       const idx = Math.round(ratio * (meta.daily.length - 1));
       state.hoverIndex = idx;
-      if (commit) state.selectedIndex = idx;
-      renderInspector();
-      renderCharts();
+      if (commit) {
+        state.selectedIndex = idx;
+        renderInspector();
+        renderCharts();
+      }
       showTooltip(meta.daily[idx], event, canvas, meta.chartType || 'main');
     };
     canvas.addEventListener('mousemove', (event) => handle(event, false));
@@ -1045,9 +1102,8 @@ window.ReportViewPage = (() => {
         .join('<br>');
       return `
         ${title}
-        <div>เท ${fmt(day.feedOutQty)} ลูก</div>
+        <div>ใช้อาหารไป ${fmt(day.feedOutQty)} ลูก</div>
         <div>กินจริง ${fmt(day.consumedQty)} ลูก</div>
-        <div>เหลือ ${fmt(day.leftoverQty)} ลูก</div>
         ${names}
         ${feedIn ? `<hr><div>${feedIn}</div>` : ''}
       `;
@@ -1073,7 +1129,7 @@ window.ReportViewPage = (() => {
       ${title}
       <div>ไข่ ${fmt(day.eggDaily)} ฟอง • ${fmt(day.eggPercent)}%</div>
       <div>เท ${fmt(day.feedOutQty)} ลูก</div>
-      <div>กินจริง ${fmt(day.consumedQty)} ลูก / เหลือ ${fmt(day.leftoverQty)} ลูก</div>
+      <div>ใช้อาหารไป ${fmt(day.feedOutQty)} ลูก • กินจริง ${fmt(day.consumedQty)} ลูก</div>
       ${eventLines ? `<hr><div>${eventLines}</div>` : ''}
     `;
   }
@@ -1094,6 +1150,16 @@ window.ReportViewPage = (() => {
       if (key) map[key] = { key, label: thaiMonth(key) };
     });
     return Object.keys(map).sort().map((key) => map[key]);
+  }
+
+  function averageLatestEggPercent(rows, days) {
+    const slice = (rows || [])
+      .slice()
+      .sort((a, b) => String(a.dateKey || '').localeCompare(String(b.dateKey || '')))
+      .slice(-Math.max(1, Number(days || 15)))
+      .filter((row) => Number.isFinite(Number(row.eggPercent)));
+    if (!slice.length) return 0;
+    return slice.reduce((total, row) => total + Number(row.eggPercent || 0), 0) / slice.length;
   }
 
   function weightedEggPercent(daily) {

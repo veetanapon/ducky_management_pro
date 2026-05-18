@@ -841,112 +841,17 @@ window.BatchPage = (() => {
   }
 
   async function renderBillImage(draft) {
-    const width = 430;
-    const padding = 22;
-    const lineGap = 18;
-    const itemBlockHeight = 56;
-    const headerHeight = 160;
-    const footerHeight = (draft.remark ? 74 : 42) + 0;
-    const discountRows = Number(draft.discount || 0) > 0 ? 2 : 1;
-    const height = headerHeight + footerHeight + (draft.items.length * itemBlockHeight) + 120 + (discountRows * 20);
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#163e73';
-
-    const logo = await loadImage(draft.logo_url);
-    const logoSize = 72;
-    const logoX = Math.round((width - logoSize) / 2);
-    ctx.drawImage(logo, logoX, 18, logoSize, logoSize);
-
-    let y = 114;
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 20px Arial';
-    ctx.fillText(draft.farm_name || 'FARM', width / 2, y);
-    y += 22;
-    ctx.font = 'bold 18px Arial';
-    ctx.fillText('บิลเงินสด', width / 2, y);
-    ctx.font = '13px Arial';
-    ctx.fillStyle = '#444';
-    y += 26;
-    ctx.fillText(`บิลวันที่: ${formatThaiDate(draft.log_date)}`, width / 2, y);
-    y += 18;
-    ctx.fillText(`วันที่ออกบิล: ${formatThaiDate(new Date().toISOString().slice(0, 10))} เวลา ${draft.issue_date} น.`, width / 2, y);
-
-    y += 18;
-    drawDivider(ctx, padding, y, width - padding);
-    y += 22;
-
-    for (const item of draft.items) {
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#111';
-      ctx.font = 'bold 15px Arial';
-      wrapText(ctx, item.item_name, padding, y, width - (padding * 2), lineGap);
-      y += 20;
-      ctx.font = '13px Arial';
-      ctx.fillStyle = '#555';
-      wrapText(ctx, `${formatNumber(item.qty)} ${item.unit} × ${formatMoney(item.unit_price)}`, padding, y, width - (padding * 2) - 110, 16);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#111';
-      ctx.font = 'bold 14px Arial';
-      ctx.fillText(formatMoney(item.line_total), width - padding, y + 14);
-      y += 34;
-    }
-
-    drawDivider(ctx, padding, y, width - padding);
-    y += 24;
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#444';
-    ctx.font = '13px Arial';
-    ctx.fillText(`รวมจำนวน ${formatNumber(draft.total_qty)} ตัว`, padding, y);
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#111';
-    ctx.font = '13px Arial';
-    ctx.fillText(`รวม ${formatMoney(draft.sub_total || draft.grand_total)} บาท`, width - padding, y);
-    y += 22;
-
-    if (Number(draft.discount || 0) > 0) {
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#444';
-      ctx.font = '13px Arial';
-      ctx.fillText('ส่วนลด', padding, y);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#111';
-      ctx.font = '13px Arial';
-      ctx.fillText(`- ${formatMoney(draft.discount)} บาท`, width - padding, y);
-      y += 20;
-    }
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#163e73';
-    ctx.font = 'bold 14px Arial';
-    ctx.fillText('สุทธิหลังหักส่วนลด', padding, y);
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#163e73';
-    ctx.font = 'bold 18px Arial';
-    ctx.fillText(`${formatMoney(draft.grand_total)} บาท`, width - padding, y);
-    y += 28;
-
-    if (draft.remark) {
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#444';
-      ctx.font = '12px Arial';
-      wrapText(ctx, `หมายเหตุ: ${draft.remark}`, padding, y, width - (padding * 2), 16);
-      y += 30;
-    }
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#666';
-    ctx.font = '12px Arial';
-    ctx.fillText('ขอบคุณที่ใช้บริการ', width / 2, y + 8);
-    y += 10;
-
-    return canvas.toDataURL('image/png');
+    return BillPreview.renderBillImage(draft, {
+      logoUrl: state.logoUrl || 'assets/farm-logo.png',
+      formatThaiDate,
+      formatMoney,
+      formatNumber,
+      wrapText,
+      title: draft.bill_title || 'บิลเงินสด',
+      thankYouText: 'ขอบคุณที่อุดหนุน'
+    });
   }
+
 
 
   async function downloadBillImage() {

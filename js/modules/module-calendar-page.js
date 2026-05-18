@@ -1,5 +1,5 @@
 window.ModuleCalendarPage = (() => {
-  const state = { batch: null, moduleType: '', month: '', permission: 'none', data: null, feedLots: [], feedLotMap: {}, feedEditDate: '', feedEditRows: [], saleType: '', salePriceSet: null, salePriceItems: [], salePriceLoaded: false, billDraft: null, billPreviewImage: '', saleEditBillId: '', saleRangeRows: [], saleRangeTotals: null, saleRangeImage: '', preBillReviewId: '', priceLoadPromise: null, logoUrl: 'assets/farm-logo.png' };
+  const state = { batch: null, moduleType: '', month: '', permission: 'none', data: null, feedLots: [], feedLotMap: {}, feedLotById: {}, feedEditDate: '', feedEditRows: [], saleType: '', salePriceSet: null, salePriceItems: [], salePriceLoaded: false, billDraft: null, billPreviewImage: '', saleEditBillId: '', saleRangeRows: [], saleRangeTotals: null, saleRangeImage: '', preBillReviewId: '', priceLoadPromise: null, logoUrl: 'assets/farm-logo.png' };
   const CACHE_TTL_MS = 60 * 1000;
   const EGG_TYPE_OPTIONS = [
     { key: 'qty_all', label: 'ไข่รวม' },
@@ -104,8 +104,7 @@ function bindBaseEvents() {
     state.batch = response.batch;
     state.permission = response.permission || 'none';
     state.data = response;
-    state.feedLots = Array.isArray(response.feed_lots) ? response.feed_lots : [];
-    state.feedLotMap = Object.fromEntries(state.feedLots.map((lot) => [lot.label, lot]));
+    setFeedLots(response.feed_lots);
 
     if (state.permission === 'none') {
       renderNoAccess();
@@ -335,6 +334,33 @@ function openFeedSheet(mode) {
     hideSheet(document.getElementById('feedLogSheet'));
   }
 
+  function setFeedLots(lots) {
+    state.feedLots = Array.isArray(lots) ? lots : [];
+    state.feedLotMap = Object.fromEntries(state.feedLots.map((lot) => [lot.label, lot]));
+    state.feedLotById = Object.fromEntries(state.feedLots.map((lot) => [String(lot.id || ''), lot]));
+  }
+
+  function feedLotOptionLabel(lot) {
+    const name = lot?.name || lot?.label || lot?.id || '-';
+    const remain = formatCompactNumber(lot?.current_qty || 0);
+    const price = formatCompactNumber(lot?.unit_price || 0);
+    const date = lot?.start_date ? ` • เข้า ${lot.start_date}` : '';
+    return `${name}${date} • เหลือ ${remain} ลูก • ${price} บาท/ลูก`;
+  }
+
+  function renderFeedLotSelectOptions(selectedId = '') {
+    const selected = String(selectedId || '');
+    const options = ['<option value="">เลือก lot อาหารที่มีอยู่</option>'];
+    state.feedLots.forEach((lot) => {
+      const id = String(lot.id || '');
+      const remain = Number(lot.current_qty || 0);
+      const isSelected = id && id === selected;
+      const disabled = !isSelected && !(remain > 0) ? ' disabled' : '';
+      options.push(`<option value="${escapeAttr(id)}" ${isSelected ? 'selected' : ''}${disabled}>${escapeHtml(feedLotOptionLabel(lot))}</option>`);
+    });
+    return options.join('');
+  }
+
   function refreshFeedLotDatalist() {
     const datalist = document.getElementById('feedLotOptions');
     if (!datalist) return;
@@ -365,8 +391,11 @@ function openFeedSheet(mode) {
         </div>
       </div>
       <div>
-        <label class="field-label">ชื่ออาหาร / lot</label>
-        <input class="feed-entry-name" type="text" list="feedLotOptions" placeholder="เลือก lot หรือพิมพ์ชื่อใหม่" value="${escapeAttr(entry.feed_label || entry.feed_name || '')}" />
+        <label class="field-label feed-entry-name-label">ชื่ออาหาร / lot</label>
+        <input class="feed-entry-name" type="text" list="feedLotOptions" placeholder="พิมพ์ชื่ออาหาร / lot ใหม่" value="${escapeAttr(entry.feed_label || entry.feed_name || '')}" />
+        <select class="feed-entry-lot-select hidden">
+          ${renderFeedLotSelectOptions(entry.feed_id || '')}
+        </select>
         <input class="feed-entry-feed-id" type="hidden" value="${escapeAttr(entry.feed_id || '')}" />
         <div class="feed-entry-lot-info muted"></div>
       </div>
@@ -403,7 +432,7 @@ function openFeedSheet(mode) {
   function onFeedEntryListChange(event) {
     const row = event.target.closest('.feed-entry-row');
     if (!row) return;
-    if (event.target.classList.contains('feed-entry-type') || event.target.classList.contains('feed-entry-name')) {
+    if (event.target.classList.contains('feed-entry-type') || event.target.classList.contains('feed-entry-name') || event.target.classList.contains('feed-entry-lot-select')) {
       syncFeedEntryRow(row);
     }
   }
@@ -419,36 +448,54 @@ function openFeedSheet(mode) {
   function syncFeedEntryRow(row, preserveTyping = false) {
     const type = row.querySelector('.feed-entry-type')?.value || 'out';
     const nameInput = row.querySelector('.feed-entry-name');
+    const lotSelect = row.querySelector('.feed-entry-lot-select');
     const feedIdInput = row.querySelector('.feed-entry-feed-id');
     const unitInput = row.querySelector('.feed-entry-unit-price');
     const info = row.querySelector('.feed-entry-lot-info');
     const consumeGrid = row.querySelector('.feed-entry-consume-grid');
-    const matched = state.feedLotMap[nameInput.value] || null;
+    if (!nameInput || !feedIdInput || !unitInput) return;
+
     if (consumeGrid) consumeGrid.classList.toggle('hidden', type !== 'out');
+
+    if (type === 'out') {
+      if (lotSelect) {
+        lotSelect.classList.remove('hidden');
+        // Rebuild options so newly synced stock is always visible.
+        const selected = lotSelect.value || feedIdInput.value || '';
+        lotSelect.innerHTML = renderFeedLotSelectOptions(selected);
+      }
+      nameInput.classList.add('hidden');
+      unitInput.readOnly = true;
+      const selectedId = String(lotSelect?.value || feedIdInput.value || '');
+      const matched = selectedId ? state.feedLotById[selectedId] : null;
+      if (matched) {
+        feedIdInput.value = matched.id || '';
+        nameInput.value = matched.label || matched.name || '';
+        unitInput.value = matched.unit_price || 0;
+        if (info) info.textContent = `${matched.name} • วันที่เข้า ${matched.start_date || '-'} • ${formatCompactNumber(matched.unit_price || 0)} บาท/ลูก • คงเหลือ ${formatCompactNumber(matched.current_qty || 0)} ลูก`;
+      } else {
+        feedIdInput.value = '';
+        if (!preserveTyping) unitInput.value = '';
+        if (info) info.textContent = state.feedLots.length
+          ? 'เลือก lot จากรายการที่มีอยู่ เพื่อใช้ตัดจ่าย'
+          : 'ยังไม่มี lot อาหารคงเหลือให้เลือก กรุณารับเข้าอาหารก่อน';
+      }
+      return;
+    }
+
+    if (lotSelect) lotSelect.classList.add('hidden');
+    nameInput.classList.remove('hidden');
+    nameInput.placeholder = 'เช่น อาหารขุน A lot 2026-01';
+    const matched = state.feedLotMap[nameInput.value] || null;
     if (matched) {
       feedIdInput.value = matched.id || '';
-      if (type === 'out') {
-        unitInput.value = matched.unit_price || 0;
-        unitInput.readOnly = true;
-        nameInput.placeholder = 'เลือก lot ที่มีอยู่';
-      }
-      info.textContent = `${matched.name} • วันที่เข้า ${matched.start_date || '-'} • ${formatCompactNumber(matched.unit_price || 0)} บาท/หน่วย • คงเหลือ ${formatCompactNumber(matched.current_qty || 0)}`;
+      if (!preserveTyping && !unitInput.value) unitInput.value = matched.unit_price || 0;
+      if (info) info.textContent = `${matched.name} • วันที่เข้า ${matched.start_date || '-'} • ${formatCompactNumber(matched.unit_price || 0)} บาท/ลูก • คงเหลือ ${formatCompactNumber(matched.current_qty || 0)} ลูก`;
     } else {
       feedIdInput.value = '';
-      if (type === 'out') {
-        unitInput.readOnly = true;
-        if (!preserveTyping) unitInput.value = '';
-        info.textContent = 'เลือก lot จากรายการที่มีอยู่ เพื่อใช้ตัดจ่าย';
-      } else {
-        unitInput.readOnly = false;
-        info.textContent = 'พิมพ์ชื่ออาหารใหม่หรือใช้ชื่อเดิมได้';
-      }
+      if (info) info.textContent = 'พิมพ์ชื่ออาหารใหม่หรือใช้ชื่อเดิมได้';
     }
-    if (type === 'in') {
-      unitInput.readOnly = false;
-      nameInput.placeholder = 'เช่น อาหารขุน A lot 2026-01';
-      if (matched && !preserveTyping && !unitInput.value) unitInput.value = matched.unit_price || 0;
-    }
+    unitInput.readOnly = false;
   }
 
   async function submitFeedLog(event) {
@@ -460,11 +507,14 @@ function openFeedSheet(mode) {
     for (const row of rows) {
       const transType = row.querySelector('.feed-entry-type')?.value || 'out';
       const label = row.querySelector('.feed-entry-name')?.value.trim() || '';
-      const matched = state.feedLotMap[label] || null;
-      const feedId = row.querySelector('.feed-entry-feed-id')?.value || matched?.id || '';
-      const feedName = matched?.name || label;
+      const selectedFeedId = row.querySelector('.feed-entry-lot-select')?.value || '';
+      const matched = transType === 'out'
+        ? (state.feedLotById[String(selectedFeedId || row.querySelector('.feed-entry-feed-id')?.value || '')] || null)
+        : (state.feedLotMap[label] || null);
+      const feedId = transType === 'out' ? (matched?.id || selectedFeedId || '') : (row.querySelector('.feed-entry-feed-id')?.value || matched?.id || '');
+      const feedName = transType === 'out' ? (matched?.name || '') : (matched?.name || label);
       const qty = Number(row.querySelector('.feed-entry-qty')?.value || 0);
-      const unitPrice = Number(row.querySelector('.feed-entry-unit-price')?.value || 0);
+      const unitPrice = Number(row.querySelector('.feed-entry-unit-price')?.value || matched?.unit_price || 0);
       const leftoverQty = Number(row.querySelector('.feed-entry-leftover')?.value || 0);
       const wasteQty = Number(row.querySelector('.feed-entry-waste')?.value || 0);
       if (!feedName) return alert('กรุณาระบุชื่ออาหาร / lot ทุกรายการ');
@@ -514,8 +564,7 @@ function openFeedSheet(mode) {
       if (!ok) return;
       const response = await AppApi.post({ action: 'getFeedLogRecord', batch_id: state.batch.id, log_date: logDate });
       if (!response || response.status !== 'ok') return alert(response?.message || 'โหลดข้อมูลอาหารไม่สำเร็จ');
-      state.feedLots = Array.isArray(response.feed_lots) ? response.feed_lots : state.feedLots;
-      state.feedLotMap = Object.fromEntries(state.feedLots.map((lot) => [lot.label, lot]));
+      if (Array.isArray(response.feed_lots)) setFeedLots(response.feed_lots);
       openFeedSheetForEdit(response);
       return;
     }
@@ -1096,37 +1145,17 @@ function openFeedSheet(mode) {
   }
 
   async function renderBillImage(draft) {
-    const width = 430, padding = 22, lineGap = 18, itemBlockHeight = 62, headerHeight = 188;
-    const footerHeight = (draft.remark ? 78 : 48) + 50;
-    const discountRows = Number(draft.discount || 0) > 0 ? 2 : 1;
-    const height = headerHeight + footerHeight + (draft.items.length * itemBlockHeight) + 120 + (discountRows * 20);
-    const canvas = document.createElement('canvas');
-    canvas.width = width; canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#111827'; ctx.textBaseline = 'top';
-    let y = padding;
-    try { const logo = await loadImage(draft.logo_url); const logoSize = 54; ctx.drawImage(logo, (width - logoSize) / 2, y, logoSize, logoSize); y += logoSize + 8; } catch (_) {}
-    drawCenteredFitText(ctx, draft.farm_name || 'FARM', width / 2, y, width - (padding * 2), 'bold', 20, 13); y += 28;
-    drawCenteredFitText(ctx, draft.bill_title || 'บิลเงินสด', width / 2, y, width - (padding * 2), 'bold', 17, 13); y += 28;
-    ctx.textAlign = 'left'; ctx.font = '13px system-ui';
-    ctx.fillText('วันที่ขาย: ' + formatThaiDate(draft.log_date), padding, y, width - (padding * 2)); y += lineGap;
-    ctx.fillText('เวลาออกบิล: ' + draft.issue_date, padding, y, width - (padding * 2)); y += lineGap;
-    ctx.fillText('ชุดสัตว์: ' + draft.batch_name, padding, y, width - (padding * 2)); y += 22;
-    ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke(); y += 12;
-    draft.items.forEach((item) => {
-      ctx.textAlign = 'left'; ctx.font = 'bold 14px system-ui'; ctx.fillText(item.display_name || item.item_name, padding, y, width - (padding * 2)); y += 18;
-      ctx.font = '13px system-ui';
-      const unitText = draft.sale_type === 'egg' ? `${formatNumber(item.qty)} ${item.unit_label} (${formatNumber(item.total_qty)} ฟอง) x ${formatMoney(item.unit_price)}` : `${formatNumber(item.qty)} ${item.unit} x ${formatMoney(item.unit_price)}`;
-      ctx.fillText(unitText, padding, y, width - (padding * 2) - 104); ctx.textAlign = 'right'; ctx.fillText(formatMoney(item.line_total), width - padding, y, 100); y += itemBlockHeight - 18;
+    return BillPreview.renderBillImage(draft, {
+      logoUrl: state.logoUrl || 'assets/farm-logo.png',
+      formatThaiDate,
+      formatMoney,
+      formatNumber,
+      wrapText,
+      title: draft.bill_title || 'บิลเงินสด',
+      thankYouText: 'ขอบคุณที่อุดหนุน'
     });
-    ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke(); y += 12;
-    ctx.font = '14px system-ui'; ctx.textAlign = 'left'; ctx.fillText('รวมก่อนหักส่วนลด', padding, y); ctx.textAlign = 'right'; ctx.fillText(formatMoney(draft.sub_total), width - padding, y); y += lineGap;
-    if (Number(draft.discount || 0) > 0) { ctx.textAlign = 'left'; ctx.fillText('ส่วนลด', padding, y); ctx.textAlign = 'right'; ctx.fillText('-' + formatMoney(draft.discount), width - padding, y); y += lineGap; }
-    ctx.font = 'bold 16px system-ui'; ctx.textAlign = 'left'; ctx.fillText('สุทธิ', padding, y); ctx.textAlign = 'right'; ctx.fillText(formatMoney(draft.grand_total), width - padding, y); y += lineGap + 14;
-    if (draft.remark) { ctx.textAlign = 'left'; ctx.font = '13px system-ui'; wrapText(ctx, 'หมายเหตุ: ' + draft.remark, padding, y, width - (padding * 2), 18); }
-    return canvas.toDataURL('image/png');
   }
+
 
   async function confirmBill() {
     if (!state.billDraft) return;

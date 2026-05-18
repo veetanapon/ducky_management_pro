@@ -271,11 +271,17 @@ window.ItemsPriceManagePage = (() => {
   }
 
   async function loadPriceSetDetail(priceSetId) {
-    const response = await AppApi.post({ action: 'getPriceSetDetail', price_set_id: priceSetId });
+    const selectedCard = document.querySelector(`[data-price-set-id="${CSS.escape(String(priceSetId || ''))}"]`);
+    const originalText = selectedCard?.textContent || '';
+    if (selectedCard) selectedCard.classList.add('is-loading');
+
+    const response = await AppApi.post({ action: 'getPriceSetDetail', price_set_id: priceSetId, include_bindings: 0 }, { timeoutMs: 12000 });
+    if (selectedCard) selectedCard.classList.remove('is-loading');
     if (!response || response.status !== 'ok') return alert(response?.message || 'โหลดรายละเอียดชุดราคาไม่สำเร็จ');
+
     state.activeSet = response.price_set;
-    state.activeBindings = response.bindings || [];
-    state.bindingsLoaded = true;
+    state.activeBindings = [];
+    state.bindingsLoaded = false;
     fillEditor(response.price_set, response.items || []);
     renderAll();
     renderBindings();
@@ -333,14 +339,15 @@ window.ItemsPriceManagePage = (() => {
     btn.textContent = original;
     if (!response || response.status !== 'ok') return alert(response?.message || 'บันทึกชุดราคาไม่สำเร็จ');
 
-    localStorage.removeItem('ducky:price-admin:data');
-    const refresh = await AppApi.post({ action: 'getItemPriceAdminData' });
-    if (refresh && refresh.status === 'ok') {
-      hydrateState(refresh);
-      writeAdminCache();
-    }
+    upsertLocalPriceSet(response.price_set);
+    state.activeSet = response.price_set;
+    state.activeBindings = [];
+    state.bindingsLoaded = false;
+    fillEditor(response.price_set, response.items || items);
+    writeAdminCache();
     closePriceSetSheet();
-    await loadPriceSetDetail(response.price_set.id);
+    renderAll();
+    renderBindings();
     alert('บันทึกชุดราคาเรียบร้อย');
   }
 
@@ -363,12 +370,19 @@ window.ItemsPriceManagePage = (() => {
 
   async function loadBindingsForActiveSet() {
     if (!state.activeSet) return alert('กรุณาเลือกชุดราคาก่อน');
-    const response = await AppApi.post({ action: 'getPriceSetDetail', price_set_id: state.activeSet.id });
-    if (!response || response.status !== 'ok') return alert(response?.message || 'โหลดการผูกใช้งานไม่สำเร็จ');
+    const badge = document.getElementById('bindingCountBadge');
+    const oldBadge = badge?.textContent || '';
+    if (badge) badge.textContent = 'กำลังโหลด...';
+    const response = await AppApi.post({ action: 'getPriceSetDetail', price_set_id: state.activeSet.id, include_bindings: 1 }, { timeoutMs: 15000 });
+    if (!response || response.status !== 'ok') {
+      if (badge) badge.textContent = oldBadge;
+      return alert(response?.message || 'โหลดการผูกใช้งานไม่สำเร็จ');
+    }
     state.activeSet = response.price_set;
     state.activeBindings = response.bindings || [];
     state.bindingsLoaded = true;
-    document.getElementById('bindingCountBadge').textContent = `${state.activeBindings.length} รายการผูก`;
+    upsertLocalPriceSet(response.price_set);
+    if (badge) badge.textContent = `${state.activeBindings.length} รายการผูก`;
     renderAll();
     renderBindings();
   }
@@ -396,8 +410,8 @@ window.ItemsPriceManagePage = (() => {
     btn.textContent = original;
     if (!response || response.status !== 'ok') return alert(response?.message || 'บันทึกการผูกใช้งานไม่สำเร็จ');
     document.getElementById('bindingTargetSearch').value = '';
-    localStorage.removeItem('ducky:price-admin:data');
     await loadBindingsForActiveSet();
+    writeAdminCache();
     alert('บันทึกการผูกใช้งานเรียบร้อย');
   }
 
@@ -444,6 +458,13 @@ window.ItemsPriceManagePage = (() => {
     if (item.scope_type === 'user' && item.scope_ref_label) parts.push(item.scope_ref_label);
     parts.push(item.id || '');
     return parts.filter(Boolean).join(' • ');
+  }
+
+  function upsertLocalPriceSet(priceSet) {
+    if (!priceSet || !priceSet.id) return;
+    const index = state.priceSets.findIndex((set) => String(set.id) === String(priceSet.id));
+    if (index >= 0) state.priceSets[index] = { ...state.priceSets[index], ...priceSet };
+    else state.priceSets.unshift(priceSet);
   }
 
   function writeAdminCache() {

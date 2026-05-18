@@ -672,190 +672,47 @@ window.BatchManagePage = (() => {
   //   return canvas.toDataURL('image/png');
   // }
   function loadCanvasImage(src) {
-    return new Promise((resolve) => {
-      if (!src) return resolve(null);
+  return new Promise((resolve) => {
+    if (!src) return resolve(null);
 
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = src;
-    });
-  }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
 
-  function drawCanvasCenteredText(ctx, text, centerX, y) {
-    const safeText = String(text || '');
-    const metrics = ctx.measureText(safeText);
-    const visualWidth =
-      Math.abs(metrics.actualBoundingBoxLeft || 0) +
-      Math.abs(metrics.actualBoundingBoxRight || metrics.width || 0);
+function drawCanvasCenteredText(ctx, text, centerX, y) {
+  const safeText = String(text || '');
+  const metrics = ctx.measureText(safeText);
+  const visualWidth =
+    Math.abs(metrics.actualBoundingBoxLeft || 0) +
+    Math.abs(metrics.actualBoundingBoxRight || metrics.width || 0);
 
-    const x =
-      centerX -
-      visualWidth / 2 -
-      (metrics.actualBoundingBoxLeft || 0);
+  const x =
+    centerX -
+    visualWidth / 2 -
+    (metrics.actualBoundingBoxLeft || 0);
 
-    const previousAlign = ctx.textAlign;
-    ctx.textAlign = 'left';
-    ctx.fillText(safeText, x, y);
-    ctx.textAlign = previousAlign;
-  }
+  const previousAlign = ctx.textAlign;
+  ctx.textAlign = 'left';
+  ctx.fillText(safeText, x, y);
+  ctx.textAlign = previousAlign;
+}
 
-  async function renderBillImage(draft) {
-    const width = 430;
-    const padding = 22;
-    const lineGap = 18;
-    const itemBlockHeight = 52;
+async function renderBillImage(draft) {
+  return BillPreview.renderBillImage(draft, {
+    logoUrl: state.logoUrl || 'assets/farm-logo.png',
+    formatThaiDate,
+    formatMoney,
+    formatNumber,
+    wrapText,
+    title: draft.bill_title || 'บิลเงินสด',
+    thankYouText: 'ขอบคุณที่อุดหนุน'
+  });
+}    
 
-    const hasRemark = !!String(draft.remark || '').trim();
-    const logoSize = 54;
-    const headerHeight = 156;
-    const footerBaseHeight = hasRemark ? 70 : 44;
-    const thankYouHeight = 24;
-    const discountRows = Number(draft.discount || 0) > 0 ? 2 : 1;
-
-    const height =
-      headerHeight +
-      (draft.items.length * itemBlockHeight) +
-      footerBaseHeight +
-      thankYouHeight +
-      (discountRows * 18) +
-      48;
-
-    const dpr = Math.min(window.devicePixelRatio || 2, 3);
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-
-    ctx.fillStyle = '#111827';
-    ctx.textBaseline = 'top';
-
-    let y = padding;
-
-    const logoSrc = draft.logo_url || draft.logoUrl || 'assets/farm-logo.png';
-    const logo = await loadCanvasImage(logoSrc);
-
-    if (logo) {
-      const logoX = (width - logoSize) / 2;
-      ctx.drawImage(logo, logoX, y, logoSize, logoSize);
-      y += logoSize + 8;
-    }
-
-    ctx.font = 'bold 22px system-ui';
-    drawCanvasCenteredText(ctx, draft.farm_name || 'FARM', width / 2, y);
-
-    y += 30;
-
-    ctx.font = 'bold 17px system-ui';
-    drawCanvasCenteredText(ctx, 'บิลเงินสด', width / 2, y);
-
-    y += 28;
-
-    ctx.textAlign = 'left';
-    ctx.font = '14px system-ui';
-    ctx.fillText('วันที่ขาย: ' + formatThaiDate(draft.log_date), padding, y);
-    y += lineGap;
-    ctx.fillText('เวลาออกบิล: ' + draft.issue_date, padding, y);
-    y += lineGap;
-    ctx.fillText('ชุดสัตว์: ' + draft.batch_name, padding, y);
-
-    y += 20;
-
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-    ctx.stroke();
-
-    y += 12;
-
-    draft.items.forEach((item) => {
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#111827';
-
-      ctx.font = 'bold 15px system-ui';
-      ctx.fillText(item.item_name, padding, y);
-
-      y += 18;
-
-      ctx.font = '14px system-ui';
-      ctx.fillStyle = '#4b5563';
-      ctx.fillText(
-        `${formatNumber(item.qty)} ${item.unit} x ${formatMoney(item.unit_price)}`,
-        padding,
-        y
-      );
-
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#111827';
-      ctx.fillText(formatMoney(item.line_total), width - padding, y);
-
-      y += itemBlockHeight - 18;
-    });
-
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-    ctx.stroke();
-
-    y += 12;
-
-    ctx.textAlign = 'left';
-    ctx.font = '14px system-ui';
-    ctx.fillStyle = '#111827';
-    ctx.fillText('รวมก่อนหักส่วนลด', padding, y);
-
-    ctx.textAlign = 'right';
-    ctx.fillText(formatMoney(draft.sub_total), width - padding, y);
-
-    y += lineGap;
-
-    if (Number(draft.discount || 0) > 0) {
-      ctx.textAlign = 'left';
-      ctx.fillText('ส่วนลด', padding, y);
-
-      ctx.textAlign = 'right';
-      ctx.fillText('-' + formatMoney(draft.discount), width - padding, y);
-
-      y += lineGap;
-    }
-
-    ctx.textAlign = 'left';
-    ctx.font = 'bold 16px system-ui';
-    ctx.fillText('สุทธิหลังหักส่วนลด', padding, y);
-
-    ctx.textAlign = 'right';
-    ctx.font = 'bold 18px system-ui';
-    ctx.fillText(formatMoney(draft.grand_total), width - padding, y);
-
-    y += 26;
-
-    if (hasRemark) {
-      ctx.textAlign = 'left';
-      ctx.font = '13px system-ui';
-      ctx.fillStyle = '#4b5563';
-      wrapText(ctx, 'หมายเหตุ: ' + draft.remark, padding, y, width - (padding * 2), 17);
-      y += 34;
-    }
-
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 14px system-ui';
-    ctx.fillStyle = '#0f766e';
-    drawCanvasCenteredText(ctx, 'ขอบคุณที่อุดหนุน', width / 2, y);
-
-    return canvas.toDataURL('image/png');
-  }
 
   async function confirmBill() {
     if (!state.billDraft) return;
