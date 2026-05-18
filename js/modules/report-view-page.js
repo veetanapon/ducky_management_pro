@@ -14,7 +14,8 @@ window.ReportViewPage = (() => {
       eggPercent: true,
       feed: true,
       events: true,
-      feedMarkers: true
+      feedMarkers: true,
+      tooltip: true
     },
     daily: [],
     hoverIndex: -1,
@@ -74,6 +75,7 @@ window.ReportViewPage = (() => {
     document.querySelectorAll('[data-rv-filter]').forEach((input) => {
       input.addEventListener('change', () => {
         state.filters[input.dataset.rvFilter] = !!input.checked;
+        if (input.dataset.rvFilter === 'tooltip' && !state.filters.tooltip) hideTooltip();
         render();
       });
     });
@@ -1047,6 +1049,10 @@ window.ReportViewPage = (() => {
   }
 
   function showTooltip(day, event, canvas, chartType) {
+    if (!state.filters.tooltip) {
+      hideTooltip();
+      return;
+    }
     const tip = tooltipForCanvas(canvas);
     if (!tip || !day) return;
     const rect = canvas.getBoundingClientRect();
