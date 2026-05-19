@@ -87,12 +87,22 @@ window.BatchManagePage = (() => {
   }
 
   async function load(batchId) {
+    const key = cacheKey(batchId);
+    const cached = readCache(key, { allowStale: true });
+    const cachedData = cached?.data || null;
+
+    if (cachedData) {
+      renderAll(cachedData);
+      setModuleSyncHint(cached.isStale ? 'กำลังซิงก์ข้อมูลล่าสุด...' : 'กำลังตรวจสอบข้อมูลล่าสุด...');
+    }
+
     const response = await AppApi.post({ action: 'getBatchManagePageData', batch_id: batchId, month: state.month });
     if (!response || response.status !== 'ok') {
-      document.getElementById('moduleSubtitle').textContent = response?.message || 'โหลดข้อมูลไม่สำเร็จ';
+      if (!cachedData) document.getElementById('moduleSubtitle').textContent = response?.message || 'โหลดข้อมูลไม่สำเร็จ';
+      else setModuleSyncHint('แสดงข้อมูลจากเครื่องอยู่ ยังซิงก์ล่าสุดไม่ได้');
       return;
     }
-    writeCache(cacheKey(batchId), response);
+    writeCache(key, response);
     renderAll(response);
   }
 
@@ -799,14 +809,26 @@ async function renderBillImage(draft) {
       });
     } catch (_) {}
   }
-  function readCache(key) {
+  function setModuleSyncHint(message) {
+    const el = document.getElementById('moduleHint');
+    if (!el || !message) return;
+    el.dataset.syncHint = message;
+    el.textContent = message;
+  }
+
+  function readCache(key, options = {}) {
     try {
       const raw = localStorage.getItem(key);
-      if (!raw) return null;
+      if (!raw) return options.allowStale ? { data: null, isStale: false, age: Infinity } : null;
       const parsed = JSON.parse(raw);
-      if (Date.now() - Number(parsed.savedAt || 0) > CACHE_TTL_MS) return null;
-      return parsed.data || null;
-    } catch (_) { return null; }
+      const savedAt = Number(parsed.savedAt || parsed.saved_at || 0);
+      const age = savedAt ? Date.now() - savedAt : Infinity;
+      const isStale = age > CACHE_TTL_MS;
+      const data = parsed.data || null;
+      if (options.allowStale) return { data, isStale, age, savedAt };
+      if (isStale) return null;
+      return data;
+    } catch (_) { return options.allowStale ? { data: null, isStale: false, age: Infinity } : null; }
   }
   function writeCache(key, data) {
     try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data })); } catch (_) {}

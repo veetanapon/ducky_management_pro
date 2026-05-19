@@ -84,15 +84,22 @@ function bindBaseEvents() {
 
   async function load(batchId) {
     const cacheKey = `ducky:module:${state.moduleType}:${batchId}:${state.month}`;
-    const cached = readCache(cacheKey);
-    if (cached) {
-      renderAll(cached);
+    const cached = readCache(cacheKey, { allowStale: true });
+    const cachedData = cached?.data || null;
+
+    if (cachedData) {
+      renderAll(cachedData);
+      setSyncHint(cached.isStale ? 'กำลังซิงก์ข้อมูลล่าสุด...' : 'กำลังตรวจสอบข้อมูลล่าสุด...');
+    } else {
+      setSyncHint('กำลังโหลดข้อมูล...');
     }
 
     const response = await AppApi.post({ action: 'getModuleCalendarData', batch_id: batchId, module_type: state.moduleType, month: state.month });
     if (!response || response.status !== 'ok') {
-      if (!cached) {
+      if (!cachedData) {
         document.getElementById('moduleSubtitle').textContent = response?.message || 'โหลดข้อมูลไม่สำเร็จ';
+      } else {
+        setSyncHint('แสดงข้อมูลจากเครื่องอยู่ ยังซิงก์ล่าสุดไม่ได้');
       }
       return;
     }
@@ -1447,14 +1454,26 @@ function openFeedSheet(mode) {
   function formatCompactNumber(value) { return Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
   function escapeHtml(text) { return String(text || '').replace(/[&<>"']/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
   function escapeAttr(text) { return escapeHtml(String(text || '')); }
-  function readCache(key) {
+  function setSyncHint(message) {
+    const el = document.getElementById('moduleHint');
+    if (!el || !message) return;
+    el.dataset.syncHint = message;
+    el.textContent = message;
+  }
+
+  function readCache(key, options = {}) {
     try {
       const raw = localStorage.getItem(key);
-      if (!raw) return null;
+      if (!raw) return options.meta ? { data: null, isStale: false, age: Infinity } : null;
       const parsed = JSON.parse(raw);
-      if (Date.now() - Number(parsed.savedAt || 0) > CACHE_TTL_MS) return null;
-      return parsed.data || null;
-    } catch (_) { return null; }
+      const savedAt = Number(parsed.savedAt || parsed.saved_at || 0);
+      const age = savedAt ? Date.now() - savedAt : Infinity;
+      const isStale = age > CACHE_TTL_MS;
+      const data = parsed.data || null;
+      if (options.meta || options.allowStale) return { data, isStale, age, savedAt };
+      if (isStale) return null;
+      return data;
+    } catch (_) { return options.meta || options.allowStale ? { data: null, isStale: false, age: Infinity } : null; }
   }
   function writeCache(key, data) {
     try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data })); } catch (_) {}

@@ -52,22 +52,49 @@ window.ReportPage = (() => {
   async function load() {
     setBusy(true, 'กำลังโหลดรายงาน...');
     const reportCacheKey = `ducky:report:${state.batchId}`;
-    const cachedReport = window.AppCache ? AppCache.readEnvelope(reportCacheKey, 2 * 60 * 1000, null) : null;
-    if (cachedReport && cachedReport.status === 'ok') {
-      hydrateFromResponse(cachedReport);
-      setBusy(true, 'กำลังซิงก์รายงานล่าสุด...');
+    const cachedReport = readReportCache(reportCacheKey);
+
+    if (cachedReport?.data?.status === 'ok') {
+      hydrateFromResponse(cachedReport.data);
+      setBusy(true, cachedReport.isStale ? 'แสดงข้อมูลจากเครื่องก่อน • กำลังซิงก์รายงานล่าสุด...' : 'แสดงข้อมูลจากเครื่องก่อน • กำลังตรวจสอบรายงานล่าสุด...');
     }
+
     const response = await AppApi.post({ action: 'getReportPageData', batch_id: state.batchId });
     if (!response || response.status !== 'ok') {
+      if (cachedReport?.data?.status === 'ok') {
+        setBusy(false, 'แสดงข้อมูลจากเครื่องอยู่ ยังซิงก์ล่าสุดไม่ได้');
+        return;
+      }
       setBusy(false, response?.message || 'โหลดรายงานไม่สำเร็จ');
       setText('reportSubtitle', response?.message || 'โหลดรายงานไม่สำเร็จ');
       return;
     }
-    if (window.AppCache) AppCache.writeEnvelope(reportCacheKey, response);
+    writeReportCache(reportCacheKey, response);
     hydrateFromResponse(response);
     setBusy(false, state.rows.length ? 'ข้อมูลอ่านจากชีทสรุปที่เตรียมไว้แล้ว' : 'ยังไม่มีข้อมูลรายงาน กด “โหลดข้อมูลใหม่” เพื่อสร้างข้อมูลของ batch นี้');
   }
 
+
+  function readReportCache(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const savedAt = Number(parsed.__cached_at || parsed.savedAt || parsed.saved_at || 0);
+      const data = parsed.value || parsed.data || null;
+      const age = savedAt ? Date.now() - savedAt : Infinity;
+      return { data, isStale: age > 2 * 60 * 1000, age, savedAt };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeReportCache(key, data) {
+    if (window.AppCache) AppCache.writeEnvelope(key, data);
+    else {
+      try { localStorage.setItem(key, JSON.stringify({ __cached_at: Date.now(), value: data })); } catch (_) {}
+    }
+  }
 
   function hydrateFromResponse(response) {
     state.batch = response.batch;
