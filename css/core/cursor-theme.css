@@ -1,0 +1,518 @@
+/* ==========================================================================
+   Ducky Management Pro - Cursor-like UI refresh
+   Drop this file in css/core/cursor-theme.css and import it last from app.css.
+   Scope: main web only. worker-liff, login, and report-view use isolated CSS files.
+   ========================================================================== */
+
+:root {
+  --bg-app: #f7f7f8;
+  --bg-card: #ffffff;
+  --bg-soft: #f3f4f6;
+  --bg-elevated: rgba(255, 255, 255, .82);
+  --border-soft: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text-main: #111113;
+  --text-sub: #71717a;
+  --text-faint: #a1a1aa;
+  --primary: #111113;
+  --primary-dark: #000000;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --success: #10b981;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04), 0 10px 30px rgba(15, 23, 42, .05);
+  --shadow-md: 0 18px 45px rgba(15, 23, 42, .10);
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+}
+
+.theme-dark {
+  --bg-app: #09090b;
+  --bg-card: #111113;
+  --bg-soft: #18181b;
+  --bg-elevated: rgba(17, 17, 19, .84);
+  --border-soft: #27272a;
+  --border-strong: #3f3f46;
+  --text-main: #f4f4f5;
+  --text-sub: #a1a1aa;
+  --text-faint: #71717a;
+  --primary: #f4f4f5;
+  --primary-dark: #ffffff;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .28), 0 14px 34px rgba(0, 0, 0, .18);
+  --shadow-md: 0 20px 56px rgba(0, 0, 0, .36);
+}
+
+html {
+  background: var(--bg-app);
+}
+
+body:not(.worker-liff-page):not(.dm-login-page) {
+  background:
+    radial-gradient(circle at 18% -10%, color-mix(in srgb, var(--primary) 6%, transparent), transparent 30%),
+    linear-gradient(180deg, #fbfbfc 0%, var(--bg-app) 38%, #f1f1f3 100%);
+  color: var(--text-main);
+  letter-spacing: -.01em;
+}
+
+.theme-dark:not(.worker-liff-page):not(.dm-login-page),
+body.theme-dark:not(.worker-liff-page):not(.dm-login-page) {
+  background:
+    radial-gradient(circle at 18% -10%, rgba(255,255,255,.08), transparent 32%),
+    linear-gradient(180deg, #0c0c0f 0%, #09090b 62%, #050506 100%);
+}
+
+.container {
+  max-width: 480px;
+  padding-inline: 16px;
+}
+
+.page-body,
+.module-page-layout,
+.batch-dashboard-layout {
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+}
+
+.app-header {
+  top: 0;
+  min-height: 68px;
+  background: var(--bg-elevated);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 86%, transparent);
+  box-shadow: 0 1px 0 rgba(255,255,255,.45);
+}
+
+.app-header h1,
+#moduleTitle,
+#batchTitle,
+#reportTitle {
+  font-size: clamp(18px, 4.6vw, 22px);
+  line-height: 1.1;
+  font-weight: 820;
+  letter-spacing: -.035em;
+}
+
+.muted,
+.app-header .muted {
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.header-leading {
+  gap: 12px;
+}
+
+.header-actions {
+  gap: 7px;
+}
+
+.icon-btn,
+.hamburger-btn,
+.text-btn,
+.secondary-btn,
+.module-fab-action,
+.fab-menu button,
+.calendar-nav-btn {
+  border: 1px solid var(--border-soft) !important;
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent) !important;
+  color: var(--text-main) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,.04) !important;
+}
+
+.icon-btn,
+.hamburger-btn {
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 17px;
+}
+
+.hamburger-btn {
+  font-size: 21px;
+}
+
+button:not(.icon-btn):not(.text-btn):not(.secondary-btn):not(.fab):not(.module-fab-action):not(.report-tab):not(.swipe-btn):not(.side-nav__close) {
+  border-radius: 999px;
+}
+
+button[type="submit"],
+#submitBatchBtn,
+#movementSubmitBtn,
+#eggDailySubmitBtn,
+#feedLogSubmitBtn,
+#saveLiffRouteBtn,
+#savePriceSetBtn,
+#reportRebuildBtn {
+  background: var(--primary) !important;
+  color: var(--bg-card) !important;
+  border: 1px solid var(--primary) !important;
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--primary) 13%, transparent) !important;
+}
+
+.card-panel,
+.section-card,
+.module-card,
+.module-summary-card,
+.empty-state,
+.stat-tile,
+.log-item,
+.price-set-card,
+.access-member-card,
+.permission-card,
+.access-module-card,
+.sale-item-card,
+.sale-range-bill-card,
+.report-summary-card,
+.report-chart-card {
+  border: 1px solid var(--border-soft) !important;
+  background: color-mix(in srgb, var(--bg-card) 97%, transparent) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.card-panel,
+.section-card {
+  padding: 16px;
+}
+
+.section-card-head h3,
+.sheet-section-head h3,
+.report-chart-card h4 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 820;
+  letter-spacing: -.02em;
+}
+
+.batch-list,
+.price-set-list,
+.log-list,
+.event-timeline,
+.access-member-list {
+  gap: 8px;
+}
+
+.search-bar {
+  position: sticky;
+  top: 76px;
+  z-index: 12;
+  padding: 2px 0 4px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-app) 84%, transparent), color-mix(in srgb, var(--bg-app) 0%, transparent));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.search-bar input,
+input,
+select,
+textarea,
+.sheet input,
+.sheet select,
+.sheet textarea {
+  border-color: var(--border-soft) !important;
+  background: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border-radius: 16px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+
+.search-bar input {
+  min-height: 48px;
+  padding-inline: 16px;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.sheet input:focus,
+.sheet select:focus,
+.sheet textarea:focus,
+.search-bar input:focus {
+  border-color: var(--border-strong) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 8%, transparent) !important;
+}
+
+.inline-note {
+  background: color-mix(in srgb, var(--primary) 5%, var(--bg-soft)) !important;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+}
+
+.badge-inline,
+.helper-chip,
+.feed-entry-badge,
+.side-nav__badge {
+  border: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  color: var(--text-sub);
+  font-weight: 760;
+}
+
+.badge-inline.success,
+.helper-chip {
+  background: color-mix(in srgb, var(--success) 10%, var(--bg-card)) !important;
+  color: #047857 !important;
+  border-color: color-mix(in srgb, var(--success) 24%, var(--border-soft)) !important;
+}
+
+.batch-card.compact {
+  min-height: 92px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.batch-thumb {
+  width: 92px;
+  height: 66px;
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+}
+
+.batch-title,
+.module-card-title,
+.module-summary-value,
+.stat-value {
+  font-weight: 840;
+  letter-spacing: -.02em;
+}
+
+.batch-stats-row {
+  border-top-color: var(--border-soft);
+}
+
+.module-summary-grid,
+.module-card-grid {
+  gap: 10px;
+}
+
+.module-summary-card {
+  min-height: 82px;
+  align-content: space-between;
+}
+
+.module-summary-label,
+.module-card-line,
+.stat-label,
+.batch-stat .label {
+  color: var(--text-sub);
+}
+
+body[data-page="batch_dashboard"] .module-card-grid--menu {
+  gap: 10px !important;
+}
+
+body[data-page="batch_dashboard"] .module-menu-card {
+  min-height: 100px;
+  border-radius: 14px !important;
+  background: var(--bg-card) !important;
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon {
+  background: var(--bg-soft) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-soft) !important;
+  border-radius: 16px !important;
+}
+
+.hero-image {
+  border: 1px solid var(--border-soft);
+  border-radius: 24px;
+}
+
+.module-calendar-panel {
+  gap: 12px;
+}
+
+.module-day {
+  border-radius: 16px;
+  background: var(--bg-card);
+}
+
+.module-day--filled {
+  background: color-mix(in srgb, var(--success) 8%, var(--bg-card)) !important;
+  border-color: color-mix(in srgb, var(--success) 18%, var(--border-soft)) !important;
+}
+
+.module-day--missing {
+  background: color-mix(in srgb, var(--danger) 4%, var(--bg-card)) !important;
+}
+
+.sheet-backdrop {
+  background: rgba(9, 9, 11, .42);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.sheet-panel {
+  border: 1px solid var(--border-soft);
+  border-bottom: none;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -20px 70px rgba(15, 23, 42, .18);
+}
+
+.sheet-header,
+.sheet-footer {
+  background: color-mix(in srgb, var(--bg-card) 94%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.sheet-header span {
+  font-weight: 840;
+  letter-spacing: -.02em;
+}
+
+.sheet-body {
+  gap: 10px;
+}
+
+.fab,
+.fab-radial__main.fab,
+.module-fab-main {
+  background: var(--primary) !important;
+  color: var(--bg-card) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 88%, transparent) !important;
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--primary) 20%, transparent) !important;
+}
+
+.module-fab-action,
+.fab-radial__action,
+.fab-menu button {
+  font-weight: 780 !important;
+}
+
+.side-nav {
+  background: color-mix(in srgb, var(--bg-card) 98%, transparent);
+  border-right: 1px solid var(--border-soft);
+  box-shadow: 26px 0 80px rgba(15,23,42,.18);
+}
+
+.side-nav__header {
+  border-bottom-color: var(--border-soft);
+}
+
+.side-nav__item {
+  border-radius: 16px;
+  background: transparent;
+}
+
+.side-nav__item.active {
+  background: var(--bg-soft);
+  border-color: var(--border-soft);
+  color: var(--text-main);
+}
+
+.report-tab-row {
+  border-color: var(--border-soft);
+  background: var(--bg-soft);
+}
+
+.report-tab.is-active {
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
+}
+
+.report-table th {
+  background: #f4f4f5 !important;
+  color: #111113 !important;
+}
+
+.theme-dark .report-table th {
+  background: #18181b !important;
+  color: #f4f4f5 !important;
+}
+
+@media (min-width: 744px) {
+  .container {
+    max-width: 720px;
+    padding-inline: 22px;
+  }
+
+  .app-header.container {
+    max-width: 100%;
+    padding-inline: max(22px, env(safe-area-inset-left)) max(22px, env(safe-area-inset-right));
+  }
+
+  .page-body,
+  .module-page-layout,
+  .batch-dashboard-layout {
+    gap: 14px;
+    padding-top: 16px;
+  }
+
+  .batch-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .batch-card.compact {
+    height: 100%;
+    align-items: flex-start;
+  }
+
+  .module-summary-grid--2,
+  .report-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .module-summary-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  body[data-page="batch_dashboard"] .module-card-grid--menu {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .sheet-panel {
+    max-width: 600px;
+    border-radius: 30px 30px 0 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 920px;
+  }
+
+  .batch-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body[data-page="batch_dashboard"] .module-card-grid--menu {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  .sheet-panel {
+    max-width: 680px;
+  }
+}
+
+@media (max-width: 420px) {
+  .container {
+    padding-inline: 14px;
+  }
+
+  .app-header h1,
+  #moduleTitle,
+  #batchTitle,
+  #reportTitle {
+    font-size: 18px;
+  }
+
+  .card-panel,
+  .section-card {
+    padding: 14px;
+  }
+}

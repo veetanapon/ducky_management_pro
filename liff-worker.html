@@ -14,7 +14,7 @@
         <span id="routeBadge" class="route-badge">กำลังโหลดลิงก์...</span>
         <span class="route-status-dot" aria-hidden="true"></span>
       </div>
-      <h1>บันทึกไข่ / ส่งบิล</h1>
+      <h1>บันทึกไข่ / อาหาร / ส่งบิล</h1>
       <p id="batchName" class="liff-subtitle">ลิงก์นี้ใช้สำหรับบันทึกข้อมูลเข้าฟาร์มโดยตรง</p>
     </header>
 
@@ -23,11 +23,10 @@
         <div class="section-title-row">
           <div>
             <h2>วันที่บันทึก</h2>
-            <!-- <p>ใช้วันที่ขายหรือวันที่เก็บไข่จริง</p> -->
+            <p>ใช้เป็นวันที่ของไข่และบิล ส่วนอาหารจะบันทึกเป็นของเมื่อวานอัตโนมัติ</p>
           </div>
         </div>
-        <!-- <label class="field-label" for="logDate">วันที่</label> -->
-        <input id="logDate" type="date" required />
+        <input id="logDate" type="date" required readonly />
       </section>
 
       <section class="liff-section">
@@ -64,6 +63,21 @@
             <!-- <span>ไข่คงเหลือ/เศษ</span> -->
             <input id="qty_remain" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่คงเหลือ/เศษ" />
           <!-- </label> -->
+        </div>
+      </section>
+
+      <section class="liff-section liff-section--feed">
+        <div class="section-title-row">
+          <div>
+            <h2>การกินอาหารของเมื่อวาน</h2>
+            <p>กรอกจำนวนที่เท และจำนวนที่เหลือ ถ้าไม่มีให้เว้นว่างได้</p>
+          </div>
+          <span class="mini-badge">Feed</span>
+        </div>
+
+        <div class="feed-grid">
+          <input id="feed_out_qty" type="number" min="0" step="1" inputmode="numeric" placeholder="จำนวนที่เท (ลูก)" />
+          <input id="feed_leftover_qty" type="number" min="0" step="1" inputmode="numeric" placeholder="เหลือ (ลูก)" />
         </div>
       </section>
 

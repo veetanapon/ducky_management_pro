@@ -1,6 +1,15 @@
 (() => {
   const state = { routeKey: '', profile: null, profileReady: null };
   const qs = (id) => document.getElementById(id);
+  function dateKeyOffset(days = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + Number(days || 0));
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  const yesterday = () => dateKeyOffset(-1);
   const today = () => new Date().toISOString().slice(0, 10);
   const num = (id) => Number(qs(id)?.value || 0);
 
@@ -75,9 +84,20 @@
       qty_broken: num('qty_broken'),
       qty_remain: num('qty_remain')
     };
+    const feedDaily = {
+      feed_out_qty: num('feed_out_qty'),
+      leftover_qty: num('feed_leftover_qty')
+    };
 
-    if (!Object.values(eggDaily).some((v) => Number(v) > 0) && !rawMessage) {
-      alert('กรุณากรอกจำนวนไข่ หรือรายการส่งขายอย่างน้อย 1 อย่าง');
+    if (feedDaily.leftover_qty > feedDaily.feed_out_qty && feedDaily.leftover_qty > 0) {
+      alert('จำนวนอาหารเหลือต้องไม่มากกว่าจำนวนที่เท');
+      return;
+    }
+
+    const hasEgg = Object.values(eggDaily).some((v) => Number(v) > 0);
+    const hasFeed = Number(feedDaily.feed_out_qty || 0) > 0 || Number(feedDaily.leftover_qty || 0) > 0;
+    if (!hasEgg && !rawMessage && !hasFeed) {
+      alert('กรุณากรอกจำนวนไข่ รายการส่งขาย หรือข้อมูลอาหารอย่างน้อย 1 อย่าง');
       return;
     }
 
@@ -96,6 +116,7 @@
       log_date: qs('logDate').value || today(),
       raw_message: rawMessage,
       egg_daily: eggDaily,
+      feed_daily: feedDaily,
       line_user_id: state.profile?.userId || '',
       line_display_name: state.profile?.displayName || ''
     });

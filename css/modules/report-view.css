@@ -548,3 +548,175 @@ button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
     font-size: 11px !important;
   }
 }
+
+/* ==========================================================================
+   v6.1 Cursor-like fullscreen analytics polish
+   ========================================================================== */
+:root {
+  --rv-bg: #f7f7f8;
+  --rv-card: #ffffff;
+  --rv-soft: #f3f4f6;
+  --rv-border: #e4e4e7;
+  --rv-text: #111113;
+  --rv-sub: #71717a;
+  --rv-primary: #111113;
+  --rv-primary-dark: #000000;
+  --rv-shadow: 0 1px 2px rgba(15,23,42,.04), 0 14px 38px rgba(15,23,42,.06);
+}
+body {
+  background:
+    radial-gradient(circle at 18% -12%, rgba(17,17,19,.07), transparent 28%),
+    linear-gradient(180deg, #fbfbfc 0%, var(--rv-bg) 44%, #f1f1f3 100%) !important;
+  letter-spacing: -.01em;
+}
+.rv-app {
+  min-height: 100dvh;
+  padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  gap: 10px;
+}
+.rv-topbar,
+.rv-card,
+.rv-summary-card,
+.rv-filterbar {
+  border-color: var(--rv-border) !important;
+  border-radius: 24px;
+  background: rgba(255,255,255,.86) !important;
+  box-shadow: var(--rv-shadow) !important;
+  backdrop-filter: blur(18px) saturate(1.18);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+}
+.rv-topbar {
+  min-height: 76px;
+  padding: 14px 16px;
+}
+.rv-eyebrow,
+.rv-pill {
+  background: var(--rv-soft) !important;
+  color: var(--rv-sub) !important;
+  border: 1px solid var(--rv-border) !important;
+}
+.rv-topbar h1 {
+  font-size: clamp(22px, 2.4vw, 34px);
+  letter-spacing: -.045em;
+  font-weight: 860;
+}
+.rv-topbar p,
+.rv-card p,
+.rv-summary-card span,
+.rv-summary-card small {
+  color: var(--rv-sub);
+}
+.rv-topbar select,
+.rv-icon-btn,
+.rv-secondary-btn,
+.rv-filterbar label {
+  border: 1px solid var(--rv-border) !important;
+  background: var(--rv-soft) !important;
+  color: var(--rv-text) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 1px 1px rgba(15,23,42,.03);
+}
+.rv-icon-btn,
+.rv-secondary-btn {
+  min-height: 40px;
+  font-weight: 820;
+}
+.rv-summary-grid {
+  gap: 10px;
+}
+.rv-summary-card {
+  border-radius: 22px;
+  padding: 14px;
+  min-height: 92px;
+}
+.rv-summary-card strong {
+  font-size: clamp(20px, 2vw, 30px);
+  letter-spacing: -.04em;
+  font-weight: 880;
+}
+.rv-layout,
+.rv-small-grid {
+  gap: 10px;
+}
+.rv-card {
+  border-radius: 24px;
+  padding: 12px;
+}
+.rv-card h2 {
+  font-size: clamp(15px, 1.3vw, 18px);
+  letter-spacing: -.025em;
+  font-weight: 850;
+}
+.rv-card--main {
+  min-height: calc(100dvh - 232px);
+  grid-template-rows: auto auto minmax(420px, 1fr) auto !important;
+}
+.rv-main-chart-wrap,
+.rv-small-chart-wrap,
+.rv-fullscreen-canvas-wrap {
+  border-color: var(--rv-border) !important;
+  border-radius: 22px;
+  background: #ffffff !important;
+}
+.rv-main-chart-wrap {
+  min-height: clamp(460px, 58dvh, 760px) !important;
+}
+.rv-side-panel {
+  gap: 10px;
+}
+.rv-day-inspector,
+.rv-events-card {
+  min-height: 0;
+}
+.rv-events-card {
+  max-height: calc(100dvh - 360px);
+}
+.rv-event-row,
+.rv-inspector-grid div,
+.rv-inspector-event,
+.rv-inspector-empty,
+.rv-empty {
+  border-color: var(--rv-border) !important;
+  background: var(--rv-soft) !important;
+  border-radius: 18px !important;
+}
+.rv-filterbar--in-card {
+  background: var(--rv-soft) !important;
+  box-shadow: none !important;
+  border-radius: 18px !important;
+}
+.rv-filterbar--in-card label {
+  background: #fff !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 6px 10px !important;
+}
+.rv-tooltip {
+  background: rgba(255,255,255,.96) !important;
+  border-color: var(--rv-border) !important;
+  box-shadow: 0 16px 40px rgba(15,23,42,.16) !important;
+}
+.rv-fullscreen {
+  background: var(--rv-bg) !important;
+  gap: 10px;
+}
+.rv-fullscreen-head {
+  border-color: var(--rv-border) !important;
+  border-radius: 22px;
+  box-shadow: var(--rv-shadow) !important;
+}
+@media (min-width: 1280px) {
+  .rv-app { padding: 16px 18px; }
+  .rv-layout { grid-template-columns: minmax(0, 1fr) minmax(340px, 420px); }
+  .rv-small-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .rv-small-chart-wrap { height: clamp(250px, 25dvh, 340px); }
+}
+@media (min-width: 1600px) {
+  .rv-layout { grid-template-columns: minmax(0, 1.35fr) minmax(380px, 460px); }
+  .rv-main-chart-wrap { min-height: clamp(540px, 62dvh, 880px) !important; }
+}
+@media (max-width: 920px) {
+  .rv-layout { grid-template-columns: 1fr !important; }
+  .rv-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rv-events-card { max-height: 420px; }
+}

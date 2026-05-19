@@ -91,10 +91,20 @@ window.BillPreview = (() => {
     const hasRemark = !!String(draft.remark || '').trim();
     const logoSize = helpers.logoSize || 54;
     const headerHeight = 154;
-    const footerBaseHeight = hasRemark ? 70 : 42;
-    const thankYouHeight = 22;
+    const remarkReserve = hasRemark ? 96 : 24;
+    const thankYouHeight = 34;
+    const bottomPadding = helpers.bottomPadding || 42;
     const discountRows = Number(draft.discount || 0) > 0 ? 2 : 1;
-    const height = Math.max(260, headerHeight + (items.length * itemBlockHeight) + footerBaseHeight + thankYouHeight + (discountRows * 18) + 42);
+    const height = Math.max(
+      320,
+      headerHeight +
+        (items.length * itemBlockHeight) +
+        remarkReserve +
+        thankYouHeight +
+        (discountRows * lineGap) +
+        bottomPadding +
+        34
+    );
 
     const dpr = Math.min(window.devicePixelRatio || 2, 3);
     const canvas = document.createElement('canvas');
@@ -195,20 +205,25 @@ window.BillPreview = (() => {
     ctx.textAlign = 'right';
     ctx.font = 'bold 18px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.fillText(formatMoney(draft.grand_total || draft.grandTotal || 0, helpers), width - padding, y);
-    y += 25;
+    y += 32;
 
     if (hasRemark) {
       ctx.textAlign = 'left';
       ctx.font = '13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       ctx.fillStyle = '#4b5563';
       const wrap = helpers.wrapText || defaultWrapText;
-      wrap(ctx, 'หมายเหตุ: ' + draft.remark, padding, y, width - (padding * 2), 17);
-      y += 34;
+      const remarkEndY = wrap(ctx, 'หมายเหตุ: ' + draft.remark, padding, y, width - (padding * 2), 17);
+      y = Number.isFinite(remarkEndY) ? remarkEndY + 18 : y + 48;
+    } else {
+      y += 12;
     }
 
+    const thankYouY = Math.min(y, height - padding - 22);
+    ctx.textAlign = 'center';
     ctx.font = 'bold 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.fillStyle = '#0f766e';
-    drawCenteredText(ctx, helpers.thankYouText || 'ขอบคุณที่อุดหนุน', width / 2, y);
+    ctx.fillText(helpers.thankYouText || 'ขอบคุณที่อุดหนุน', width / 2, thankYouY);
+    ctx.textAlign = 'left';
 
     return canvas.toDataURL('image/png');
   }
