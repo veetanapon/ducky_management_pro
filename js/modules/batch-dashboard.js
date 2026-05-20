@@ -90,7 +90,7 @@ window.BatchDashboardPage = (() => {
       return `
         <a class="module-card module-menu-card" href="${href}" aria-label="${escapeHtml(compactTitle(card))} - ${escapeHtml(permissionLabel(card.permission))}">
           <span class="module-card-permission-icon ${badgeClass(card.permission)}" title="${escapeHtml(permissionLabel(card.permission))}" aria-hidden="true">${permissionIcon(card.permission)}</span>
-          <span class="module-menu-icon" aria-hidden="true">${moduleIcon(card.key)}</span>
+          <span class="module-menu-icon module-menu-icon--asset" aria-hidden="true">${moduleIcon(card.key)}</span>
           <span class="module-card-title">${escapeHtml(compactTitle(card))}</span>
         </a>
       `;
@@ -131,7 +131,17 @@ window.BatchDashboardPage = (() => {
   }
 
   function moduleIcon(key) {
-    const icons = {
+    const files = {
+      batch_manage: 'management.png',
+      feed_manage: 'feed.png',
+      egg_daily: 'eggs.png',
+      sale_manage: 'bill.png',
+      batch_access: 'permission.png',
+      liff_routes: 'link.png',
+      report: 'report.png',
+      farm_events: 'activity.png'
+    };
+    const fallback = {
       batch_manage: iconSvg('batch'),
       feed_manage: iconSvg('feed'),
       egg_daily: iconSvg('egg'),
@@ -140,8 +150,10 @@ window.BatchDashboardPage = (() => {
       liff_routes: iconSvg('link'),
       report: iconSvg('report'),
       farm_events: iconSvg('activity')
-    };
-    return icons[key] || iconSvg('grid');
+    }[key] || iconSvg('grid');
+    const file = files[key] || 'default.png';
+    const src = `assets/module-icon/${file}`;
+    return `<img class="module-menu-icon-img" src="${escapeHtml(src)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';"><span class="module-menu-icon-fallback">${fallback}</span>`;
   }
 
   function permissionIcon(value) {

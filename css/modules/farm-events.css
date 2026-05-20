@@ -427,3 +427,107 @@ body[data-page="farm_events"] .event-row-icon--other { background: color-mix(in 
     font-size: 12px;
   }
 }
+
+/* v5.9 activity timeline icon assets + inline edit */
+body[data-page="farm_events"] .event-timeline-bubble--asset {
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  background: #fff;
+}
+body[data-page="farm_events"] .event-timeline-bubble--asset img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
+}
+body[data-page="farm_events"] .event-card-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+body[data-page="farm_events"] .event-edit-link {
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border-soft));
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+  color: var(--primary-dark);
+  border-radius: 999px;
+  padding: 5px 9px;
+  min-height: 28px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 900;
+  white-space: nowrap;
+}
+body[data-page="farm_events"] .event-edit-link:active {
+  transform: translateY(1px);
+}
+@media (max-width: 380px) {
+  body[data-page="farm_events"] .event-card-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* v6.0 event edit sheet: cancel + series scope */
+body[data-page="farm_events"] .event-edit-tools {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--warning) 42%, var(--border-soft));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--warning) 10%, var(--bg-card));
+}
+body[data-page="farm_events"] .event-edit-tools__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+body[data-page="farm_events"] .event-edit-tools__head strong {
+  font-size: 13px;
+  font-weight: 900;
+}
+body[data-page="farm_events"] .event-edit-tools__head span {
+  color: var(--text-sub);
+  font-size: 12px;
+  font-weight: 800;
+}
+body[data-page="farm_events"] .event-series-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--bg-card);
+  margin: 0;
+}
+body[data-page="farm_events"] .event-series-toggle input {
+  width: 18px !important;
+  height: 18px;
+  accent-color: var(--primary);
+}
+body[data-page="farm_events"] .event-series-toggle span {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-main);
+}
+body[data-page="farm_events"] .event-series-note {
+  margin: 0;
+  background: color-mix(in srgb, var(--warning) 8%, var(--bg-card));
+}
+body[data-page="farm_events"] .event-delete-btn {
+  min-height: 42px;
+  border: 1px solid color-mix(in srgb, var(--danger) 44%, var(--border-soft));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--danger) 9%, var(--bg-card));
+  color: var(--danger);
+  font-weight: 900;
+}
+body[data-page="farm_events"] .event-delete-btn:disabled {
+  opacity: .65;
+  cursor: wait;
+}

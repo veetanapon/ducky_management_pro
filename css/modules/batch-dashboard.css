@@ -130,3 +130,29 @@ body[data-page="batch_dashboard"] .module-card-permission-icon.muted-badge {
     font-size: 11px;
   }
 }
+
+/* Asset icon support: loads /assets/module-icon/*.png first, then falls back to built-in SVG. */
+body[data-page="batch_dashboard"] .module-menu-icon--asset {
+  background: #f5f5f3;
+  border-color: #e8e6df;
+  overflow: hidden;
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon-img {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+  display: block;
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon-fallback {
+  width: 100%;
+  height: 100%;
+  display: none;
+  place-items: center;
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon-fallback svg {
+  width: 23px;
+  height: 23px;
+}

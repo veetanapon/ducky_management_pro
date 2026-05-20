@@ -14,6 +14,10 @@ window.ReportPage = (() => {
   };
   let bootstrapped = false;
   let chartLoadPromise = null;
+  let reportSyncPromise = null;
+  const nativeChartMeta = new WeakMap();
+  const REPORT_CACHE_TTL_MS = 2 * 60 * 1000;
+  const REPORT_SYNC_TIMEOUT_MS = 12000;
 
   async function bootstrap() {
     if (bootstrapped) return;
@@ -49,52 +53,92 @@ window.ReportPage = (() => {
     });
   }
 
-  async function load() {
-    setBusy(true, 'กำลังโหลดรายงาน...');
-    const reportCacheKey = `ducky:report:${state.batchId}`;
-    const cachedReport = readReportCache(reportCacheKey);
+  async function load(options = {}) {
+    const force = !!options.force;
+    setBusy(true, force ? 'กำลังโหลดรายงานล่าสุด...' : 'กำลังเปิดรายงานจากเครื่อง...');
 
-    if (cachedReport?.data?.status === 'ok') {
-      hydrateFromResponse(cachedReport.data);
-      setBusy(true, cachedReport.isStale ? 'แสดงข้อมูลจากเครื่องก่อน • กำลังซิงก์รายงานล่าสุด...' : 'แสดงข้อมูลจากเครื่องก่อน • กำลังตรวจสอบรายงานล่าสุด...');
-    }
-
-    const response = await AppApi.post({ action: 'getReportPageData', batch_id: state.batchId });
-    if (!response || response.status !== 'ok') {
-      if (cachedReport?.data?.status === 'ok') {
-        setBusy(false, 'แสดงข้อมูลจากเครื่องอยู่ ยังซิงก์ล่าสุดไม่ได้');
-        return;
-      }
-      setBusy(false, response?.message || 'โหลดรายงานไม่สำเร็จ');
-      setText('reportSubtitle', response?.message || 'โหลดรายงานไม่สำเร็จ');
+    const cached = !force ? readReportCache() : null;
+    if (cached?.data?.status === 'ok') {
+      hydrateFromResponse(cached.data);
+      setBusy(false, `แสดงข้อมูลจากเครื่อง${formatCacheAge(cached.ageMs)} • กำลังซิงก์ล่าสุด...`);
+      syncReportInBackground({ hasCache: true });
       return;
     }
-    writeReportCache(reportCacheKey, response);
-    hydrateFromResponse(response);
-    setBusy(false, state.rows.length ? 'ข้อมูลอ่านจากชีทสรุปที่เตรียมไว้แล้ว' : 'ยังไม่มีข้อมูลรายงาน กด “โหลดข้อมูลใหม่” เพื่อสร้างข้อมูลของ batch นี้');
+
+    await syncReportFromGas({ hasCache: false, showError: true });
   }
 
+  async function syncReportInBackground(options = {}) {
+    if (reportSyncPromise) return reportSyncPromise;
+    reportSyncPromise = syncReportFromGas({ hasCache: !!options.hasCache, showError: false })
+      .finally(() => { reportSyncPromise = null; });
+    return reportSyncPromise;
+  }
 
-  function readReportCache(key) {
+  async function syncReportFromGas(options = {}) {
+    const hasCache = !!options.hasCache;
+    const showError = !!options.showError;
+    const response = await AppApi.post(
+      { action: 'getReportPageData', batch_id: state.batchId },
+      { timeoutMs: REPORT_SYNC_TIMEOUT_MS }
+    );
+
+    if (!response || response.status !== 'ok') {
+      const message = response?.message === 'request_timeout'
+        ? 'เชื่อมต่อ GAS ช้า/timeout กำลังแสดงข้อมูลจาก cache ในเครื่อง'
+        : (response?.message || 'โหลดรายงานไม่สำเร็จ');
+
+      if (hasCache) {
+        setBusy(false, message);
+        return null;
+      }
+
+      setBusy(false, showError ? message : 'ยังไม่มี cache ในเครื่อง และโหลดข้อมูลล่าสุดไม่สำเร็จ');
+      setText('reportSubtitle', showError ? message : 'โหลดรายงานไม่สำเร็จ');
+      return null;
+    }
+
+    writeReportCache(response);
+    hydrateFromResponse(response);
+    setBusy(false, state.rows.length ? 'ซิงก์ข้อมูลรายงานล่าสุดแล้ว' : 'ยังไม่มีข้อมูลรายงาน กด “โหลดข้อมูลใหม่” เพื่อสร้างข้อมูลของ batch นี้');
+    return response;
+  }
+
+  function reportCacheKey() {
+    return `ducky:report:${state.batchId}`;
+  }
+
+  function readReportCache() {
     try {
-      const raw = localStorage.getItem(key);
+      const raw = localStorage.getItem(reportCacheKey());
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      const savedAt = Number(parsed.__cached_at || parsed.savedAt || parsed.saved_at || 0);
-      const data = parsed.value || parsed.data || null;
-      const age = savedAt ? Date.now() - savedAt : Infinity;
-      return { data, isStale: age > 2 * 60 * 1000, age, savedAt };
-    } catch (_) {
+      const isEnvelope = parsed && typeof parsed === 'object' && Object.prototype.hasOwnProperty.call(parsed, 'value');
+      const data = isEnvelope ? parsed.value : parsed;
+      const cachedAt = Number(isEnvelope ? parsed.__cached_at : (parsed.__cached_at || 0)) || 0;
+      return { data, cachedAt, ageMs: cachedAt ? Date.now() - cachedAt : null };
+    } catch (error) {
+      console.warn('Report cache read failed', error);
       return null;
     }
   }
 
-  function writeReportCache(key, data) {
-    if (window.AppCache) AppCache.writeEnvelope(key, data);
-    else {
-      try { localStorage.setItem(key, JSON.stringify({ __cached_at: Date.now(), value: data })); } catch (_) {}
+  function writeReportCache(response) {
+    try {
+      if (window.AppCache?.writeEnvelope) AppCache.writeEnvelope(reportCacheKey(), response);
+      else localStorage.setItem(reportCacheKey(), JSON.stringify({ __cached_at: Date.now(), value: response }));
+    } catch (error) {
+      console.warn('Report cache write failed', error);
     }
   }
+
+  function formatCacheAge(ageMs) {
+    if (ageMs == null || Number.isNaN(Number(ageMs))) return '';
+    if (ageMs < 60 * 1000) return ' • cache ล่าสุดไม่ถึง 1 นาที';
+    if (ageMs < 60 * 60 * 1000) return ` • cache ${Math.round(ageMs / 60000)} นาทีที่แล้ว`;
+    return ` • cache ${Math.round(ageMs / 3600000)} ชม.ที่แล้ว`;
+  }
+
 
   function hydrateFromResponse(response) {
     state.batch = response.batch;
@@ -211,7 +255,7 @@ window.ReportPage = (() => {
         <td class="report-date-cell">${escapeHtml(dayOnly(row))}</td>
         <td>${fmtCompact(row.egg_daily)}</td>
         <td>${fmtPercent(row.egg_percent)}</td>
-        <td>${fmtCompact(row.feed_out)}</td>
+        <td>${fmtFeed(row.feed_out)}</td>
         <td>${fmtCompact(row.feed_cost)}</td>
         <td>${fmtCompact(row.egg_income)}</td>
         <td class="${Number(row.total_income || 0) < 0 ? 'report-negative' : 'report-positive'}">${fmtCompact(row.total_income)}</td>
@@ -250,7 +294,7 @@ window.ReportPage = (() => {
         <td class="report-total-label">${escapeHtml(label)}</td>
         <td>${fmtCompact(total.egg_daily)}</td>
         <td>-</td>
-        <td>${fmtCompact(total.feed_out)}</td>
+        <td>${fmtFeed(total.feed_out)}</td>
         <td>${fmtCompact(total.feed_cost)}</td>
         <td>${fmtCompact(total.egg_income)}</td>
         <td class="${Number(total.total_income || 0) < 0 ? 'report-negative' : 'report-positive'}">${fmtCompact(total.total_income)}</td>
@@ -303,8 +347,8 @@ window.ReportPage = (() => {
       data: {
         labels,
         datasets: [
-          { label: 'ไข่รายวัน', data: eggRows.map((r) => Number(r.egg_daily || 0)), yAxisID: 'y' },
-          { label: '% ไข่', data: eggRows.map((r) => Number(r.egg_percent || 0)), type: 'line', yAxisID: 'y1' }
+          { label: 'ไข่รายวัน', data: eggRows.map((r) => Number(r.egg_daily || 0)), yAxisID: 'y', backgroundColor: '#2563eb', borderColor: '#1d4ed8', borderWidth: 1.2, borderRadius: 5, maxBarThickness: 18 },
+          { label: '% ไข่', data: eggRows.map((r) => Number(r.egg_percent || 0)), type: 'line', yAxisID: 'y1', borderColor: '#f97316', backgroundColor: '#f97316', borderWidth: 2.5, pointRadius: 2.6, pointHoverRadius: 5, tension: .25 }
         ]
       },
       options: chartOptions({ rightAxis: true })
@@ -313,9 +357,15 @@ window.ReportPage = (() => {
     const feedTypes = Array.from(new Set(feedRows.map(feedSeriesName)));
     const dateKeys = Array.from(new Set(feedRows.map((r) => String(r.date_key || '')))).filter(Boolean).sort();
     const feedLabels = dateKeys.map((key) => chartLabel(feedRows.find((r) => String(r.date_key || '') === key) || { date_key: key }));
-    const feedDatasets = feedTypes.map((name) => ({
+    const chartColors = chartPalette();
+    const feedDatasets = feedTypes.map((name, index) => ({
       label: name,
-      data: dateKeys.map((key) => feedRows.filter((r) => String(r.date_key || '') === key && feedSeriesName(r) === name).reduce((sum, r) => sum + Number(r.feed_out || 0), 0))
+      data: dateKeys.map((key) => feedRows.filter((r) => String(r.date_key || '') === key && feedSeriesName(r) === name).reduce((sum, r) => sum + Number(r.feed_out || 0), 0)),
+      backgroundColor: chartColors[index % chartColors.length],
+      borderColor: chartColors[index % chartColors.length],
+      borderWidth: 1,
+      borderRadius: 4,
+      maxBarThickness: 18
     }));
     prepareChartCanvas(feedCanvas, feedLabels.length);
     state.charts.feed = new Chart(feedCanvas, {
@@ -330,7 +380,7 @@ window.ReportPage = (() => {
       type: 'bar',
       data: {
         labels: duckLabels,
-        datasets: [{ label: 'เป็ดตาย', data: duckRows.map((r) => Number(r.duck_dead || 0)) }]
+        datasets: [{ label: 'เป็ดตาย', data: duckRows.map((r) => Number(r.duck_dead || 0)), backgroundColor: '#dc2626', borderColor: '#b91c1c', borderWidth: 1.2, borderRadius: 5, maxBarThickness: 18 }]
       },
       options: chartOptions()
     });
@@ -343,9 +393,15 @@ window.ReportPage = (() => {
     const feedTypes = Array.from(new Set(feedRows.map(feedSeriesName)));
     const dateKeys = Array.from(new Set(feedRows.map((r) => String(r.date_key || '')))).filter(Boolean).sort();
     const feedLabels = dateKeys.map((key) => chartLabel(feedRows.find((r) => String(r.date_key || '') === key) || { date_key: key }));
-    const feedDatasets = feedTypes.map((name) => ({
+    const chartColors = chartPalette();
+    const feedDatasets = feedTypes.map((name, index) => ({
       label: name,
-      data: dateKeys.map((key) => feedRows.filter((r) => String(r.date_key || '') === key && feedSeriesName(r) === name).reduce((sum, r) => sum + Number(r.feed_out || 0), 0))
+      data: dateKeys.map((key) => feedRows.filter((r) => String(r.date_key || '') === key && feedSeriesName(r) === name).reduce((sum, r) => sum + Number(r.feed_out || 0), 0)),
+      backgroundColor: chartColors[index % chartColors.length],
+      borderColor: chartColors[index % chartColors.length],
+      borderWidth: 1,
+      borderRadius: 4,
+      maxBarThickness: 18
     }));
     drawStackedCanvasChart('feedChart', feedLabels, feedDatasets);
 
@@ -382,7 +438,7 @@ window.ReportPage = (() => {
         <td>${fmt(row.duck_remain)}</td>
         <td>${fmt(row.egg_daily)}</td>
         <td>${fmt(row.egg_percent)}</td>
-        <td>${fmt(row.feed_out)}</td>
+        <td>${fmtFeed(row.feed_out)}</td>
         <td>${fmt(row.feed_cost)}</td>
         <td>${fmt(row.egg_income)}</td>
         <td class="${Number(row.total_income || 0) < 0 ? 'report-negative' : 'report-positive'}">${fmt(row.total_income)}</td>
@@ -397,7 +453,7 @@ window.ReportPage = (() => {
           <td>${fmt(total.duck_remain)}</td>
           <td>${fmt(total.egg_daily)}</td>
           <td>-</td>
-          <td>${fmt(total.feed_out)}</td>
+          <td>${fmtFeed(total.feed_out)}</td>
           <td>${fmt(total.feed_cost)}</td>
           <td>${fmt(total.egg_income)}</td>
           <td class="${Number(total.total_income || 0) < 0 ? 'report-negative' : 'report-positive'}">${fmt(total.total_income)}</td>
@@ -468,9 +524,9 @@ window.ReportPage = (() => {
       return;
     }
     setText('reportHint', `สร้างข้อมูลใหม่แล้ว ${Number(response.rows || 0).toLocaleString('th-TH')} แถว กำลังโหลดผลล่าสุด...`);
-    await load();
+    await load({ force: true });
     setButtonLoading('reportRebuildBtn', false);
-    setBusy(false, 'โหลดข้อมูลรายงานล่าสุดแล้ว');
+    setBusy(false, state.rows.length ? 'โหลดข้อมูลรายงานล่าสุดแล้ว' : 'สร้างข้อมูลแล้ว แต่ยังโหลดผลล่าสุดไม่สำเร็จ');
   }
 
 
@@ -593,6 +649,41 @@ window.ReportPage = (() => {
     return chartLoadPromise;
   }
 
+  function chartPalette() {
+    return ['#2563eb', '#0ea5e9', '#10b981', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#64748b'];
+  }
+
+  function shouldDrawValueLabels(count) {
+    return count <= 35;
+  }
+
+  function fmtChartNumber(value) {
+    const n = Number(value || 0);
+    if (!Number.isFinite(n)) return '0';
+    return n.toLocaleString('th-TH', {
+      minimumFractionDigits: Number.isInteger(n) ? 0 : 1,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function drawValueLabel(ctx, text, x, y, color, ratio) {
+    const safe = String(text || '0');
+    ctx.save();
+    ctx.font = `${9.5 * ratio}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    const metrics = ctx.measureText(safe);
+    const padX = 3 * ratio;
+    const h = 13 * ratio;
+    const w = metrics.width + padX * 2;
+    const bx = x - w / 2;
+    const by = Math.max(2 * ratio, y - h);
+    roundedRect(ctx, bx, by, w, h, 4, 'rgba(255,255,255,.88)');
+    ctx.fillStyle = color || '#0f172a';
+    ctx.fillText(safe, x, by + h - 2 * ratio);
+    ctx.restore();
+  }
+
   function drawBarCanvasChart(canvasId, labels, data, label) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
@@ -602,14 +693,20 @@ window.ReportPage = (() => {
     clearCanvas(ctx, canvas);
     drawAxes(ctx, box, labels);
     const max = Math.max(1, ...data.map(Number));
-    const barW = Math.max(4, Math.min(18, box.w / Math.max(1, labels.length) * .58));
-    const color = cssVar('--primary') || '#0ea5a4';
-    labels.forEach((_, i) => {
+    const barW = Math.max(5, Math.min(20, box.w / Math.max(1, labels.length) * .62));
+    const color = '#dc2626';
+    const points = [];
+    labels.forEach((lab, i) => {
+      const value = Number(data[i] || 0);
       const x = box.x + (i + .5) * box.w / Math.max(1, labels.length);
-      const h = (Number(data[i] || 0) / max) * box.h;
-      roundedRect(ctx, x - barW / 2, box.y + box.h - h, barW, h, 4, color);
+      const h = (value / max) * box.h;
+      const y = box.y + box.h - h;
+      roundedRect(ctx, x - barW / 2, y, barW, h, 4, color);
+      if (value > 0 && shouldDrawValueLabels(labels.length)) drawValueLabel(ctx, fmtChartNumber(value), x, y - 2 * box.ratio, color, box.ratio);
+      points.push({ x, y, label: lab, items: [{ label, value, color }] });
     });
     drawLegend(ctx, [{ label, color }], canvas);
+    registerNativeChartTooltip(canvas, points);
   }
 
   function drawComboCanvasChart(canvasId, labels, bars, line, barLabel, lineLabel) {
@@ -622,13 +719,22 @@ window.ReportPage = (() => {
     drawAxes(ctx, box, labels);
     const maxBar = Math.max(1, ...bars.map(Number));
     const maxLine = Math.max(1, ...line.map(Number));
-    const barColor = cssVar('--primary') || '#0ea5a4';
-    const lineColor = '#f59e0b';
-    const barW = Math.max(4, Math.min(18, box.w / Math.max(1, labels.length) * .58));
-    labels.forEach((_, i) => {
+    const barColor = '#2563eb';
+    const lineColor = '#f97316';
+    const barW = Math.max(5, Math.min(20, box.w / Math.max(1, labels.length) * .62));
+    const points = [];
+    labels.forEach((lab, i) => {
+      const barValue = Number(bars[i] || 0);
+      const percentValue = Number(line[i] || 0);
       const x = box.x + (i + .5) * box.w / Math.max(1, labels.length);
-      const h = (Number(bars[i] || 0) / maxBar) * box.h;
-      roundedRect(ctx, x - barW / 2, box.y + box.h - h, barW, h, 4, barColor);
+      const h = (barValue / maxBar) * box.h;
+      const y = box.y + box.h - h;
+      roundedRect(ctx, x - barW / 2, y, barW, h, 4, barColor);
+      if (barValue > 0 && shouldDrawValueLabels(labels.length)) drawValueLabel(ctx, fmtChartNumber(barValue), x, y - 2 * box.ratio, barColor, box.ratio);
+      points.push({ x, y, label: lab, items: [
+        { label: barLabel, value: barValue, color: barColor },
+        { label: lineLabel, value: percentValue, color: lineColor, suffix: '%' }
+      ] });
     });
     ctx.beginPath();
     labels.forEach((_, i) => {
@@ -638,9 +744,21 @@ window.ReportPage = (() => {
       else ctx.lineTo(x, y);
     });
     ctx.strokeStyle = lineColor;
-    ctx.lineWidth = 2.2 * dpr();
+    ctx.lineWidth = 2.4 * dpr();
     ctx.stroke();
+    labels.forEach((_, i) => {
+      const x = box.x + (i + .5) * box.w / Math.max(1, labels.length);
+      const y = box.y + box.h - (Number(line[i] || 0) / maxLine) * box.h;
+      ctx.fillStyle = lineColor;
+      ctx.beginPath();
+      ctx.arc(x, y, 2.4 * box.ratio, 0, Math.PI * 2);
+      ctx.fill();
+      if (Number(line[i] || 0) > 0 && shouldDrawValueLabels(labels.length) && i % 2 === 0) {
+        drawValueLabel(ctx, `${fmtChartNumber(line[i])}%`, x, y - 5 * box.ratio, lineColor, box.ratio);
+      }
+    });
     drawLegend(ctx, [{ label: barLabel, color: barColor }, { label: lineLabel, color: lineColor }], canvas);
+    registerNativeChartTooltip(canvas, points);
   }
 
   function drawStackedCanvasChart(canvasId, labels, datasets) {
@@ -651,27 +769,87 @@ window.ReportPage = (() => {
     const box = chartBox(canvas);
     clearCanvas(ctx, canvas);
     drawAxes(ctx, box, labels);
-    const palette = ['#0ea5a4', '#3b82f6', '#f59e0b', '#8b5cf6', '#22c55e', '#ef4444', '#14b8a6', '#64748b'];
+    const palette = chartPalette();
     const totals = labels.map((_, i) => datasets.reduce((sum, ds) => sum + Number(ds.data[i] || 0), 0));
     const max = Math.max(1, ...totals);
-    const barW = Math.max(4, Math.min(18, box.w / Math.max(1, labels.length) * .58));
-    labels.forEach((_, i) => {
+    const barW = Math.max(5, Math.min(20, box.w / Math.max(1, labels.length) * .62));
+    const points = [];
+    labels.forEach((lab, i) => {
       const x = box.x + (i + .5) * box.w / Math.max(1, labels.length);
       let y = box.y + box.h;
+      const items = [];
       datasets.forEach((ds, j) => {
-        const h = (Number(ds.data[i] || 0) / max) * box.h;
-        if (h > 0) roundedRect(ctx, x - barW / 2, y - h, barW, h, 2, palette[j % palette.length]);
+        const value = Number(ds.data[i] || 0);
+        const h = (value / max) * box.h;
+        const color = palette[j % palette.length];
+        if (h > 0) roundedRect(ctx, x - barW / 2, y - h, barW, h, 2, color);
         y -= h;
+        if (value > 0) items.push({ label: ds.label, value, color });
       });
+      if (totals[i] > 0 && shouldDrawValueLabels(labels.length)) drawValueLabel(ctx, fmtChartNumber(totals[i]), x, y - 2 * box.ratio, '#0f766e', box.ratio);
+      points.push({ x, y, label: lab, items: [{ label: 'รวม', value: totals[i], color: '#0f766e' }].concat(items) });
     });
     drawLegend(ctx, datasets.slice(0, 4).map((ds, i) => ({ label: ds.label, color: palette[i % palette.length] })), canvas);
+    registerNativeChartTooltip(canvas, points);
+  }
+
+  function registerNativeChartTooltip(canvas, points) {
+    nativeChartMeta.set(canvas, { points: points || [] });
+    if (canvas.dataset.reportTooltipBound === '1') return;
+    canvas.dataset.reportTooltipBound = '1';
+    const move = (event) => showNativeChartTooltip(canvas, event);
+    canvas.addEventListener('mousemove', move);
+    canvas.addEventListener('touchstart', move, { passive: true });
+    canvas.addEventListener('touchmove', move, { passive: true });
+    canvas.addEventListener('mouseleave', hideNativeChartTooltip);
+    canvas.addEventListener('touchend', () => setTimeout(hideNativeChartTooltip, 900), { passive: true });
+  }
+
+  function ensureNativeChartTooltip() {
+    let el = document.getElementById('reportNativeTooltip');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'reportNativeTooltip';
+    el.className = 'report-native-tooltip hidden';
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function showNativeChartTooltip(canvas, event) {
+    const meta = nativeChartMeta.get(canvas);
+    if (!meta || !meta.points?.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const pointer = event.touches?.[0] || event;
+    const cssX = pointer.clientX - rect.left;
+    const canvasX = cssX * (canvas.width / Math.max(1, rect.width));
+    let nearest = null;
+    let best = Infinity;
+    meta.points.forEach((p) => {
+      const d = Math.abs(Number(p.x || 0) - canvasX);
+      if (d < best) { best = d; nearest = p; }
+    });
+    if (!nearest || best > 32 * dpr()) return hideNativeChartTooltip();
+    const el = ensureNativeChartTooltip();
+    el.innerHTML = `<b>${escapeHtml(nearest.label || '-')}</b>` + (nearest.items || []).map((item) => {
+      const value = fmtChartNumber(item.value) + (item.suffix || '');
+      return `<div><i style="background:${escapeHtml(item.color || '#64748b')}"></i><span>${escapeHtml(item.label || '')}</span><strong>${escapeHtml(value)}</strong></div>`;
+    }).join('');
+    const left = Math.min(window.innerWidth - 18, Math.max(8, pointer.clientX + 10));
+    const top = Math.min(window.innerHeight - 18, Math.max(8, pointer.clientY + 10));
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    el.classList.remove('hidden');
+  }
+
+  function hideNativeChartTooltip() {
+    document.getElementById('reportNativeTooltip')?.classList.add('hidden');
   }
 
   function prepareNativeCanvas(canvas, labelCount = 0) {
     const wrap = canvas.closest('.report-chart-canvas');
     const baseW = wrap?.clientWidth || 320;
     const cssW = Math.max(baseW, Math.min(2400, Math.max(1, labelCount) * (state.selectedMonth === 'all' ? 24 : 18)));
-    const cssH = 240;
+    const cssH = 270;
     canvas.style.width = `${cssW}px`;
     canvas.style.height = `${cssH}px`;
     const ratio = dpr();
@@ -683,7 +861,7 @@ window.ReportPage = (() => {
 
   function chartBox(canvas) {
     const ratio = dpr();
-    return { x: 34 * ratio, y: 18 * ratio, w: canvas.width - 48 * ratio, h: canvas.height - 68 * ratio, ratio };
+    return { x: 36 * ratio, y: 30 * ratio, w: canvas.width - 54 * ratio, h: canvas.height - 88 * ratio, ratio };
   }
 
   function clearCanvas(ctx, canvas) {
@@ -756,11 +934,29 @@ window.ReportPage = (() => {
     return {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom' } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true } },
+        tooltip: {
+          enabled: true,
+          backgroundColor: 'rgba(15, 23, 42, .92)',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          padding: 10,
+          cornerRadius: 10,
+          callbacks: {
+            label(ctx) {
+              const label = ctx.dataset?.label || '';
+              const value = ctx.parsed?.y ?? ctx.raw ?? 0;
+              return `${label}: ${fmtChartNumber(value)}`;
+            }
+          }
+        }
+      },
       scales: {
-        x: { stacked },
-        y: { stacked, beginAtZero: true },
-        ...(rightAxis ? { y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } } : {})
+        x: { stacked, grid: { display: false }, ticks: { color: '#64748b', maxRotation: 0, autoSkip: true } },
+        y: { stacked, beginAtZero: true, grid: { color: 'rgba(148, 163, 184, .25)' }, ticks: { color: '#64748b' } },
+        ...(rightAxis ? { y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#f97316' } } } : {})
       }
     };
   }
@@ -812,6 +1008,7 @@ window.ReportPage = (() => {
   function money(value) { return Number(value || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 }); }
   function fmtCompact(value) { return Number(value || 0).toLocaleString('th-TH', { maximumFractionDigits: 0 }); }
   function fmtPercent(value) { return Number(value || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 }); }
+  function fmtFeed(value) { const n = Number(value || 0); return n.toLocaleString('th-TH', { minimumFractionDigits: Number.isInteger(n) ? 0 : 1, maximumFractionDigits: 2 }); }
   function shortDate(value) { return String(value || '').replace(/ \d{4}$/, ''); }
   function dayOnly(row) {
     const key = String(row?.date_key || '');

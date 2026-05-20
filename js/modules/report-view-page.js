@@ -42,6 +42,21 @@ window.ReportViewPage = (() => {
     feed_in: '📦',
     feed_change: '🔁'
   };
+
+  // Optional PNG icons for markers plotted on the charts only.
+  // Put files in /assets/report-icon/. If a file is missing, the chart falls back to emoji.
+  const chartMarkerIconFiles = {
+    injection: 'injection.png',
+    rain: 'rain.png',
+    duck_cull: 'duck.png',
+    vitamin: 'vitamin.png',
+    medicine: 'medicine.png',
+    feed_swap: 'feed-swap.png',
+    feed_change: 'feed-swap.png',
+    feed_in: 'feed-in.png',
+    other: 'activity.png'
+  };
+  const chartMarkerImageCache = new Map();
   const eventLabelMap = {
     injection: 'ฉีดยา',
     rain: 'ฝนตก',
@@ -182,7 +197,7 @@ window.ReportViewPage = (() => {
     }
     target.innerHTML = events.slice(0, 220).map((event) => `
       <button type="button" class="rv-event-row" data-date-key="${esc(event.dateKey)}">
-        <span class="rv-event-icon">${iconFor(event.type, event.subtype, event.severity)}</span>
+        ${eventTimelineIconHtml(event, "rv-event-icon")}
         <span class="rv-event-date">${esc(shortDate(event.dateKey))}</span>
         <span class="rv-event-text"><b>${esc(event.title || eventLabel(event.type))}</b><small>${esc(event.detail || '')}</small></span>
         ${event.cost ? `<span class="rv-event-cost">${money(event.cost)}</span>` : ''}
@@ -216,7 +231,7 @@ window.ReportViewPage = (() => {
       </div>
       <div class="rv-inspector-events">
         ${selected.timeline.length ? selected.timeline.map((event) => `
-          <div class="rv-inspector-event"><span>${iconFor(event.type, event.subtype, event.severity)}</span><div><b>${esc(event.title || eventLabel(event.type))}</b><p>${esc(event.detail || '')}</p></div>${event.cost ? `<strong>${money(event.cost)}</strong>` : ''}</div>
+          <div class="rv-inspector-event">${eventTimelineIconHtml(event, "rv-inspector-event-icon")}<div><b>${esc(event.title || eventLabel(event.type))}</b><p>${esc(event.detail || '')}</p></div>${event.cost ? `<strong>${money(event.cost)}</strong>` : ''}</div>
         `).join('') : '<div class="rv-empty">วันนี้ไม่มีเหตุการณ์เพิ่มเติม</div>'}
       </div>
     `;
@@ -846,19 +861,59 @@ window.ReportViewPage = (() => {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = '20px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", system-ui, sans-serif';
-    markers.forEach((marker) => {
-      const icon = iconFor(marker.type, marker.subtype, marker.severity);
-      // Plain icon only: no circle/border, so event markers do not compete with the chart.
-      ctx.save();
-      ctx.shadowColor = 'rgba(15, 23, 42, .16)';
-      ctx.shadowBlur = 4;
-      ctx.shadowOffsetY = 1;
-      ctx.fillStyle = '#111827';
-      ctx.fillText(icon, marker.x, marker.y + 0.8);
-      ctx.restore();
-    });
+    markers.forEach((marker) => drawChartMarkerIcon(ctx, marker));
     ctx.restore();
     attachCanvasInteractions(canvas);
+  }
+
+  function drawChartMarkerIcon(ctx, marker) {
+    const image = getChartMarkerImage(marker.type, marker.subtype, marker.severity);
+    const size = marker.type === 'feed_in' || marker.type === 'feed_change' ? 24 : 22;
+    ctx.save();
+    ctx.shadowColor = 'rgba(15, 23, 42, .16)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 1;
+
+    if (image && image.complete && image.naturalWidth > 0) {
+      ctx.drawImage(image, marker.x - size / 2, marker.y - size / 2, size, size);
+    } else {
+      ctx.fillStyle = '#111827';
+      ctx.fillText(iconFor(marker.type, marker.subtype, marker.severity), marker.x, marker.y + 0.8);
+    }
+    ctx.restore();
+  }
+
+  function getChartMarkerImage(type, subtype, severity) {
+    const normalizedType = normalizeMarkerIconType(type, subtype, severity);
+    const file = chartMarkerIconFiles[normalizedType];
+    if (!file) return null;
+    const src = `assets/report-icon/${file}`;
+    if (chartMarkerImageCache.has(src)) return chartMarkerImageCache.get(src);
+
+    const img = new Image();
+    img.onload = () => renderCharts();
+    img.onerror = () => { chartMarkerImageCache.set(src, null); };
+    img.src = src;
+    chartMarkerImageCache.set(src, img);
+    return img;
+  }
+
+  function normalizeMarkerIconType(type, subtype, severity) {
+    const t = normalizeEventType(type);
+    if (t === 'rain' && (severity === 'high' || subtype === 'heavy')) return 'rain';
+    return t;
+  }
+
+
+  function eventTimelineIconHtml(event, className) {
+    const type = event?.type || event?.event_type || 'other';
+    const subtype = event?.subtype || event?.event_subtype || '';
+    const severity = event?.severity || '';
+    const normalizedType = normalizeMarkerIconType(type, subtype, severity);
+    const file = chartMarkerIconFiles[normalizedType];
+    const fallback = iconFor(type, subtype, severity);
+    if (!file) return `<span class="${esc(className || 'rv-event-icon')}">${esc(fallback)}</span>`;
+    return `<span class="${esc(className || 'rv-event-icon')} rv-event-icon--asset" data-fallback="${escapeAttr(fallback)}"><img src="assets/report-icon/${esc(file)}" alt="" loading="lazy" onerror="this.parentElement.textContent=this.parentElement.dataset.fallback||'•';" /></span>`;
   }
 
   function drawMarkerGlyph(ctx, marker, color) {
@@ -1140,6 +1195,7 @@ window.ReportViewPage = (() => {
     `;
   }
 
+
   function scopedValue(dateKey) { return String(dateKey || '').slice(0, 7); }
   function normalizeDateKey(value) { return value ? String(value).slice(0, 10) : ''; }
   function scopedByMonth(dateKey) { return state.selectedMonth === 'all' || scopedValue(dateKey) === state.selectedMonth; }
@@ -1199,6 +1255,7 @@ window.ReportViewPage = (() => {
   function thaiMonth(key) { const p = String(key || '').split('-'); const y = Number(p[0] || 0); const m = Number(p[1] || 0); const names = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']; return `${names[m - 1] || key} ${y ? y + 543 : ''}`; }
   function parseDate(key) { const p = String(key || '').slice(0, 10).split('-').map(Number); return p.length === 3 && p[0] ? new Date(p[0], p[1] - 1, p[2]) : null; }
   function shortDateTime(value) { return String(value || '').replace('T', ' ').slice(0, 16) || '-'; }
+  function escapeAttr(value) { return String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' }[ch])).replace(/`/g, '&#096;'); }
   function esc(value) { return String(value ?? '').replace(/[&<>'"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[m])); }
   function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text || ''; }
   function debounce(fn, delay) { let timer; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); }; }

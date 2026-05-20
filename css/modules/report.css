@@ -636,95 +636,65 @@ body[data-page="report"] .report-action-row button {
   body[data-page="report"] .report-action-row { grid-template-columns: 1fr; }
 }
 
-
-/* ===== v5.6: main-app report sizing guard + no body overflow ===== */
-body[data-page="report"] {
-  overflow-x: hidden;
+/* ===== v5.8 report chart readability ===== */
+body[data-page="report"] .report-chart-card {
+  border-color: color-mix(in srgb, var(--border-soft) 82%, #cbd5e1);
+  background: color-mix(in srgb, var(--bg-card) 98%, #f8fafc);
 }
-
-body[data-page="report"] .app-header.container,
-body[data-page="report"] .page-body.report-page {
-  width: 100%;
-  max-width: min(100%, 460px) !important;
-  margin-inline: auto;
-  padding-left: max(14px, env(safe-area-inset-left));
-  padding-right: max(14px, env(safe-area-inset-right));
+body[data-page="report"] .report-chart-card h4 {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text-main);
 }
-
-body[data-page="report"] .report-hero,
-body[data-page="report"] .report-toolbar,
-body[data-page="report"] .report-panel,
-body[data-page="report"] .report-chart-card,
-body[data-page="report"] .report-summary-card,
-body[data-page="report"] .report-compact-table,
-body[data-page="report"] .report-table-scroll {
+body[data-page="report"] .report-chart-canvas {
+  border: 1px solid color-mix(in srgb, var(--border-soft) 88%, #cbd5e1);
+  border-radius: 16px;
+  background: #ffffff;
+  padding-top: 2px;
+}
+body[data-page="report"] .report-chart-canvas canvas {
+  height: 270px !important;
+}
+.report-native-tooltip {
+  position: fixed;
+  z-index: 9999;
+  min-width: 142px;
+  max-width: min(260px, calc(100vw - 16px));
+  padding: 10px 11px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, .12);
+  background: rgba(15, 23, 42, .94);
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .22);
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.report-native-tooltip b {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.report-native-tooltip div {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+.report-native-tooltip i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+.report-native-tooltip span {
   min-width: 0;
-  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255,255,255,.82);
 }
-
-body[data-page="report"] .report-action-row {
-  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
-}
-
-body[data-page="report"] .report-action-row button,
-body[data-page="report"] .report-wide-btn,
-body[data-page="report"] .report-fullscreen-actions button {
-  white-space: normal;
-  line-height: 1.15;
-  min-width: 0;
-}
-
-body[data-page="report"] .report-panel-head {
-  min-width: 0;
-  align-items: flex-start;
-}
-
-body[data-page="report"] .report-panel-head > div {
-  min-width: 0;
-}
-
-body[data-page="report"] .report-wide-btn {
-  flex: 0 0 auto;
-  max-width: 118px;
-}
-
-body[data-page="report"] .report-table-scroll {
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-inline: contain;
-}
-
-body[data-page="report"] .report-table--compact {
-  width: max-content;
-  min-width: 100%;
-  max-width: none;
-}
-
-@media (min-width: 760px) {
-  body[data-page="report"] .app-header.container,
-  body[data-page="report"] .page-body.report-page {
-    max-width: min(100%, 560px) !important;
-  }
-}
-
-@media (max-width: 430px) {
-  body[data-page="report"] .report-action-row {
-    grid-template-columns: 1fr 1fr;
-  }
-  body[data-page="report"] .report-action-row button:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-  }
-  body[data-page="report"] .report-panel-head {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-}
-
-@media (max-width: 360px) {
-  body[data-page="report"] .report-action-row {
-    grid-template-columns: 1fr;
-  }
-  body[data-page="report"] .report-wide-btn {
-    max-width: none;
-  }
+.report-native-tooltip strong {
+  font-variant-numeric: tabular-nums;
 }
