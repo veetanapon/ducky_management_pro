@@ -154,6 +154,10 @@ textarea {
   background: color-mix(in srgb, var(--warning) 7%, var(--bg-card));
 }
 
+.liff-section--feed {
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-card));
+}
+
 .section-title-row {
   display: flex;
   align-items: flex-start;
@@ -226,7 +230,8 @@ textarea::placeholder {
   color: color-mix(in srgb, var(--text-sub) 76%, transparent);
 }
 
-.egg-grid {
+.egg-grid,
+.feed-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
@@ -316,28 +321,7 @@ input #log-date {
     padding-right: 10px;
   }
 
-  .egg-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-
-/* Worker LIFF feed section */
-.liff-section--feed {
-  background: color-mix(in srgb, var(--primary) 6%, var(--bg-card));
-}
-
-.feed-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-#feed_remark {
-  margin-top: 0;
-}
-
-@media (max-width: 360px) {
+  .egg-grid,
   .feed-grid {
     grid-template-columns: 1fr;
   }

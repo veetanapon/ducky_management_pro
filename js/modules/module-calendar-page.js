@@ -1,5 +1,5 @@
 window.ModuleCalendarPage = (() => {
-  const state = { batch: null, moduleType: '', month: '', permission: 'none', data: null, feedLots: [], feedLotMap: {}, feedLotById: {}, feedEditDate: '', feedEditRows: [], saleType: '', salePriceSet: null, salePriceItems: [], salePriceLoaded: false, billDraft: null, billPreviewImage: '', saleEditBillId: '', saleRangeRows: [], saleRangeTotals: null, saleRangeImage: '', preBillReviewId: '', priceLoadPromise: null, logoUrl: 'assets/farm-logo.png' };
+  const state = { batch: null, moduleType: '', month: '', permission: 'none', data: null, feedLots: [], feedLotMap: {}, feedLotById: {}, feedEditDate: '', feedEditRows: [], saleType: '', salePriceSet: null, salePriceItems: [], salePriceLoaded: false, billDraft: null, billPreviewImage: '', saleEditBillId: '', saleRangeRows: [], saleRangeTotals: null, saleRangeImage: '', preBillReviewId: '', pendingFeed: [], priceLoadPromise: null, logoUrl: 'assets/farm-logo.png' };
   const CACHE_TTL_MS = 60 * 1000;
   const EGG_TYPE_OPTIONS = [
     { key: 'qty_all', label: 'ไข่รวม' },
@@ -48,6 +48,9 @@ function bindBaseEvents() {
     document.getElementById('feedEntryList')?.addEventListener('click', onFeedEntryListClick);
     document.getElementById('feedEntryList')?.addEventListener('change', onFeedEntryListChange);
     document.getElementById('feedEntryList')?.addEventListener('input', onFeedEntryListInput);
+    document.addEventListener('click', onPendingFeedClick);
+    document.addEventListener('change', onPendingFeedChange);
+    document.addEventListener('input', onPendingFeedInput);
 
     document.getElementById('eggDailyCloseBtn')?.addEventListener('click', closeEggDailySheet);
     document.getElementById('eggDailyBackdrop')?.addEventListener('click', closeEggDailySheet);
@@ -112,6 +115,7 @@ function bindBaseEvents() {
     state.permission = response.permission || 'none';
     state.data = response;
     setFeedLots(response.feed_lots);
+    state.pendingFeed = Array.isArray(response.pending_feed_consumptions) ? response.pending_feed_consumptions : [];
 
     if (state.permission === 'none') {
       renderNoAccess();
@@ -120,6 +124,7 @@ function bindBaseEvents() {
 
     renderHeader();
     renderSummary();
+    renderPendingFeedPanel();
     renderCalendar();
     initSaleRangeSummaryDefaults();
     // renderRecentLogs();
@@ -192,6 +197,167 @@ function bindBaseEvents() {
   }
 
   
+
+  function ensurePendingFeedPanel() {
+    let panel = document.getElementById('pendingFeedPanel');
+    const summary = document.getElementById('moduleSummaryCards');
+    if (!summary || state.moduleType !== 'feed_manage') {
+      if (panel) panel.remove();
+      return null;
+    }
+    if (!panel) {
+      panel = document.createElement('section');
+      panel.id = 'pendingFeedPanel';
+      panel.className = 'card-panel pre-feed-panel hidden';
+      summary.insertAdjacentElement('afterend', panel);
+    }
+    return panel;
+  }
+
+  function renderPendingFeedPanel() {
+    const panel = ensurePendingFeedPanel();
+    if (!panel) return;
+    const rows = Array.isArray(state.pendingFeed) ? state.pendingFeed : [];
+    panel.classList.toggle('hidden', !rows.length);
+    if (!rows.length) {
+      panel.innerHTML = '';
+      return;
+    }
+    const options = renderFeedLotSelectOptions('');
+    panel.innerHTML = `
+      <div class="pre-feed-warning-head">
+        <div class="pre-feed-warning-icon">!</div>
+        <div class="pre-feed-warning-title">
+          <h3>อาหารจาก LIFF รอผูก lot (${rows.length})</h3>
+          <p>ยังไม่หักสต็อกและยังไม่คิดต้นทุน จนกว่าจะตรวจสอบและเลือก lot อาหาร</p>
+        </div>
+        <button type="button" class="pre-feed-toggle" data-pre-feed-action="toggle">show more</button>
+      </div>
+      <div class="pre-feed-list hidden" id="pendingFeedList">
+        ${rows.map((item) => {
+          const feedOut = Number(item.feed_out_qty || 0);
+          const leftover = Number(item.leftover_qty || 0);
+          const consumed = Math.max(0, feedOut - leftover);
+          return `
+          <article class="pre-feed-card" data-pre-feed-id="${escapeAttr(item.id || item.pre_feed_id || '')}">
+            <div class="pre-feed-card__main">
+              <div class="pre-feed-card__title">
+                <span>วันที่ ${escapeHtml(item.log_date || '-')}</span>
+                <b>ยังไม่ได้ผูกกับชุดอาหาร</b>
+              </div>
+              <div class="pre-feed-edit-grid">
+                <label class="pre-feed-edit-field">
+                  <div class="pre-feed-input-shell">
+                    <span class="pre-feed-input-prefix">เท</span>
+                    <input class="pre-feed-input" data-pre-feed-field="feed_out_qty" type="number" min="0" step="0.01" inputmode="decimal" value="${escapeAttr(feedOut)}" />
+                    <span class="pre-feed-input-unit">ลูก</span>
+                  </div>
+                </label>
+                <label class="pre-feed-edit-field">
+                  <div class="pre-feed-input-shell">
+                    <span class="pre-feed-input-prefix">เหลือ</span>
+                    <input class="pre-feed-input" data-pre-feed-field="leftover_qty" type="number" min="0" step="0.01" inputmode="decimal" value="${escapeAttr(leftover)}" />
+                    <span class="pre-feed-input-unit">ลูก</span>
+                  </div>
+                </label>
+                <div class="pre-feed-consumed-box" aria-hidden="true">
+                  <span>กินจริง</span>
+                  <b data-pre-feed-consumed>${escapeHtml(formatCompactNumber(consumed))} ลูก</b>
+                </div>
+              </div>
+              <input class="pre-feed-remark-input" data-pre-feed-field="feed_remark" type="text" value="${escapeAttr(item.remark || item.feed_remark || '')}" placeholder="หมายเหตุอาหารจาก LIFF" />
+              ${item.line_display_name ? `<p class="muted">ผู้กรอก: ${escapeHtml(item.line_display_name)}</p>` : ''}
+            </div>
+            <div class="pre-feed-actions">
+              <select class="pre-feed-lot-select" aria-label="เลือก lot อาหาร">${options}</select>
+              <button type="button" class="secondary-btn pre-feed-approve" data-pre-feed-action="approve">ผูกกับ lot</button>
+              <button type="button" class="secondary-btn pre-feed-reject" data-pre-feed-action="reject">ปฏิเสธ</button>
+            </div>
+          </article>`;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function onPendingFeedChange(event) {
+    if (!event.target.classList?.contains('pre-feed-lot-select')) return;
+    const card = event.target.closest('.pre-feed-card');
+    if (!card) return;
+    const lot = state.feedLotById[String(event.target.value || '')] || null;
+    card.classList.toggle('has-selected-lot', !!lot);
+  }
+
+  function onPendingFeedInput(event) {
+    const input = event.target.closest('[data-pre-feed-field]');
+    if (!input || state.moduleType !== 'feed_manage') return;
+    const card = input.closest('.pre-feed-card');
+    if (!card) return;
+    const out = Number(card.querySelector('[data-pre-feed-field="feed_out_qty"]')?.value || 0);
+    const leftover = Number(card.querySelector('[data-pre-feed-field="leftover_qty"]')?.value || 0);
+    const consumed = Math.max(0, out - leftover);
+    const target = card.querySelector('[data-pre-feed-consumed]');
+    if (target) target.textContent = `${formatCompactNumber(consumed)} ลูก`;
+  }
+
+  function getPendingFeedEditedPayload(card) {
+    const feedOut = Number(card.querySelector('[data-pre-feed-field="feed_out_qty"]')?.value || 0);
+    const leftover = Number(card.querySelector('[data-pre-feed-field="leftover_qty"]')?.value || 0);
+    const remark = card.querySelector('[data-pre-feed-field="feed_remark"]')?.value?.trim() || '';
+    return { feed_out_qty: feedOut, leftover_qty: leftover, feed_remark: remark };
+  }
+
+  async function onPendingFeedClick(event) {
+    const actionBtn = event.target.closest('[data-pre-feed-action]');
+    if (!actionBtn || state.moduleType !== 'feed_manage') return;
+    if (actionBtn.dataset.preFeedAction === 'toggle') {
+      const panel = actionBtn.closest('.pre-feed-panel');
+      const list = panel?.querySelector('#pendingFeedList');
+      const willShow = list?.classList.contains('hidden');
+      list?.classList.toggle('hidden', !willShow);
+      actionBtn.textContent = willShow ? 'show less' : 'show more';
+      panel?.classList.toggle('is-expanded', !!willShow);
+      return;
+    }
+    const card = actionBtn.closest('.pre-feed-card');
+    if (!card || !state.batch) return;
+    const preFeedId = card.dataset.preFeedId || '';
+    if (!preFeedId) return;
+    const action = actionBtn.dataset.preFeedAction;
+    if (action === 'approve') {
+      const select = card.querySelector('.pre-feed-lot-select');
+      const feedId = select?.value || '';
+      if (!feedId) return alert('กรุณาเลือก lot อาหารก่อนผูกข้อมูล');
+      const lot = state.feedLotById[String(feedId)] || null;
+      if (!lot) return alert('ไม่พบ lot อาหารที่เลือก');
+      const edited = getPendingFeedEditedPayload(card);
+      if (!(edited.feed_out_qty > 0)) return alert('จำนวนที่เทต้องมากกว่า 0');
+      if (edited.leftover_qty > edited.feed_out_qty) return alert('จำนวนเหลือต้องไม่มากกว่าจำนวนที่เท');
+      const consumed = Math.max(0, edited.feed_out_qty - edited.leftover_qty);
+      const ok = confirm(`ผูกข้อมูลอาหารนี้กับ lot "${lot.name || feedId}" ใช่หรือไม่?\nเท ${formatCompactNumber(edited.feed_out_qty)} ลูก เหลือ ${formatCompactNumber(edited.leftover_qty)} ลูก กินจริง ${formatCompactNumber(consumed)} ลูก`);
+      if (!ok) return;
+      await submitPendingFeedAction(actionBtn, { action: 'approvePreFeedConsumption', batch_id: state.batch.id, pre_feed_id: preFeedId, feed_id: feedId, ...edited });
+      return;
+    }
+    if (action === 'reject') {
+      const reason = prompt('เหตุผลที่ปฏิเสธข้อมูลอาหารนี้ (ไม่บังคับ)', '') || '';
+      const ok = confirm('ยืนยันปฏิเสธข้อมูลอาหารจาก LIFF รายการนี้?');
+      if (!ok) return;
+      await submitPendingFeedAction(actionBtn, { action: 'rejectPreFeedConsumption', batch_id: state.batch.id, pre_feed_id: preFeedId, reject_reason: reason });
+    }
+  }
+
+  async function submitPendingFeedAction(button, payload) {
+    const old = button.textContent;
+    button.disabled = true;
+    button.textContent = 'กำลังบันทึก...';
+    const response = await AppApi.post(payload, { timeoutMs: 30000 });
+    button.disabled = false;
+    button.textContent = old;
+    if (!response || response.status !== 'ok') return alert(response?.message || 'จัดการข้อมูลอาหารไม่สำเร็จ');
+    clearModuleCaches(state.batch.id, ['feed_manage']);
+    await load(state.batch.id);
+  }
+
 function renderCalendar() {
     const calendarPanel = document.querySelector('.module-calendar-panel');
     if (calendarPanel) calendarPanel.classList.toggle('hidden', state.moduleType === 'report');

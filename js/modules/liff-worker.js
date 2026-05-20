@@ -59,14 +59,14 @@
 
     if (!state.routeKey) {
       qs('routeBadge').textContent = 'ลิงก์ไม่ถูกต้อง';
-      qs('batchName').textContent = 'ไม่พบ route_key กรุณาใช้ลิงก์ที่ถูกต้อง';
+      qs('batchName').textContent = 'ไม่พบ route_key กรุณาใช้ลิงก์ที่เจ้าของสร้างให้';
       setStatus('ลิงก์นี้ไม่มี route_key');
       qs('submitBtn').disabled = true;
       return;
     }
 
     qs('routeBadge').textContent = 'พร้อมบันทึก';
-    qs('batchName').textContent = 'ข้อมูลจะถูกส่งไปตรวจสอบ';
+    qs('batchName').textContent = 'ข้อมูลจะถูกส่งให้เจ้าของตรวจสอบ';
     setStatus('');
     state.profileReady = initLiffProfileInBackground();
   }

@@ -13,7 +13,7 @@ window.AppApi = (() => {
     'add_batch','edit_batch','delete_batch','saveBatchMovement','saveBatchSaleBill','deleteBatchSaleBill','saveFeedLog',
     'saveEggDailyLog','approvePreBill','rejectPreBill','upsertBatchModulePermission','revokeBatchUserPermissions',
     'saveLiffBatchRoute','deactivateLiffBatchRoute','savePriceSet','savePriceSetBinding','removePriceSetBinding','deletePriceSet',
-    'rebuildReportForBatch','saveFeedConsumptionLog','saveBatchEvent','saveMedicalInventoryLog','deleteBatchEvent','createReportViewLink'
+    'rebuildReportForBatch','saveFeedConsumptionLog','approvePreFeedConsumption','rejectPreFeedConsumption','saveBatchEvent','saveMedicalInventoryLog','deleteBatchEvent','createReportViewLink'
   ]);
   const CACHE_TTL = {
     getAllBatches: 5 * 60 * 1000,
