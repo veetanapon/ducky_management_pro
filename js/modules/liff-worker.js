@@ -1,6 +1,7 @@
 (() => {
   const state = { routeKey: '', profile: null, profileReady: null };
   const qs = (id) => document.getElementById(id);
+
   function dateKeyOffset(days = 0) {
     const d = new Date();
     d.setDate(d.getDate() + Number(days || 0));
@@ -9,8 +10,8 @@
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   }
-  const yesterday = () => dateKeyOffset(-1);
-  const today = () => new Date().toISOString().slice(0, 10);
+
+  const today = () => dateKeyOffset(0);
   const num = (id) => Number(qs(id)?.value || 0);
 
   function setStatus(text) {
@@ -58,17 +59,15 @@
 
     if (!state.routeKey) {
       qs('routeBadge').textContent = 'ลิงก์ไม่ถูกต้อง';
-      qs('batchName').textContent = 'ไม่พบ route_key กรุณาใช้ลิงก์ที่เจ้าของสร้างให้';
+      qs('batchName').textContent = 'ไม่พบ route_key กรุณาใช้ลิงก์ที่ถูกต้อง';
       setStatus('ลิงก์นี้ไม่มี route_key');
       qs('submitBtn').disabled = true;
       return;
     }
 
     qs('routeBadge').textContent = 'พร้อมบันทึก';
-    qs('batchName').textContent = 'ข้อมูลจะถูกส่งให้เจ้าของตรวจสอบ';
+    qs('batchName').textContent = 'ข้อมูลจะถูกส่งไปตรวจสอบ';
     setStatus('');
-
-    // Do not block the form with route/batch/price loading. Backend resolves those on submit.
     state.profileReady = initLiffProfileInBackground();
   }
 
@@ -86,7 +85,8 @@
     };
     const feedDaily = {
       feed_out_qty: num('feed_out_qty'),
-      leftover_qty: num('feed_leftover_qty')
+      leftover_qty: num('feed_leftover_qty'),
+      remark: qs('feed_remark')?.value?.trim() || ''
     };
 
     if (feedDaily.leftover_qty > feedDaily.feed_out_qty && feedDaily.leftover_qty > 0) {
@@ -95,7 +95,7 @@
     }
 
     const hasEgg = Object.values(eggDaily).some((v) => Number(v) > 0);
-    const hasFeed = Number(feedDaily.feed_out_qty || 0) > 0 || Number(feedDaily.leftover_qty || 0) > 0;
+    const hasFeed = Number(feedDaily.feed_out_qty || 0) > 0 || Number(feedDaily.leftover_qty || 0) > 0 || !!feedDaily.remark;
     if (!hasEgg && !rawMessage && !hasFeed) {
       alert('กรุณากรอกจำนวนไข่ รายการส่งขาย หรือข้อมูลอาหารอย่างน้อย 1 อย่าง');
       return;
