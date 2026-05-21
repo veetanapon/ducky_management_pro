@@ -102,14 +102,34 @@ window.ReportViewPage = (() => {
   }
 
   async function load({ force = false } = {}) {
-    setText('rvSubtitle', force ? 'กำลังโหลดข้อมูลใหม่...' : 'กำลังโหลดข้อมูล...');
-    const response = await AppApi.postPublic({ action: 'getReportPublicViewData', view_key: state.key, force: force ? 1 : 0 });
-    if (!response || response.status !== 'ok') {
-      setText('rvSubtitle', response?.message || 'โหลดรายงานไม่สำเร็จ');
-      renderError(response?.message || 'โหลดรายงานไม่สำเร็จ');
+    setText('rvSubtitle', force ? 'กำลังโหลดข้อมูลใหม่...' : 'กำลังเปิดรายงานจากเครื่อง...');
+    const cacheKey = `ducky:report-view:${state.key}`;
+    const cached = !force && window.AppCache
+      ? AppCache.readEnvelope(cacheKey, 30 * 60 * 1000, null, { allowStale: true, withMeta: true })
+      : null;
+    if (cached?.value?.status === 'ok') {
+      hydrateFromResponse(cached.value);
+      setText('rvSubtitle', `${state.batch?.name || 'Batch'} • แสดงจาก cache • กำลังซิงก์ล่าสุด...`);
+      syncReportView(cacheKey, false);
       return;
     }
+    await syncReportView(cacheKey, true);
+  }
 
+  async function syncReportView(cacheKey, showError) {
+    const response = await AppApi.postPublic({ action: 'getReportPublicViewData', view_key: state.key, force: 0 }, { timeoutMs: 10000 });
+    if (!response || response.status !== 'ok') {
+      const message = response?.message === 'request_timeout' ? 'เชื่อมต่อ GAS ช้า/timeout' : (response?.message || 'โหลดรายงานไม่สำเร็จ');
+      setText('rvSubtitle', message);
+      if (showError) renderError(message);
+      return;
+    }
+    if (window.AppCache) AppCache.writeEnvelope(cacheKey, response);
+    hydrateFromResponse(response);
+    setText('rvSubtitle', `${state.batch?.name || 'Batch'} • เปิดดูอย่างเดียว • อัปเดต ${shortDateTime(response.generated_at || '')}`);
+  }
+
+  function hydrateFromResponse(response) {
     state.batch = response.batch || null;
     state.rows = Array.isArray(response.rows) ? response.rows : [];
     state.chart = response.chart || { egg: [], feed: [], duck: [] };
@@ -118,10 +138,8 @@ window.ReportViewPage = (() => {
     state.feedMovements = Array.isArray(response.feed_movements) ? response.feed_movements : [];
     state.months = Array.isArray(response.months) && response.months.length ? response.months : deriveMonths(state.rows);
     state.daily = buildDailyRows();
-
     renderMonthSelect();
     render();
-    setText('rvSubtitle', `${state.batch?.name || 'Batch'} • เปิดดูอย่างเดียว • อัปเดต ${shortDateTime(response.generated_at || '')}`);
   }
 
   function renderError(message) {

@@ -15,9 +15,11 @@ window.ReportPage = (() => {
   let bootstrapped = false;
   let chartLoadPromise = null;
   let reportSyncPromise = null;
+  let reportSyncSeq = 0;
   const nativeChartMeta = new WeakMap();
   const REPORT_CACHE_TTL_MS = 2 * 60 * 1000;
   const REPORT_SYNC_TIMEOUT_MS = 12000;
+  const REPORT_FORCE_SYNC_TIMEOUT_MS = 30000;
 
   async function bootstrap() {
     if (bootstrapped) return;
@@ -57,6 +59,10 @@ window.ReportPage = (() => {
     const force = !!options.force;
     setBusy(true, force ? 'กำลังโหลดรายงานล่าสุด...' : 'กำลังเปิดรายงานจากเครื่อง...');
 
+    // Normal open: show browser cache immediately and sync in the background.
+    // Force open after rebuild: start a new request and do not reuse an older
+    // background sync promise, because the older request may already be close to
+    // its timeout.
     const cached = !force ? readReportCache() : null;
     if (cached?.data?.status === 'ok') {
       hydrateFromResponse(cached.data);
@@ -65,12 +71,28 @@ window.ReportPage = (() => {
       return;
     }
 
-    await syncReportFromGas({ hasCache: false, showError: true });
+    const seq = nextReportSyncSeq();
+    await syncReportFromGas({
+      hasCache: false,
+      showError: true,
+      forceFresh: force,
+      seq
+    });
+  }
+
+  function nextReportSyncSeq() {
+    reportSyncSeq += 1;
+    return reportSyncSeq;
+  }
+
+  function isLatestReportSync(seq) {
+    return !seq || seq === reportSyncSeq;
   }
 
   async function syncReportInBackground(options = {}) {
     if (reportSyncPromise) return reportSyncPromise;
-    reportSyncPromise = syncReportFromGas({ hasCache: !!options.hasCache, showError: false })
+    const seq = nextReportSyncSeq();
+    reportSyncPromise = syncReportFromGas({ hasCache: !!options.hasCache, showError: false, seq })
       .finally(() => { reportSyncPromise = null; });
     return reportSyncPromise;
   }
@@ -78,10 +100,26 @@ window.ReportPage = (() => {
   async function syncReportFromGas(options = {}) {
     const hasCache = !!options.hasCache;
     const showError = !!options.showError;
+    const forceFresh = !!options.forceFresh;
+    const seq = options.seq || nextReportSyncSeq();
+    const payload = { action: 'getReportPageData', batch_id: state.batchId };
+
+    if (forceFresh) {
+      payload._request_id = `report_force_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    }
+
     const response = await AppApi.post(
-      { action: 'getReportPageData', batch_id: state.batchId },
-      { timeoutMs: REPORT_SYNC_TIMEOUT_MS }
+      payload,
+      {
+        timeoutMs: forceFresh ? REPORT_FORCE_SYNC_TIMEOUT_MS : REPORT_SYNC_TIMEOUT_MS,
+        dedupe: !forceFresh
+      }
     );
+
+    // If a newer sync/rebuild started while this one was still running, ignore
+    // this old result so it cannot overwrite fresh UI state or show a stale
+    // timeout message.
+    if (!isLatestReportSync(seq)) return null;
 
     if (!response || response.status !== 'ok') {
       const message = response?.message === 'request_timeout'
@@ -514,15 +552,28 @@ window.ReportPage = (() => {
 
   async function rebuildReport() {
     if (!confirm('โหลดข้อมูลรายงานใหม่ของ batch นี้ตั้งแต่วันเริ่มเลี้ยงถึงปัจจุบัน?')) return;
+
+    // Invalidate any background getReportPageData request already in flight.
+    // The rebuild result must not be followed by an old almost-timeout read.
+    nextReportSyncSeq();
+    reportSyncPromise = null;
+
     setButtonLoading('reportRebuildBtn', true, 'กำลังโหลด...');
     setBusy(true, 'กำลังสร้างข้อมูลรายงานใหม่...');
-    const response = await AppApi.post({ action: 'rebuildReportForBatch', batch_id: state.batchId });
+    const response = await AppApi.post(
+      { action: 'rebuildReportForBatch', batch_id: state.batchId, _request_id: `rebuild_${Date.now()}` },
+      { timeoutMs: 45000, dedupe: false }
+    );
     if (!response || response.status !== 'ok') {
       setButtonLoading('reportRebuildBtn', false);
       setBusy(false, response?.message || 'สร้างข้อมูลรายงานไม่สำเร็จ');
       alert(response?.message || 'สร้างข้อมูลรายงานไม่สำเร็จ');
       return;
     }
+
+    if (window.AppCache?.remove) AppCache.remove(reportCacheKey());
+    else localStorage.removeItem(reportCacheKey());
+
     setText('reportHint', `สร้างข้อมูลใหม่แล้ว ${Number(response.rows || 0).toLocaleString('th-TH')} แถว กำลังโหลดผลล่าสุด...`);
     await load({ force: true });
     setButtonLoading('reportRebuildBtn', false);

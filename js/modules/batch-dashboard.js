@@ -1,6 +1,6 @@
 
 window.BatchDashboardPage = (() => {
-  const CACHE_TTL_MS = 60 * 1000;
+  const CACHE_TTL_MS = 2 * 60 * 1000;
 
   async function bootstrap() {
     const ok = await AppAuth.ensureAuth();
@@ -13,14 +13,28 @@ window.BatchDashboardPage = (() => {
     }
 
     const cacheKey = `ducky:batch-dashboard:${batchId}`;
-    const cached = readCache(cacheKey);
-    if (cached) {
-      renderAll(cached);
+    const cached = readCache(cacheKey, { allowStale: true });
+    const cachedData = cached?.data || null;
+
+    if (cachedData) {
+      renderAll(cachedData);
+      setSyncHint(cached.isStale ? 'กำลังซิงก์ข้อมูลล่าสุด...' : 'กำลังตรวจสอบข้อมูลล่าสุด...');
+    } else {
+      setSyncHint('กำลังโหลดข้อมูล...');
     }
 
-    const response = await AppApi.post({ action: 'getBatchDashboardSummary', batch_id: batchId });
+    const response = await AppApi.post(
+      { action: 'getBatchDashboardSummary', batch_id: batchId },
+      { timeoutMs: cachedData ? 12000 : 22000, dedupe: false }
+    );
     if (!response || response.status !== 'ok') {
-      if (!cached) document.getElementById('batchSubtitle').textContent = response?.message || 'โหลดข้อมูลไม่สำเร็จ';
+      if (!cachedData) {
+        setSyncHint(response?.message === 'request_timeout'
+          ? 'โหลดข้อมูลช้า/timeout กรุณาลองกดรีเฟรชอีกครั้ง'
+          : (response?.message || 'โหลดข้อมูลไม่สำเร็จ'));
+      } else {
+        setSyncHint('แสดงข้อมูลจากเครื่องอยู่ ยังซิงก์ล่าสุดไม่ได้');
+      }
       return;
     }
     writeCache(cacheKey, response);
@@ -97,13 +111,15 @@ window.BatchDashboardPage = (() => {
     }).join('');
   }
 
-  function readCache(key) {
+  function readCache(key, options = {}) {
     try {
       const raw = localStorage.getItem(key);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      if (Date.now() - Number(parsed.savedAt || 0) > CACHE_TTL_MS) return null;
-      return parsed.data || null;
+      const age = Date.now() - Number(parsed.savedAt || 0);
+      const isStale = age > CACHE_TTL_MS;
+      if (isStale && !options.allowStale) return null;
+      return { data: parsed.data || null, isStale, age };
     } catch (_) {
       return null;
     }
@@ -113,6 +129,11 @@ window.BatchDashboardPage = (() => {
     try {
       localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data }));
     } catch (_) {}
+  }
+
+  function setSyncHint(text) {
+    const el = document.getElementById('batchSubtitle');
+    if (el) el.textContent = text || '';
   }
 
 

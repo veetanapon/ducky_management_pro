@@ -19,12 +19,22 @@ window.AppCache = (() => {
       return keys.length;
     } catch (error) { console.warn('Cache removeByPrefix failed', prefix, error); return 0; }
   }
-  function readEnvelope(key, ttlMs = 0, fallback = null) {
+  function readEnvelopeDetailed(key, ttlMs = 0, fallback = null, options = {}) {
     const data = read(key, null);
-    if (!data || typeof data !== 'object' || !data.__cached_at) return fallback;
-    const age = Date.now() - Number(data.__cached_at || 0);
-    if (ttlMs > 0 && age > ttlMs) return fallback;
-    return data.value;
+    if (!data || typeof data !== 'object' || !data.__cached_at) {
+      return { value: fallback, hasValue: false, isStale: false, ageMs: null, cachedAt: null };
+    }
+    const cachedAt = Number(data.__cached_at || 0);
+    const ageMs = Date.now() - cachedAt;
+    const isStale = ttlMs > 0 && ageMs > ttlMs;
+    if (isStale && !options.allowStale) {
+      return { value: fallback, hasValue: false, isStale, ageMs, cachedAt };
+    }
+    return { value: data.value, hasValue: true, isStale, ageMs, cachedAt };
+  }
+  function readEnvelope(key, ttlMs = 0, fallback = null, options = {}) {
+    const detailed = readEnvelopeDetailed(key, ttlMs, fallback, options);
+    return options.withMeta ? detailed : detailed.value;
   }
   function writeEnvelope(key, value) { return write(key, { __cached_at: Date.now(), value }); }
   function loadBatchCache() {
@@ -51,13 +61,15 @@ window.AppCache = (() => {
       removeByPrefix(`ducky:batch-manage:${batchId}`);
       removeByPrefix(`ducky:report:${batchId}`);
       removeByPrefix(`ducky:liff-routes:${batchId}`);
+      removeByPrefix(`ducky:farm-events:${batchId}`);
+      removeByPrefix(`ducky:medicine:${batchId}`);
       removeByPrefix('ducky:api:');
     }
-    if (/price|Permission|Access|batch|Batch/i.test(action)) {
+    if (/price|Permission|Access|batch|Batch|Liff|Report/i.test(action)) {
       removeByPrefix('ducky:admin:');
       removeByPrefix('ducky:price-admin:');
       removeByPrefix('ducky:api:');
     }
   }
-  return { read, write, remove, removeByPrefix, readEnvelope, writeEnvelope, loadBatchCache, saveBatchCache, clearBatchCache, invalidateByPayload };
+  return { read, write, remove, removeByPrefix, readEnvelope, readEnvelopeDetailed, writeEnvelope, loadBatchCache, saveBatchCache, clearBatchCache, invalidateByPayload };
 })();

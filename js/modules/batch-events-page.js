@@ -59,12 +59,16 @@ window.BatchEventsPage = (() => {
   async function load() {
     setText('eventSubtitle', 'กำลังโหลดข้อมูล...');
     const cacheKey = `ducky:farm-events:${state.batchId}`;
-    const cached = readCache(cacheKey);
-    if (cached) hydrateAndRender(cached);
+    const cached = readCache(cacheKey, { allowStale: true });
+    const cachedData = cached?.data || null;
+    if (cachedData) {
+      hydrateAndRender(cachedData);
+      setText('eventSubtitle', cached.isStale ? 'แสดงข้อมูลจากเครื่อง • กำลังซิงก์ล่าสุด...' : 'แสดงข้อมูลจากเครื่อง • กำลังตรวจสอบล่าสุด...');
+    }
 
     const res = await AppApi.post({ action: 'getBatchEventsPageData', batch_id: state.batchId });
     if (!res || res.status !== 'ok') {
-      if (!cached) {
+      if (!cachedData) {
         setText('eventSubtitle', res?.message || 'โหลดข้อมูลไม่สำเร็จ');
         document.getElementById('eventTimeline').innerHTML = `<div class="empty-state">${escapeHtml(res?.message || 'โหลดข้อมูลไม่สำเร็จ')}</div>`;
       }
@@ -604,7 +608,19 @@ window.BatchEventsPage = (() => {
   function showSheet(sheet) { if (!sheet) return; sheet.classList.remove('hidden'); requestAnimationFrame(() => sheet.classList.add('show')); }
   function hideSheet(sheet) { if (!sheet) return; sheet.classList.remove('show'); setTimeout(() => sheet.classList.add('hidden'), 220); }
 
-  function readCache(key) { try { const raw = localStorage.getItem(key); if (!raw) return null; const parsed = JSON.parse(raw); if (!parsed || !parsed.saved_at || Date.now() - parsed.saved_at > 90 * 1000) return null; return parsed.data; } catch (_) { return null; } }
+  function readCache(key, options = {}) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return options.allowStale ? { data: null, isStale: false, age: Infinity } : null;
+      const parsed = JSON.parse(raw);
+      const savedAt = Number(parsed.saved_at || parsed.savedAt || 0);
+      const age = savedAt ? Date.now() - savedAt : Infinity;
+      const isStale = age > 90 * 1000;
+      if (options.allowStale) return { data: parsed.data || null, isStale, age, savedAt };
+      if (isStale) return null;
+      return parsed.data || null;
+    } catch (_) { return options.allowStale ? { data: null, isStale: false, age: Infinity } : null; }
+  }
   function writeCache(key, data) { try { localStorage.setItem(key, JSON.stringify({ saved_at: Date.now(), data })); } catch (_) {} }
   function removeCache(key) { try { localStorage.removeItem(key); } catch (_) {} }
   function normalizeEventType(type) { const t = String(type || 'other').toLowerCase(); if (t === 'vaccine') return 'injection'; if (t === 'weather') return 'rain'; if (t === 'farm_event') return 'other'; return ['injection', 'rain', 'duck_cull', 'vitamin', 'medicine', 'feed_swap', 'other'].includes(t) ? t : 'other'; }
