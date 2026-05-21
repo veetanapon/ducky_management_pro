@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Report View | Ducky Management Pro</title>
-  <link rel="stylesheet" href="css/modules/report-view.css" />
+    <link rel="stylesheet" href="dist/css/report-view.bundle.css" />
 </head>
 <body data-page="report_view">
   <main class="rv-app">
@@ -19,7 +19,6 @@
         <button type="button" class="rv-icon-btn" id="rvRefreshBtn" title="โหลดข้อมูลใหม่">↻</button>
       </div>
     </header>
-
 
     <section id="rvSummary" class="rv-summary-grid"></section>
 
@@ -94,9 +93,8 @@
     <div class="rv-fullscreen-canvas-wrap"><canvas id="rvFullscreenCanvas"></canvas></div>
     <div id="rvFullscreenLegend" class="rv-legend"></div>
   </div>
-
-  <script src="js/config.js"></script>
-  <script src="js/core/api.js"></script>
-  <script src="js/modules/report-view-page.js"></script>
+  <script src="dist/js/core.bundle.js" defer></script>
+  <script src="dist/js/report-view.bundle.js" defer></script>
+  <script src="dist/js/app.bundle.js" defer></script>
 </body>
 </html>

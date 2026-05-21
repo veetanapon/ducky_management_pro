@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>คลังยา / วิตามิน | Ducky Management Pro</title>
+    <link rel="stylesheet" href="dist/css/module-medicine.bundle.css" />
+  
+</head>
+<body data-page="medicine_manage">
+  <header class="app-header container">
+    <div class="header-leading">
+      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
+      <div>
+        <h1 id="medicineTitle">คลังยา / วิตามิน</h1>
+        <p class="muted" id="medicineSubtitle">กำลังโหลดข้อมูล...</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="backBtn" type="button">←</button>
+      <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+    </div>
+  </header>
+
+  <main class="container page-body medicine-page-layout">
+    <section class="card-panel medicine-hero-card">
+      <div class="section-card-head">
+        <div>
+          <h3>สต๊อกยา วิตามิน และพรีมิกซ์</h3>
+          <p class="muted">ซื้อเป็นถุง/กระปุกได้ แต่ระบบเก็บ stock เป็นกรัม เพื่อให้ตอนใช้ชั่ง 100g / 200g ได้ตรง</p>
+        </div>
+        <span class="badge-inline muted-badge" id="medicinePermissionBadge">กำลังโหลด</span>
+      </div>
+    </section>
+
+    <section id="medicineSummaryCards" class="module-summary-grid module-summary-grid--3"></section>
+
+    <section class="card-panel medicine-toolbar-card">
+      <input id="medicineSearch" type="search" placeholder="ค้นหาชื่อยา วิตามิน หรือพรีมิกซ์..." />
+      <div class="medicine-filter-row" id="medicineFilterRow">
+        <button type="button" class="is-active" data-filter="all">ทั้งหมด</button>
+        <button type="button" data-filter="medicine">ยา</button>
+        <button type="button" data-filter="vitamin">วิตามิน</button>
+        <button type="button" data-filter="premix">พรีมิกซ์</button>
+        <button type="button" data-filter="vaccine">วัคซีน</button>
+      </div>
+    </section>
+
+    <section class="card-panel medicine-list-card">
+      <div class="section-card-head">
+        <h3>รายการในคลัง</h3>
+        <span class="badge-inline muted-badge" id="medicineCountBadge">0 รายการ</span>
+      </div>
+      <div id="medicineList" class="medicine-list">
+        <div class="empty-state">กำลังโหลด...</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="medicineFabRoot"></div>
+
+  <div id="medicineSheet" class="sheet hidden" aria-hidden="true">
+    <div class="sheet-backdrop" id="medicineSheetBackdrop"></div>
+    <div class="sheet-panel">
+      <div class="sheet-header">
+        <span id="medicineSheetTitle">บันทึกคลังยา</span>
+        <button id="medicineSheetCloseBtn" type="button">&times;</button>
+      </div>
+      <form id="medicineForm" class="sheet-body form-stack">
+        <input type="hidden" id="medicineMode" />
+        <input type="hidden" id="medicineItemId" />
+
+        <div id="medicinePurchaseFields" class="medicine-mode-panel">
+          <label class="field-label">ประเภท</label>
+          <select id="medicineItemType">
+            <option value="medicine">ยา</option>
+            <option value="vitamin">วิตามิน</option>
+            <option value="premix">พรีมิกซ์</option>
+            <option value="vaccine">วัคซีน</option>
+            <option value="other">อื่น ๆ</option>
+          </select>
+
+          <label class="field-label">ชื่อรายการ</label>
+          <input id="medicineItemName" type="text" placeholder="เช่น พรีมิกซ์ไข่ / วิตามินรวม / ยา..." />
+
+          <div class="sheet-field-grid sheet-field-grid--2">
+            <div>
+              <label class="field-label">จำนวนถุง/กระปุก</label>
+              <input id="medicinePackageQty" type="number" min="0" step="0.01" inputmode="decimal" placeholder="เช่น 1" />
+            </div>
+            <div>
+              <label class="field-label">กิโลกรัม/ถุง</label>
+              <input id="medicineKgPerPackage" type="number" min="0" step="0.001" inputmode="decimal" placeholder="เช่น 25" />
+            </div>
+          </div>
+          <div class="inline-note" id="medicineComputedWeight">รวม 0 กรัม</div>
+
+          <label class="field-label">ราคารวมที่ซื้อ</label>
+          <input id="medicineTotalCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="เช่น 1200" />
+        </div>
+
+        <div id="medicineUseFields" class="medicine-mode-panel hidden">
+          <label class="field-label">รายการ</label>
+          <input id="medicineUseItemName" type="text" readonly />
+          <div class="inline-note" id="medicineUseStockNote">คงเหลือ -</div>
+          <label class="field-label">จำนวนที่ใช้</label>
+          <div class="unit-input">
+            <input id="medicineUseGram" type="number" min="0" step="0.01" inputmode="decimal" placeholder="เช่น 200" />
+            <span>กรัม</span>
+          </div>
+        </div>
+
+        <div id="medicineAdjustFields" class="medicine-mode-panel hidden">
+          <label class="field-label">รายการ</label>
+          <input id="medicineAdjustItemName" type="text" readonly />
+          <div class="inline-note" id="medicineAdjustStockNote">คงเหลือ -</div>
+          <label class="field-label">ปรับยอดคงเหลือให้เป็น</label>
+          <div class="unit-input">
+            <input id="medicineAdjustGram" type="number" min="0" step="0.01" inputmode="decimal" placeholder="จำนวนคงเหลือจริง" />
+            <span>กรัม</span>
+          </div>
+        </div>
+
+        <label class="field-label">วันที่ทำรายการ</label>
+        <input id="medicineLogDate" type="date" required />
+        <label class="field-label">หมายเหตุ</label>
+        <textarea id="medicineRemark" rows="3" placeholder="เช่น ซื้อมา 1 ถุง 25 กก. / ใช้ผสมอาหาร 200 กรัม"></textarea>
+      </form>
+      <div class="sheet-footer sheet-footer--dual medicine-sheet-footer">
+        <button type="button" class="secondary-btn" id="medicineSheetCancelBtn">ยกเลิก</button>
+        <button type="submit" form="medicineForm" id="medicineSubmitBtn">บันทึก</button>
+      </div>
+    </div>
+  </div>
+  <script src="dist/js/core.bundle.js" defer></script>
+  <script src="dist/js/medicine.bundle.js" defer></script>
+  <script src="dist/js/app.bundle.js" defer></script>
+</body>
+</html>

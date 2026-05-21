@@ -114,10 +114,18 @@
   gap: 0;
 }
 
+/*
+  Do not hide .access-page-card here.
+  admin-permissions.html and batch-access.html use .access-page-card
+  as their main visible content wrapper.
+*/
 .module-page-intro,
-.module-intro-card,
-.access-page-card {
+.module-intro-card {
   display: none;
+}
+
+.access-page-card {
+  display: block;
 }
 
 .permission-card-grid {
