@@ -1,127 +1,90 @@
-/*
-  Ducky Management Pro - Service Worker
-  Phase 4D CSS bundle hotfix:
-  - Avoid background revalidating every static file on each page open.
-  - Do not serve stale HTML while developing on localhost/127.0.0.1.
-  - Remove old ducky caches from earlier service worker versions.
-  - GAS / Apps Script requests stay network-only.
+
+/* Ducky Management Pro service worker
+   Strategy:
+   - HTML / JS / CSS: network-first to avoid stale UI after deploy
+   - images/assets/fonts: cache-first for fast repeat loads
+   - GAS/API requests are never cached
 */
-
-const DUCKY_SW_VERSION = 'phase4d-css-bundle-v2026-05-21-01';
-const STATIC_CACHE = `ducky-static-${DUCKY_SW_VERSION}`;
-const HTML_CACHE = `ducky-html-${DUCKY_SW_VERSION}`;
-const RUNTIME_CACHE = `ducky-runtime-${DUCKY_SW_VERSION}`;
-
-const STATIC_EXT_RE = /\.(?:js|css|png|jpg|jpeg|webp|gif|svg|ico|json|woff2?|ttf|otf)$/i;
-const API_HOST_RE = /(?:script\.google\.com|script\.googleusercontent\.com)$/i;
-
-function isApiUrl(url) {
-  return API_HOST_RE.test(url.hostname);
-}
-
-function isHttp(url) {
-  return url.protocol === 'http:' || url.protocol === 'https:';
-}
-
-function isSameOrigin(url) {
-  return url.origin === self.location.origin;
-}
-
-function isLocalDev() {
-  return self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
-}
-
-function isStaticAsset(request, url) {
-  if (request.method !== 'GET') return false;
-  if (request.destination && ['script', 'style', 'image', 'font', 'manifest'].includes(request.destination)) return true;
-  return STATIC_EXT_RE.test(url.pathname);
-}
-
-async function cacheFirst(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-  if (cached) return cached;
-
-  const response = await fetch(request);
-  if (response && (response.ok || response.type === 'opaque')) {
-    try { await cache.put(request, response.clone()); } catch (_) {}
-  }
-  return response;
-}
-
-async function networkFirstHtml(request) {
-  // In local development, always use the latest HTML. This prevents old, cached
-  // HTML from still referencing unbundled JS after running the bundle rewrite.
-  if (isLocalDev()) {
-    return fetch(request, { cache: 'no-store' });
-  }
-
-  const cache = await caches.open(HTML_CACHE);
-  try {
-    const response = await fetch(request, { cache: 'no-cache' });
-    if (response && response.ok) {
-      try { await cache.put(request, response.clone()); } catch (_) {}
-    }
-    return response;
-  } catch (error) {
-    const cached = await cache.match(request);
-    if (cached) return cached;
-    throw error;
-  }
-}
+const SW_VERSION = 'ducky-sw-20260526-raw-01';
+const STATIC_CACHE = `${SW_VERSION}:static`;
+const RUNTIME_CACHE = `${SW_VERSION}:runtime`;
+const SAME_ORIGIN = self.location.origin;
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(Promise.all([
-    caches.open(STATIC_CACHE),
-    caches.open(HTML_CACHE),
-    caches.open(RUNTIME_CACHE)
-  ]));
+  event.waitUntil(caches.open(STATIC_CACHE));
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    const names = await caches.keys();
+    const keys = await caches.keys();
     await Promise.all(
-      names
-        .filter((name) => name.startsWith('ducky-') && ![STATIC_CACHE, HTML_CACHE, RUNTIME_CACHE].includes(name))
-        .map((name) => caches.delete(name))
+      keys
+        .filter((key) => key.startsWith('ducky-sw-') && !key.startsWith(SW_VERSION))
+        .map((key) => caches.delete(key))
     );
     await self.clients.claim();
   })());
 });
 
 self.addEventListener('message', (event) => {
-  const data = event.data || {};
-  if (data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-    return;
-  }
-  if (data.type === 'CLEAR_DUCKY_CACHE') {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (event.data && event.data.type === 'CLEAR_CACHES') {
     event.waitUntil((async () => {
-      const names = await caches.keys();
-      await Promise.all(names.filter((name) => name.startsWith('ducky-')).map((name) => caches.delete(name)));
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
     })());
   }
 });
 
 self.addEventListener('fetch', (event) => {
-  const request = event.request;
-  if (!request || request.method !== 'GET') return;
+  const req = event.request;
+  if (req.method !== 'GET') return;
 
-  let url;
-  try { url = new URL(request.url); } catch (_) { return; }
-  if (!isHttp(url)) return;
+  const url = new URL(req.url);
+  if (url.origin !== SAME_ORIGIN) return;
+  if (url.pathname.includes('/exec') || url.hostname.includes('script.google.com')) return;
 
-  // Apps Script/API must never be cached by service worker.
-  if (isApiUrl(url)) return;
-
-  if (request.mode === 'navigate' || /\.html$/i.test(url.pathname)) {
-    event.respondWith(networkFirstHtml(request));
+  if (isHtmlRequest(req, url) || isUiAsset(url)) {
+    event.respondWith(networkFirst(req));
     return;
   }
 
-  if (isStaticAsset(request, url)) {
-    event.respondWith(cacheFirst(request, isSameOrigin(url) ? STATIC_CACHE : RUNTIME_CACHE));
+  if (isStaticAsset(url)) {
+    event.respondWith(cacheFirst(req));
   }
 });
+
+function isHtmlRequest(req, url) {
+  return req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname === '';
+}
+
+function isUiAsset(url) {
+  return url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.endsWith('.json');
+}
+
+function isStaticAsset(url) {
+  return /\.(png|jpg|jpeg|webp|gif|svg|ico|woff2?|ttf|otf)$/i.test(url.pathname);
+}
+
+async function networkFirst(req) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  try {
+    const fresh = await fetch(req, { cache: 'no-store' });
+    if (fresh && fresh.ok) await cache.put(req, fresh.clone());
+    return fresh;
+  } catch (error) {
+    const cached = await cache.match(req);
+    if (cached) return cached;
+    throw error;
+  }
+}
+
+async function cacheFirst(req) {
+  const cache = await caches.open(STATIC_CACHE);
+  const cached = await cache.match(req);
+  if (cached) return cached;
+  const fresh = await fetch(req);
+  if (fresh && fresh.ok) await cache.put(req, fresh.clone());
+  return fresh;
+}

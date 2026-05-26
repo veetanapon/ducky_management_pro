@@ -220,3 +220,61 @@
     padding-right: max(16px, env(safe-area-inset-right));
   }
 }
+
+
+/* ===== v6.0: iPhone/PWA sheet height guard =====
+   Keep bottom sheets below the top safe area so the close button/header never disappears.
+   The body/footer still scroll inside the sheet. */
+:root {
+  --sheet-top-gap: 72px;
+}
+
+.sheet-panel {
+  /* fallback first */
+  max-height: 82vh;
+  max-height: calc(100svh - var(--sheet-top-gap) - env(safe-area-inset-top));
+  max-height: min(82dvh, calc(100dvh - var(--sheet-top-gap) - env(safe-area-inset-top)));
+  min-height: 0;
+}
+
+.sheet-header {
+  flex: 0 0 auto;
+  min-height: 54px;
+}
+
+.sheet-body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sheet-footer {
+  flex: 0 0 auto;
+}
+
+@media (max-height: 740px) {
+  :root {
+    --sheet-top-gap: 88px;
+  }
+
+  .sheet-panel {
+    border-radius: 20px 20px 0 0;
+  }
+
+  .sheet-header {
+    padding-top: 12px;
+    padding-bottom: 10px;
+  }
+
+  .sheet-body {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
+
+@media (display-mode: standalone) {
+  :root {
+    --sheet-top-gap: 92px;
+  }
+}

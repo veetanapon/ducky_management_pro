@@ -1,0 +1,127 @@
+{
+  "generated_at": "2026-05-26T09:42:03.886Z",
+  "pages": {
+    "admin-permissions": {
+      "css": "dist/css/admin-permissions.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/access.css",
+        "css/modules/admin-permissions.css"
+      ]
+    },
+    "batch-access": {
+      "css": "dist/css/batch-access.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/access.css",
+        "css/modules/batch-access.css"
+      ]
+    },
+    "batch-events": {
+      "css": "dist/css/batch-events.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/farm-events.css"
+      ]
+    },
+    "batch": {
+      "css": "dist/css/batch.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/batch-dashboard.css"
+      ]
+    },
+    "feed-order-bills": {
+      "css": "dist/css/feed-order-bills.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/feed-order-bills.css"
+      ]
+    },
+    "items-price-manage": {
+      "css": "dist/css/items-price-manage.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/items-price-manage.css"
+      ]
+    },
+    "liff-routes": {
+      "css": "dist/css/liff-routes.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/liff-routes.css"
+      ]
+    },
+    "liff-worker": {
+      "css": "dist/css/liff-worker.bundle.css",
+      "sources": [
+        "css/worker-liff.css"
+      ]
+    },
+    "login": {
+      "css": "dist/css/login.bundle.css",
+      "sources": [
+        "css/login.css"
+      ]
+    },
+    "module-batch-manage": {
+      "css": "dist/css/module-batch-manage.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/batch-manage.css",
+        "css/modules/module-calendar.css",
+        "css/modules/sale.css"
+      ]
+    },
+    "module-egg-daily": {
+      "css": "dist/css/module-egg-daily.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/module-calendar.css"
+      ]
+    },
+    "module-feed": {
+      "css": "dist/css/module-feed.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/module-calendar.css"
+      ]
+    },
+    "module-medicine": {
+      "css": "dist/css/module-medicine.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/medicine.css"
+      ]
+    },
+    "module-sale": {
+      "css": "dist/css/module-sale.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/module-calendar.css",
+        "css/modules/sale.css"
+      ]
+    },
+    "program-permissions": {
+      "css": "dist/css/program-permissions.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/access.css",
+        "css/modules/admin-permissions.css"
+      ]
+    },
+    "report-view": {
+      "css": "dist/css/report-view.bundle.css",
+      "sources": [
+        "css/modules/report-view.css"
+      ]
+    },
+    "report": {
+      "css": "dist/css/report.bundle.css",
+      "sources": [
+        "css/core/app.css",
+        "css/modules/report.css"
+      ]
+    }
+  }
+}
