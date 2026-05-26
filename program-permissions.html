@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Program Menu Permissions | Ducky Management Pro</title>
+  <link rel="stylesheet" href="dist/css/program-permissions.bundle.css?v=20260526094230" />
+</head>
+<body data-page="program_permissions">
+  <header class="app-header container">
+    <div class="header-leading">
+      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
+      <div>
+        <h1>สิทธิ์เมนูหลัก</h1>
+        <p class="muted" id="programPermissionSubtitle">กำหนดสิทธิ์ระดับเมนูหลัก แยกจากสิทธิ์ Batch Module</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="backBtn" type="button">←</button>
+      <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+    </div>
+  </header>
+
+  <main class="container page-body module-page-layout">
+    <section class="card-panel access-page-card">
+      <div class="section-card-head">
+        <h3>เลือกผู้ใช้</h3>
+        <span class="badge-inline success">admin</span>
+      </div>
+      <form id="programPermissionForm" class="form-stack">
+        <label class="field-label">เลือกผู้ใช้</label>
+        <input type="search" id="programUserSearch" list="programUserList" placeholder="ค้นหาด้วย email หรือชื่อฟาร์ม" required />
+        <datalist id="programUserList"></datalist>
+
+        <div id="programPermissionMatrix" class="permission-card-grid permission-card-grid--3">
+          <div class="empty-state">เลือก user ก่อนเพื่อแสดงสิทธิ์เมนูหลัก</div>
+        </div>
+
+        <div class="access-action-row">
+          <button type="button" class="secondary-btn" id="programInitSheetBtn">สร้าง/ตรวจชีทสิทธิ์</button>
+          <button type="button" class="secondary-btn" id="programMigrateBtn">ให้สิทธิ์ user เดิมครบทุกเมนู</button>
+          <button type="submit" id="programPermissionSaveBtn">บันทึกสิทธิ์เมนูหลัก</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card-panel access-page-card">
+      <div class="section-card-head">
+        <h3>กติกาการทำงาน</h3>
+        <span class="badge-inline muted-badge">Program Permission</span>
+      </div>
+      <div class="access-member-list">
+        <div class="access-member-card">
+          <div class="access-module-grid access-module-grid--3">
+            <div class="access-module-card">
+              <div class="access-module-card__title">none</div>
+              <span class="badge-inline danger-soft">ไม่เห็นเมนู</span>
+            </div>
+            <div class="access-module-card">
+              <div class="access-module-card__title">view</div>
+              <span class="badge-inline muted-badge">ดูอย่างเดียว</span>
+            </div>
+            <div class="access-module-card">
+              <div class="access-module-card__title">write</div>
+              <span class="badge-inline success">ดูและแก้ไข</span>
+            </div>
+          </div>
+          <p class="muted">ชีท user_menu_permissions จะถูกสร้างอัตโนมัติเมื่อเรียก action นี้ครั้งแรก และจะ seed สิทธิ์ write ให้ user ที่ approved อยู่แล้วเฉพาะตอนสร้างชีทครั้งแรกเท่านั้น</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="dist/js/program-permissions.bundle.js?v=20260526094223" defer></script>
+</body>
+</html>

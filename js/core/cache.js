@@ -65,7 +65,7 @@ window.AppCache = (() => {
       removeByPrefix(`ducky:medicine:${batchId}`);
       removeByPrefix('ducky:api:');
     }
-    if (/price|Permission|Access|batch|Batch|Liff|Report/i.test(action)) {
+    if (/price|Permission|Access|batch|Batch|Liff|Report|FeedOrder/i.test(action)) {
       removeByPrefix('ducky:admin:');
       removeByPrefix('ducky:price-admin:');
       removeByPrefix('ducky:api:');

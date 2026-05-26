@@ -5,12 +5,17 @@ window.IndexPage = (() => {
     const refreshButton = document.getElementById('refreshBtn');
     const logoutButton = document.getElementById('logoutBtn');
     const searchInput = document.getElementById('batchSearch');
+    const statusButtons = Array.from(document.querySelectorAll('[data-batch-status-filter]'));
     const fab = document.getElementById('fabMain');
     const backdrop = document.querySelector('[data-close-sheet]');
     const fabMenu = document.getElementById('fabMenu');
 
     form?.addEventListener('submit', async (event) => {
       event.preventDefault();
+      if (!canWriteProgramMenu('batch_create')) {
+        alert('ไม่มีสิทธิ์เพิ่มชุดสัตว์');
+        return;
+      }
       await IndexBatchForm.submit();
     });
 
@@ -30,10 +35,19 @@ window.IndexPage = (() => {
       render();
     });
 
+    statusButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const next = button.dataset.batchStatusFilter || 'active';
+        AppState.patch('ui.batchStatusFilter', next);
+        render();
+      });
+    });
+
     AppState.merge({
       ui: {
+        batchStatusFilter: AppState.get().ui.batchStatusFilter || 'active',
         fab: {
-          actions: [{ id: 'add_batch', label: 'เพิ่มชุดสัตว์' }]
+          actions: canWriteProgramMenu('batch_create') ? [{ id: 'add_batch', label: 'เพิ่มชุดสัตว์' }] : []
         }
       }
     });
@@ -42,12 +56,21 @@ window.IndexPage = (() => {
   async function bootstrap() {
     const ok = await AppAuth.ensureAuth();
     if (!ok) return;
+    if (window.MenuPermissionApi?.ensureLoaded) await MenuPermissionApi.ensureLoaded().catch(() => null);
+    if (!canViewProgramMenu('batch_list')) {
+      renderAccessDenied('ไม่มีสิทธิ์เข้าถึงเมนูรายการชุดสัตว์');
+      return;
+    }
     init();
     await loadBatches();
 
     const params = new URLSearchParams(location.search);
     if (params.get('action') === 'add_batch') {
-      IndexBatchForm.open('add');
+      if (canWriteProgramMenu('batch_create')) {
+        IndexBatchForm.open('add');
+      } else {
+        alert('ไม่มีสิทธิ์เพิ่มชุดสัตว์');
+      }
       params.delete('action');
       const next = params.toString();
       history.replaceState({}, '', `${location.pathname}${next ? `?${next}` : ''}${location.hash || ''}`);
@@ -55,6 +78,10 @@ window.IndexPage = (() => {
   }
 
   async function loadBatches({ forceRefresh = false } = {}) {
+    if (!canViewProgramMenu('batch_list')) {
+      renderAccessDenied('ไม่มีสิทธิ์เข้าถึงเมนูรายการชุดสัตว์');
+      return;
+    }
     const cache = AppCache.loadBatchCache();
     const now = Date.now();
     const cacheAge = cache.meta?.fetchedAt ? now - new Date(cache.meta.fetchedAt).getTime() : Infinity;
@@ -102,22 +129,32 @@ window.IndexPage = (() => {
   }
 
   function render() {
+    if (!canViewProgramMenu('batch_list')) {
+      renderAccessDenied('ไม่มีสิทธิ์เข้าถึงเมนูรายการชุดสัตว์');
+      return;
+    }
     const list = document.getElementById('batchLists');
     const banner = document.getElementById('offlineBanner');
     const template = document.getElementById('batchCardTemplate');
     const state = AppState.get();
     const search = state.ui.search;
+    const statusFilter = state.ui.batchStatusFilter || 'active';
 
     if (!list || !template) return;
+    updateStatusToggle(statusFilter);
     list.innerHTML = '';
 
     if (state.ui.offlineMode && state.batches.length) banner.classList.remove('hidden');
     else banner.classList.add('hidden');
 
-    const visible = state.batches.filter((item) => !search || String(item.batch_name || '').toLowerCase().includes(search));
+    const visible = state.batches.filter((item) => {
+      const matchSearch = !search || String(item.batch_name || '').toLowerCase().includes(search);
+      const matchStatus = statusFilter === 'all' || String(item.batch_status ?? '1') === '1';
+      return matchSearch && matchStatus;
+    });
 
     if (!visible.length) {
-      renderEmpty('ไม่พบข้อมูลชุดสัตว์');
+      renderEmpty(statusFilter === 'active' ? 'ไม่พบชุดสัตว์ที่กำลังใช้งาน' : 'ไม่พบข้อมูลชุดสัตว์');
       return;
     }
 
@@ -140,6 +177,9 @@ window.IndexPage = (() => {
       article.id = `card-${batch.batch_id}`;
       title.textContent = `${specieEmoji(batch.batch_specie)} ${batch.batch_name || '-'}`;
       subtitle.textContent = `เข้าวันที่ ${batch.batch_stdate || '-'}`;
+      const isActive = String(batch.batch_status ?? '1') === '1';
+      article.classList.toggle('batch-card--inactive', !isActive);
+      subtitle.insertAdjacentHTML('afterend', `<span class="batch-status-pill ${isActive ? 'is-active' : 'is-inactive'}">${isActive ? 'ปกติ' : 'ปิด'}</span>`);
       start.textContent = `แรกเข้า ${batch.batch_iniqty ?? 0}`;
       current.textContent = `เหลือ ${batch.batch_curqty ?? 0}`;
       rightLabel.textContent = `ไข่เฉลี่ย ${Number(batch.summary?.percent_dailyegg || 0).toFixed(2)}%`;
@@ -151,7 +191,8 @@ window.IndexPage = (() => {
         location.href = `batch.html?bid=${encodeURIComponent(batch.batch_id)}`;
       });
 
-      if (batch.permission !== 'write') {
+      const canWriteThisBatch = canWriteProgramMenu('batch_list') && batch.permission === 'write';
+      if (!canWriteThisBatch) {
         editButton.classList.add('hidden');
         deleteButton.classList.add('hidden');
       } else {
@@ -166,11 +207,17 @@ window.IndexPage = (() => {
         });
       }
 
-      bindSwipe(article, content, batch.permission === 'write');
+      bindSwipe(article, content, canWriteThisBatch);
       fragment.appendChild(node);
     });
 
     list.appendChild(fragment);
+  }
+
+  function updateStatusToggle(statusFilter) {
+    document.querySelectorAll('[data-batch-status-filter]').forEach((button) => {
+      button.classList.toggle('is-active', button.dataset.batchStatusFilter === statusFilter);
+    });
   }
 
   function renderSkeleton() {
@@ -217,7 +264,13 @@ window.IndexPage = (() => {
   }
 
   function handleFabAction(actionId) {
-    if (actionId === 'add_batch') IndexBatchForm.open('add');
+    if (actionId === 'add_batch') {
+      if (!canWriteProgramMenu('batch_create')) {
+        alert('ไม่มีสิทธิ์เพิ่มชุดสัตว์');
+        return;
+      }
+      IndexBatchForm.open('add');
+    }
   }
 
   function updateBatchInState(updated) {
@@ -282,6 +335,28 @@ window.IndexPage = (() => {
     AppState.merge({ batches: next, batchMeta: meta });
     AppCache.saveBatchCache(next, meta);
     render();
+  }
+
+
+  function canViewProgramMenu(menuKey) {
+    if (typeof window.AppAuth?.isAdminSession === 'function' && AppAuth.isAdminSession()) return true;
+    if (window.AppAuth?.getSession?.('is_admin') === true || window.AppAuth?.getSession?.('is_admin') === 'true' || window.AppAuth?.getSession?.('role') === 'admin') return true;
+    return !!window.MenuPermissionApi?.canView?.(menuKey);
+  }
+
+  function canWriteProgramMenu(menuKey) {
+    if (typeof window.AppAuth?.isAdminSession === 'function' && AppAuth.isAdminSession()) return true;
+    if (window.AppAuth?.getSession?.('is_admin') === true || window.AppAuth?.getSession?.('is_admin') === 'true' || window.AppAuth?.getSession?.('role') === 'admin') return true;
+    return !!window.MenuPermissionApi?.canWrite?.(menuKey);
+  }
+
+  function renderAccessDenied(message) {
+    const list = document.getElementById('batchLists');
+    const fab = document.getElementById('fabMain');
+    const fabMenu = document.getElementById('fabMenu');
+    if (fab) fab.classList.add('hidden');
+    if (fabMenu) fabMenu.classList.add('hidden');
+    if (list) list.innerHTML = `<div class="empty-state">${message || 'ไม่มีสิทธิ์เข้าถึงเมนูนี้'}</div>`;
   }
 
   return {

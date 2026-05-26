@@ -23,7 +23,7 @@ window.BatchEventsPage = (() => {
     { key: 'duck_cull', eventType: 'duck_cull', label: 'แตะตูด', icon: '🦆', title: 'แตะตูด / คัดเป็ดไม่ไข่' },
     { key: 'vitamin', eventType: 'vitamin', label: 'วิตามิน', icon: '✨', title: 'บันทึกการให้วิตามิน' },
     { key: 'medicine', eventType: 'medicine', label: 'ให้ยา', icon: '💊', title: 'บันทึกการให้ยา' },
-    { key: 'feed_swap', eventType: 'feed_swap', label: 'สลับอาหาร', icon: '🔁', title: 'บันทึกการสลับอาหาร' },
+    { key: 'feed_swap', eventType: 'feed_swap', label: 'เคลมอาหาร', icon: '🔁', title: 'บันทึกการเคลมอาหาร' },
     { key: 'other', eventType: 'other', label: 'อื่น ๆ', icon: '•', title: 'บันทึกกิจกรรมอื่น ๆ' }
   ];
 
@@ -59,16 +59,12 @@ window.BatchEventsPage = (() => {
   async function load() {
     setText('eventSubtitle', 'กำลังโหลดข้อมูล...');
     const cacheKey = `ducky:farm-events:${state.batchId}`;
-    const cached = readCache(cacheKey, { allowStale: true });
-    const cachedData = cached?.data || null;
-    if (cachedData) {
-      hydrateAndRender(cachedData);
-      setText('eventSubtitle', cached.isStale ? 'แสดงข้อมูลจากเครื่อง • กำลังซิงก์ล่าสุด...' : 'แสดงข้อมูลจากเครื่อง • กำลังตรวจสอบล่าสุด...');
-    }
+    const cached = readCache(cacheKey);
+    if (cached) hydrateAndRender(cached);
 
     const res = await AppApi.post({ action: 'getBatchEventsPageData', batch_id: state.batchId });
     if (!res || res.status !== 'ok') {
-      if (!cachedData) {
+      if (!cached) {
         setText('eventSubtitle', res?.message || 'โหลดข้อมูลไม่สำเร็จ');
         document.getElementById('eventTimeline').innerHTML = `<div class="empty-state">${escapeHtml(res?.message || 'โหลดข้อมูลไม่สำเร็จ')}</div>`;
       }
@@ -339,10 +335,10 @@ window.BatchEventsPage = (() => {
       <label class="field-label">รายละเอียด</label><textarea id="eventDetail" rows="3" placeholder="เช่น ให้ต่อเนื่อง 3 วัน"></textarea>
     `;
     if (actionKey === 'feed_swap') return `
-      <div class="inline-note">บันทึกเป็น marker เหตุการณ์เท่านั้น ไม่หัก/เพิ่ม stock อาหาร</div>
-      <label class="field-label">อาหารเดิม</label><input id="oldFeedName" type="text" placeholder="ชื่ออาหารเดิม" />
-      <label class="field-label">อาหารใหม่</label><input id="newFeedName" type="text" placeholder="ชื่ออาหารใหม่" />
-      <label class="field-label">สาเหตุ</label><textarea id="eventDetail" rows="3" placeholder="เช่น อาหาร lot เดิมเป็ดกินน้อย / คุณภาพไม่ดี"></textarea>
+      <div class="inline-note">บันทึกเป็นเหตุการณ์เคลมอาหารเท่านั้น ไม่หัก/เพิ่ม stock อาหารอัตโนมัติ</div>
+      <label class="field-label">อาหาร/ล็อตที่มีปัญหา</label><input id="oldFeedName" type="text" placeholder="ชื่ออาหาร/ล็อตที่มีปัญหา" />
+      <label class="field-label">อาหารที่ได้เปลี่ยนกลับ / อาหารใหม่</label><input id="newFeedName" type="text" placeholder="ชื่ออาหารที่ได้เปลี่ยนกลับ / อาหารใหม่" />
+      <label class="field-label">สาเหตุ</label><textarea id="eventDetail" rows="3" placeholder="เช่น อาหาร lot เดิมมีปัญหา ต้องส่งคืน/เคลมกับโรงงาน"></textarea>
     `;
     return `
       <label class="field-label">หัวข้อ</label><input id="otherTitle" type="text" placeholder="หัวข้อกิจกรรม" required />
@@ -464,7 +460,7 @@ window.BatchEventsPage = (() => {
     } else if (action === 'feed_swap') {
       const oldName = val('oldFeedName');
       const newName = val('newFeedName');
-      base.event_title = 'สลับอาหาร';
+      base.event_title = 'เคลมอาหาร';
       base.detail = val('eventDetail') || `${oldName || '-'} → ${newName || '-'}`;
       base.extra = { old_feed_name: oldName, new_feed_name: newName };
     } else {
@@ -608,19 +604,7 @@ window.BatchEventsPage = (() => {
   function showSheet(sheet) { if (!sheet) return; sheet.classList.remove('hidden'); requestAnimationFrame(() => sheet.classList.add('show')); }
   function hideSheet(sheet) { if (!sheet) return; sheet.classList.remove('show'); setTimeout(() => sheet.classList.add('hidden'), 220); }
 
-  function readCache(key, options = {}) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return options.allowStale ? { data: null, isStale: false, age: Infinity } : null;
-      const parsed = JSON.parse(raw);
-      const savedAt = Number(parsed.saved_at || parsed.savedAt || 0);
-      const age = savedAt ? Date.now() - savedAt : Infinity;
-      const isStale = age > 90 * 1000;
-      if (options.allowStale) return { data: parsed.data || null, isStale, age, savedAt };
-      if (isStale) return null;
-      return parsed.data || null;
-    } catch (_) { return options.allowStale ? { data: null, isStale: false, age: Infinity } : null; }
-  }
+  function readCache(key) { try { const raw = localStorage.getItem(key); if (!raw) return null; const parsed = JSON.parse(raw); if (!parsed || !parsed.saved_at || Date.now() - parsed.saved_at > 90 * 1000) return null; return parsed.data; } catch (_) { return null; } }
   function writeCache(key, data) { try { localStorage.setItem(key, JSON.stringify({ saved_at: Date.now(), data })); } catch (_) {} }
   function removeCache(key) { try { localStorage.removeItem(key); } catch (_) {} }
   function normalizeEventType(type) { const t = String(type || 'other').toLowerCase(); if (t === 'vaccine') return 'injection'; if (t === 'weather') return 'rain'; if (t === 'farm_event') return 'other'; return ['injection', 'rain', 'duck_cull', 'vitamin', 'medicine', 'feed_swap', 'other'].includes(t) ? t : 'other'; }
@@ -628,7 +612,7 @@ window.BatchEventsPage = (() => {
   function eventIcon(type, subtype, severity) { const t = normalizeEventType(type); if (t === 'injection') return subtype === 'preg' ? '💉P' : '💉'; if (t === 'rain') return severity === 'high' || subtype === 'heavy' ? '⛈' : '🌦'; return ({ duck_cull:'🦆', vitamin:'✨', medicine:'💊', feed_swap:'🔁', other:'•' }[t] || '•'); }
   function eventIconFile(type, subtype, severity) { const t = normalizeEventType(type); return ({ injection:'injection.png', rain:'rain.png', duck_cull:'duck.png', vitamin:'vitamin.png', medicine:'medicine.png', feed_swap:'feed-swap.png', other:'activity.png' }[t] || 'activity.png'); }
   function eventIconHtml(type, subtype, severity, className) { const fallback = eventIcon(type, subtype, severity); const file = eventIconFile(type, subtype, severity); return `<span class="${escapeAttr(className || 'event-timeline-bubble')} event-timeline-bubble--asset" data-fallback="${escapeAttr(fallback)}"><img src="assets/report-icon/${escapeAttr(file)}" alt="" loading="lazy" onerror="this.parentElement.textContent=this.parentElement.dataset.fallback||'•';" /></span>`; }
-  function typeLabel(type, subtype) { const t = normalizeEventType(type); if (t === 'injection') return 'ฉีดยา' + (subtype ? ' • ' + injectionSubtypeLabel(subtype) : ''); if (t === 'rain') return subtype === 'heavy' ? 'ฝนตกแรง' : (subtype === 'light' ? 'ฝนตกเบา' : 'ฝนตก'); return ({ duck_cull:'แตะตูด / คัดเป็ด', vitamin:'ให้วิตามิน', medicine:'ให้ยา', feed_swap:'สลับอาหาร', other:'อื่น ๆ' }[t] || t || '-'); }
+  function typeLabel(type, subtype) { const t = normalizeEventType(type); if (t === 'injection') return 'ฉีดยา' + (subtype ? ' • ' + injectionSubtypeLabel(subtype) : ''); if (t === 'rain') return subtype === 'heavy' ? 'ฝนตกแรง' : (subtype === 'light' ? 'ฝนตกเบา' : 'ฝนตก'); return ({ duck_cull:'แตะตูด / คัดเป็ด', vitamin:'ให้วิตามิน', medicine:'ให้ยา', feed_swap:'เคลมอาหาร', other:'อื่น ๆ' }[t] || t || '-'); }
   function injectionSubtypeLabel(v) { return ({ preg:'เพร็ก', bird_flu:'หวัดนก', other:'ยาอื่น ๆ', water:'ผสมน้ำ', feed:'ผสมอาหาร' }[v] || v || 'ยาอื่น ๆ'); }
   function severityLabel(v) { return ({ normal:'ปกติ', medium:'กลาง', high:'สูง', light:'เบา', heavy:'แรง' }[v] || 'ปกติ'); }
   function todayString() { return new Date().toISOString().slice(0, 10); }

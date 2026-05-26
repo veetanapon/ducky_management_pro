@@ -1,114 +1,107 @@
 <!DOCTYPE html>
+
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <title>Ducky Management Pro</title>
-    <link rel="stylesheet" href="dist/css/index.bundle.css" />
-  
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Ducky Management Pro</title>
+
+<link href="css/core/app.css" rel="stylesheet"/>
+<link href="css/modules/index.css" rel="stylesheet"/>
 </head>
 <body data-page="index">
-  <header class="app-header container">
-    <div class="header-leading">
-      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
-      <div>
-        <h1>My Batch Lists</h1>
-        <p class="muted" id="pageSubtitle">รายการชุดสัตว์ที่เข้าถึงได้</p>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="icon-btn" id="refreshBtn" type="button" title="รีเฟรช">↻</button>
-      <button class="icon-btn" id="logoutBtn" type="button" title="ออกจากระบบ">⎋</button>
-    </div>
-  </header>
-
-  <main class="container page-body">
-    <section class="search-bar">
-      <input id="batchSearch" type="search" placeholder="ค้นหาชื่อชุดสัตว์..." />
-    </section>
-
-    <section id="offlineBanner" class="banner warning hidden">
+<header class="app-header container">
+<div class="header-leading">
+<button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
+<div>
+<h1>My Batch Lists</h1>
+<p class="muted" id="pageSubtitle">รายการชุดสัตว์ที่เข้าถึงได้</p>
+</div>
+</div>
+<div class="header-actions">
+<button class="icon-btn" id="refreshBtn" title="รีเฟรช" type="button">↻</button>
+<button class="icon-btn" id="logoutBtn" title="ออกจากระบบ" type="button">⎋</button>
+</div>
+</header>
+<main class="container page-body">
+<section class="search-bar index-filter-panel">
+<input id="batchSearch" placeholder="ค้นหาชื่อชุดสัตว์..." type="search"/>
+<div aria-label="ตัวกรองสถานะชุดสัตว์" class="index-status-toggle" role="tablist">
+<button class="is-active" data-batch-status-filter="active" type="button">เฉพาะที่ Active</button>
+<button data-batch-status-filter="all" type="button">ทั้งหมด</button>
+</div>
+</section>
+<section class="banner warning hidden" id="offlineBanner">
       กำลังแสดงข้อมูลจากเครื่อง อาจยังไม่เป็นข้อมูลล่าสุด
     </section>
-
-    <section id="batchLists" class="batch-list"></section>
-  </main>
-
-  <button class="fab" id="fabMain" type="button" aria-label="actions">＋</button>
-  <div id="fabMenu" class="fab-menu hidden"></div>
-
-  <div id="addSheet" class="sheet hidden" aria-hidden="true">
-    <div class="sheet-backdrop" data-close-sheet></div>
-    <div class="sheet-panel">
-      <div class="sheet-header">
-        <span id="sheetTitle">เพิ่มชุดสัตว์ใหม่</span>
-        <button id="closeSheetBtn" type="button" class="icon-btn">×</button>
-      </div>
-      <form id="batchForm" class="sheet-body">
-        <input id="ab_species" list="speciesList" placeholder="ชนิดสัตว์" required />
-        <datalist id="speciesList">
-          <option value="เป็ด"></option>
-          <option value="ปลา"></option>
-        </datalist>
-
-        <input id="ab_name" placeholder="ชื่อชุดสัตว์" required />
-        <div class="grid-2">
-          <input id="ab_initqty" type="number" min="0" step="1" placeholder="จำนวนเริ่มต้น" />
-          <input id="ab_currqty" type="number" min="0" step="1" placeholder="จำนวนปัจจุบัน" />
-        </div>
-        <input id="ab_unitprice" type="number" min="0" step="0.01" placeholder="ราคาต่อหน่วย" />
-
-        <div class="grid-2">
-          <select id="ab_status">
-            <option value="1">Active</option>
-            <option value="0">Inactive</option>
-          </select>
-          <input id="ab_startDate" type="date" />
-        </div>
-
-        <input id="ab_endDate" type="date" />
-        <textarea id="ab_remark" rows="3" placeholder="หมายเหตุเพิ่มเติม"></textarea>
-
-        <label class="upload">
-          <span>📷 เลือกรูป</span>
-          <input type="file" id="batchImage" accept="image/*" />
-        </label>
-
-        <img id="imagePreview" class="image-preview hidden" alt="preview" />
-        <button id="submitBatchBtn" type="submit">บันทึกข้อมูล</button>
-      </form>
-    </div>
-  </div>
-
-  <template id="batchCardTemplate">
-    <article class="swipe-wrap">
-      <div class="swipe-actions">
-        <button class="swipe-btn edit" type="button" data-action="edit">✎</button>
-        <button class="swipe-btn delete" type="button" data-action="delete">🗑</button>
-      </div>
-      <div class="batch-card compact swipe-content">
-        <div class="batch-thumb"><img alt="" /></div>
-        <div class="batch-info">
-          <div class="batch-header-row">
-            <span class="batch-title"></span>
-            <span class="batch-subtitle"></span>
-          </div>
-          <div class="batch-stats-row">
-            <div class="batch-stat">
-              <span class="label js-start"></span>
-              <span class="value js-current"></span>
-            </div>
-            <div class="batch-stat text-right">
-              <span class="label js-right-label"></span>
-              <span class="value js-right-value"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </article>
-  </template>
-  <script src="dist/js/core.bundle.js" defer></script>
-  <script src="dist/js/index.bundle.js" defer></script>
-  <script src="dist/js/app.bundle.js" defer></script>
+<section class="batch-list" id="batchLists"></section>
+</main>
+<button aria-label="actions" class="fab" id="fabMain" type="button">＋</button>
+<div class="fab-menu hidden" id="fabMenu"></div>
+<div aria-hidden="true" class="sheet hidden" id="addSheet">
+<div class="sheet-backdrop" data-close-sheet=""></div>
+<div class="sheet-panel">
+<div class="sheet-header">
+<span id="sheetTitle">เพิ่มชุดสัตว์ใหม่</span>
+<button class="icon-btn" id="closeSheetBtn" type="button">×</button>
+</div>
+<form class="sheet-body" id="batchForm">
+<input id="ab_species" list="speciesList" placeholder="ชนิดสัตว์" required=""/>
+<datalist id="speciesList">
+<option value="เป็ด"></option>
+<option value="ปลา"></option>
+</datalist>
+<input id="ab_name" placeholder="ชื่อชุดสัตว์" required=""/>
+<div class="grid-2">
+<input id="ab_initqty" min="0" placeholder="จำนวนเริ่มต้น" step="1" type="number"/>
+<input id="ab_currqty" min="0" placeholder="จำนวนปัจจุบัน" step="1" type="number"/>
+</div>
+<input id="ab_unitprice" min="0" placeholder="ราคาต่อหน่วย" step="0.01" type="number"/>
+<div class="grid-2">
+<select id="ab_status">
+<option value="1">Active</option>
+<option value="0">Inactive</option>
+</select>
+<input id="ab_startDate" type="date"/>
+</div>
+<input id="ab_endDate" type="date"/>
+<textarea id="ab_remark" placeholder="หมายเหตุเพิ่มเติม" rows="3"></textarea>
+<label class="upload">
+<span>📷 เลือกรูป</span>
+<input accept="image/*" id="batchImage" type="file"/>
+</label>
+<img alt="preview" class="image-preview hidden" id="imagePreview"/>
+<button id="submitBatchBtn" type="submit">บันทึกข้อมูล</button>
+</form>
+</div>
+</div>
+<template id="batchCardTemplate">
+<article class="swipe-wrap">
+<div class="swipe-actions">
+<button class="swipe-btn edit" data-action="edit" type="button">✎</button>
+<button class="swipe-btn delete" data-action="delete" type="button">🗑</button>
+</div>
+<div class="batch-card compact swipe-content">
+<div class="batch-thumb"><img alt=""/></div>
+<div class="batch-info">
+<div class="batch-header-row">
+<span class="batch-title"></span>
+<span class="batch-subtitle"></span>
+</div>
+<div class="batch-stats-row">
+<div class="batch-stat">
+<span class="label js-start"></span>
+<span class="value js-current"></span>
+</div>
+<div class="batch-stat text-right">
+<span class="label js-right-label"></span>
+<span class="value js-right-value"></span>
+</div>
+</div>
+</div>
+</div>
+</article>
+</template>
+  <script src="dist/js/index.bundle.js?v=20260526094223" defer></script>
 </body>
 </html>

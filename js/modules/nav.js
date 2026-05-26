@@ -1,4 +1,3 @@
-
 window.NavDrawer = (() => {
   const state = {
     isOpen: false,
@@ -16,11 +15,13 @@ window.NavDrawer = (() => {
     module_egg_daily: 'บันทึกจำนวนไข่รายวัน',
     module_sale: 'ขายออก/บิล',
     batch_access: 'สิทธิ์การเข้าถึง batch',
-    admin_permissions: 'จัดการสิทธิ์',
+    admin_permissions: 'จัดการสิทธิ์ Batch',
+    program_permissions: 'สิทธิ์เมนูหลัก',
     items_price_manage: 'จัดการราคาไข่',
     liff_routes: 'จัดการลิงก์ LIFF',
     report: 'รายงาน',
-    farm_events: 'กิจกรรม'
+    farm_events: 'กิจกรรม',
+    feed_order_bills: 'บิลอาหารกลาง'
   };
 
   function ensureShell() {
@@ -49,6 +50,9 @@ window.NavDrawer = (() => {
     state.batch = options.batch || readStoredBatchContext() || null;
     render();
     bind();
+    if (window.MenuPermissionApi?.ensureLoaded) {
+      MenuPermissionApi.ensureLoaded().then(() => render()).catch(() => render());
+    }
   }
 
   function resolvePageKey(page) {
@@ -64,28 +68,55 @@ window.NavDrawer = (() => {
 
     if (bodyPage === 'batch' || bodyPage === 'batch_dashboard') return 'batch_dashboard';
     if (bodyPage === 'items_price_manage') return 'items_price_manage';
+    if (bodyPage === 'program_permissions') return 'program_permissions';
     if (bodyPage === 'liff_routes') return 'liff_routes';
     if (bodyPage === 'farm_events') return 'farm_events';
     if (bodyPage === 'report_view') return 'report_view';
+    if (bodyPage === 'feed_order_bills' || bodyPage === 'feed-order-bills') return 'feed_order_bills';
     return bodyPage || 'index';
   }
 
   function setBatchContext(batch) {
-    const sessionIsAdmin = Boolean(
-      window.AppAuth?.getSession?.('is_admin') === true ||
-      window.AppAuth?.getSession?.('is_admin') === 'true' ||
-      window.AppAuth?.getSession?.('role') === 'admin'
-    );
-    state.batch = batch ? { ...batch, isAdmin: sessionIsAdmin || !!batch.isAdmin } : null;
+    const sessionUserId = getSessionUserId();
+    state.batch = batch ? sanitizeBatchContext({ ...batch, _user_id: sessionUserId }) : null;
     storeBatchContext(state.batch);
     state.page = resolvePageKey(document.body?.dataset?.page || state.page);
     render();
   }
 
+  function getSessionUserId() {
+    try {
+      return String(window.AppAuth?.getSession?.('user_id') || '');
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function sanitizeBatchContext(batch) {
+    if (!batch) return null;
+    const sessionIsAdmin = isAdminSession();
+    const sanitized = {
+      ...batch,
+      _user_id: String(batch._user_id || getSessionUserId() || ''),
+      // isAdmin is never trusted from localStorage. System/admin menus are based on session only.
+      isAdmin: sessionIsAdmin,
+      isOwner: !!batch.isOwner,
+      module_permissions: batch.module_permissions || {}
+    };
+    return sanitized;
+  }
+
   function readStoredBatchContext() {
     try {
       const raw = localStorage.getItem('ducky:lastBatchContext');
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const sessionUserId = getSessionUserId();
+      if (!sessionUserId || String(parsed._user_id || '') !== sessionUserId) {
+        localStorage.removeItem('ducky:lastBatchContext');
+        return null;
+      }
+      return sanitizeBatchContext(parsed);
     } catch (_) {
       return null;
     }
@@ -97,7 +128,9 @@ window.NavDrawer = (() => {
         localStorage.removeItem('ducky:lastBatchContext');
         return;
       }
-      localStorage.setItem('ducky:lastBatchContext', JSON.stringify(batch));
+      const sessionUserId = getSessionUserId();
+      if (!sessionUserId) return;
+      localStorage.setItem('ducky:lastBatchContext', JSON.stringify(sanitizeBatchContext({ ...batch, _user_id: sessionUserId })));
     } catch (_) {}
   }
 
@@ -193,6 +226,10 @@ window.NavDrawer = (() => {
     if (type === 'open-add-batch') {
       event.preventDefault();
       close();
+      if (!canWriteProgramMenu('batch_create')) {
+        alert('ไม่มีสิทธิ์เพิ่มชุดสัตว์');
+        return;
+      }
       if (state.page === 'index' && window.IndexBatchForm) {
         IndexBatchForm.open('add');
         return;
@@ -265,22 +302,23 @@ window.NavDrawer = (() => {
     const batchId = state.batch?.id || getBatchIdFromUrl();
     const specie = state.batch?.specie || null;
     const isOwner = Boolean(state.batch?.isOwner);
-    const sessionIsAdmin = Boolean(
-      window.AppAuth?.getSession?.('is_admin') === true ||
-      window.AppAuth?.getSession?.('is_admin') === 'true' ||
-      window.AppAuth?.getSession?.('role') === 'admin'
-    );
-    const isAdmin = sessionIsAdmin || Boolean(state.batch?.isAdmin);
+    const sessionIsAdmin = isAdminSession();
+    const isAdmin = sessionIsAdmin;
     const modulePermissions = state.batch?.module_permissions || {};
     const inBatch = Boolean(batchId);
 
-    const sections = [{
-      title: 'หน้าหลัก',
-      items: [
-        { label: 'รายการชุดสัตว์', href: 'index.html', active: state.page === 'index' },
-        { label: 'เพิ่มชุดสัตว์', href: state.page === 'index' ? '#' : 'index.html?action=add_batch', navAction: 'open-add-batch' }
-      ]
-    }];
+    const mainItems = [];
+    if (canViewProgramMenu('batch_list')) {
+      mainItems.push({ label: 'รายการชุดสัตว์', href: 'index.html', active: state.page === 'index' });
+    }
+    if (canViewProgramMenu('feed_order_bills')) {
+      mainItems.push({ label: 'บิลอาหารกลาง', href: 'feed-order-bills.html', active: state.page === 'feed_order_bills' });
+    }
+    if (canWriteProgramMenu('batch_create')) {
+      mainItems.push({ label: 'เพิ่มชุดสัตว์', href: state.page === 'index' ? '#' : 'index.html?action=add_batch', navAction: 'open-add-batch' });
+    }
+
+    const sections = [{ title: 'หน้าหลัก', items: mainItems }];
 
     if (inBatch) {
       const batchItems = [];
@@ -348,7 +386,11 @@ window.NavDrawer = (() => {
       sections.push({
         title: 'ระบบ',
         items: [{
-          label: 'จัดการสิทธิ์',
+          label: 'สิทธิ์เมนูหลัก',
+          href: 'program-permissions.html',
+          active: state.page === 'program_permissions'
+        }, {
+          label: 'สิทธิ์ Batch',
           href: 'admin-permissions.html',
           active: state.page === 'admin_permissions'
         }, {
@@ -360,6 +402,26 @@ window.NavDrawer = (() => {
     }
 
     return sections;
+  }
+
+  function isAdminSession() {
+    if (window.AppAuth?.isAdminSession) return AppAuth.isAdminSession();
+    const role = String(window.AppAuth?.getSession?.('role') || '').trim().toLowerCase();
+    const flag = window.AppAuth?.getSession?.('is_admin');
+    const flagText = String(flag == null ? '' : flag).trim().toLowerCase();
+    return role === 'admin' || flag === true || flag === 1 || flagText === '1' || flagText === 'true' || flagText === 'yes';
+  }
+
+  function canViewProgramMenu(menuKey) {
+    if (isAdminSession()) return true;
+    if (!window.MenuPermissionApi?.canView) return false;
+    return MenuPermissionApi.canView(menuKey);
+  }
+
+  function canWriteProgramMenu(menuKey) {
+    if (isAdminSession()) return true;
+    if (!window.MenuPermissionApi?.canWrite) return false;
+    return MenuPermissionApi.canWrite(menuKey);
   }
 
   function canAccess(moduleKey, modulePermissions, isOwner, isAdmin, specie) {
