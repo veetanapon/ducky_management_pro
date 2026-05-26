@@ -1,5 +1,5 @@
-/* Ducky bundle: admin-permissions
- * Generated: 2026-05-26T09:41:55.001Z
+/* Ducky bundle: module-medicine
+ * Generated: 2026-05-26T09:41:55.724Z
  * Sources:
  * - js/config.js
  * - js/core/state.js
@@ -8,27 +8,13 @@
  * - js/core/auth.js
  * - js/core/dom.js
  * - js/core/format.js
- * - js/core/image.js
- * - js/services/batch.service.js
- * - js/services/feed.service.js
- * - js/services/egg.service.js
- * - js/services/sale.service.js
- * - js/services/price.service.js
- * - js/services/permission.service.js
- * - js/services/menu-permission.service.js
- * - js/services/report.service.js
- * - js/services/liff.service.js
  * - js/services/event.service.js
  * - js/components/bottom-sheet.js
- * - js/components/calendar-grid.js
- * - js/components/summary-cards.js
- * - js/components/skeleton.js
- * - js/components/fab.js
- * - js/components/bill-preview.js
+ * - js/services/menu-permission.service.js
  * - js/modules/nav.js
- * - js/modules/admin-permissions-page.js
- * - js/core/zoom-lock.js
+ * - js/modules/medicine-page.js
  * - js/app.js
+ * - js/core/zoom-lock.js
  */
 
 /* ==== js/config.js ==== */
@@ -786,91 +772,26 @@ window.AppFormat = (() => {
 //# sourceURL=js/core/format.js
 
 
-/* ==== js/core/image.js ==== */
-window.AppImage = (() => {
-  function fileToBase64(file) { return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); }); }
-  function resizeDataUrl(dataUrl, maxW = 1200, maxH = 900, quality = 0.82) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        const ratio = Math.min(maxW / width, maxH / height, 1);
-        width = Math.round(width * ratio); height = Math.round(height * ratio);
-        const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.src = dataUrl;
-    });
-  }
-  return { fileToBase64, resizeDataUrl };
+/* ==== js/services/event.service.js ==== */
+window.EventApi = {
+  pageData: (batchId) => AppApi.postCached({ action: 'getBatchEventsPageData', batch_id: batchId }, { ttlMs: 60 * 1000, background: false }),
+  saveFeedConsumption: (payload) => AppApi.post({ action: 'saveFeedConsumptionLog', ...payload }),
+  saveEvent: (payload) => AppApi.post({ action: 'saveBatchEvent', ...payload }),
+  saveMedicalInventory: (payload) => AppApi.post({ action: 'saveMedicalInventoryLog', ...payload }),
+  deleteEvent: (payload) => AppApi.post({ action: 'deleteBatchEvent', ...payload })
+};
+
+//# sourceURL=js/services/event.service.js
+
+
+/* ==== js/components/bottom-sheet.js ==== */
+window.BottomSheet = (() => {
+  function open(id) { const sheet = document.getElementById(id); if (!sheet) return; sheet.classList.remove('hidden'); requestAnimationFrame(() => sheet.classList.add('show')); }
+  function close(id) { const sheet = document.getElementById(id); if (!sheet) return; sheet.classList.remove('show'); setTimeout(() => sheet.classList.add('hidden'), 220); }
+  return { open, close };
 })();
 
-//# sourceURL=js/core/image.js
-
-
-/* ==== js/services/batch.service.js ==== */
-window.BatchApi = {
-  list: (lastUpdate) => AppApi.postCached({ action: 'getAllBatches', lastUpdate }, { background: false }),
-  dashboard: (batchId) => AppApi.postCached({ action: 'getBatchDashboardSummary', batch_id: batchId }, { background: false }),
-  detail: (batchId) => AppApi.post({ action: 'getBatchFullDetail', batch_id: batchId }),
-  save: (payload) => AppApi.post(payload),
-  movement: (payload) => AppApi.post({ action: 'saveBatchMovement', ...payload })
-};
-
-//# sourceURL=js/services/batch.service.js
-
-
-/* ==== js/services/feed.service.js ==== */
-window.FeedApi = {
-  pageData: (batchId, month) => AppApi.postCached({ action: 'getModuleCalendarData', batch_id: batchId, module_type: 'feed_manage', month }, { background: false }),
-  saveLog: (payload) => AppApi.post({ action: 'saveFeedLog', ...payload }),
-  record: (payload) => AppApi.post({ action: 'getFeedLogRecord', ...payload })
-};
-
-//# sourceURL=js/services/feed.service.js
-
-
-/* ==== js/services/egg.service.js ==== */
-window.EggApi = {
-  pageData: (batchId, month) => AppApi.postCached({ action: 'getModuleCalendarData', batch_id: batchId, module_type: 'egg_daily', month }, { background: false }),
-  saveLog: (payload) => AppApi.post({ action: 'saveEggDailyLog', ...payload }),
-  record: (payload) => AppApi.post({ action: 'getEggDailyRecord', ...payload })
-};
-
-//# sourceURL=js/services/egg.service.js
-
-
-/* ==== js/services/sale.service.js ==== */
-window.SaleApi = {
-  pageData: (batchId, month) => AppApi.postCached({ action: 'getModuleCalendarData', batch_id: batchId, module_type: 'sale_manage', month }, { background: false }),
-  saveBill: (payload) => AppApi.post({ action: 'saveBatchSaleBill', ...payload }),
-  billRecord: (payload) => AppApi.post({ action: 'getSaleBillRecord', ...payload }),
-  billsForDate: (payload) => AppApi.post({ action: 'getSaleBillsForDate', ...payload }),
-  rangeSummary: (payload) => AppApi.post({ action: 'getSaleBillRangeSummary', ...payload })
-};
-
-//# sourceURL=js/services/sale.service.js
-
-
-/* ==== js/services/price.service.js ==== */
-window.PriceApi = {
-  adminData: () => AppApi.postCached({ action: 'getItemPriceAdminData' }, { background: false }),
-  effectiveEgg: (batchId) => AppApi.postCached({ action: 'getEffectiveEggPriceSet', batch_id: batchId }, { ttlMs: 12 * 60 * 60 * 1000, background: false }),
-  saveSet: (payload) => AppApi.post({ action: 'savePriceSet', ...payload })
-};
-
-//# sourceURL=js/services/price.service.js
-
-
-/* ==== js/services/permission.service.js ==== */
-window.PermissionApi = {
-  adminOptions: () => AppApi.postCached({ action: 'getPermissionAdminOptions' }, { ttlMs: 5 * 60 * 1000, background: false }),
-  accessList: (batchId) => AppApi.post({ action: 'getBatchAccessList', batch_id: batchId }),
-  accessSummary: (batchId) => AppApi.post({ action: 'getBatchAccessSummary', batch_id: batchId })
-};
-
-//# sourceURL=js/services/permission.service.js
+//# sourceURL=js/components/bottom-sheet.js
 
 
 /* ==== js/services/menu-permission.service.js ==== */
@@ -1049,330 +970,6 @@ window.MenuPermissionApi = (() => {
 })();
 
 //# sourceURL=js/services/menu-permission.service.js
-
-
-/* ==== js/services/report.service.js ==== */
-window.ReportApi = {
-  pageData: (batchId) => AppApi.postCached(
-    { action: 'getReportPageData', batch_id: batchId },
-    { ttlMs: 20 * 60 * 1000, background: true, allowStale: true, timeoutMs: 10000 }
-  ),
-  rebuild: (batchId) => AppApi.post({ action: 'rebuildReportForBatch', batch_id: batchId }, { timeoutMs: 30000 }),
-  exportExcel: (batchId, month) => AppApi.post({ action: 'exportReportExcel', batch_id: batchId, month }, { timeoutMs: 30000 }),
-  publicView: (key) => AppApi.postPublic({ action: 'getReportPublicViewData', view_key: key }, { timeoutMs: 10000 })
-};
-
-//# sourceURL=js/services/report.service.js
-
-
-/* ==== js/services/liff.service.js ==== */
-window.LiffRouteApi = {
-  pageData: (batchId) => AppApi.postCached({ action: 'getLiffBatchRoutePageData', batch_id: batchId }, { ttlMs: 2 * 60 * 1000, background: false }),
-  save: (payload) => AppApi.post({ action: 'saveLiffBatchRoute', ...payload }),
-  generateKey: (batchId) => AppApi.post({ action: 'generateLiffRouteKey', batch_id: batchId })
-};
-
-//# sourceURL=js/services/liff.service.js
-
-
-/* ==== js/services/event.service.js ==== */
-window.EventApi = {
-  pageData: (batchId) => AppApi.postCached({ action: 'getBatchEventsPageData', batch_id: batchId }, { ttlMs: 60 * 1000, background: false }),
-  saveFeedConsumption: (payload) => AppApi.post({ action: 'saveFeedConsumptionLog', ...payload }),
-  saveEvent: (payload) => AppApi.post({ action: 'saveBatchEvent', ...payload }),
-  saveMedicalInventory: (payload) => AppApi.post({ action: 'saveMedicalInventoryLog', ...payload }),
-  deleteEvent: (payload) => AppApi.post({ action: 'deleteBatchEvent', ...payload })
-};
-
-//# sourceURL=js/services/event.service.js
-
-
-/* ==== js/components/bottom-sheet.js ==== */
-window.BottomSheet = (() => {
-  function open(id) { const sheet = document.getElementById(id); if (!sheet) return; sheet.classList.remove('hidden'); requestAnimationFrame(() => sheet.classList.add('show')); }
-  function close(id) { const sheet = document.getElementById(id); if (!sheet) return; sheet.classList.remove('show'); setTimeout(() => sheet.classList.add('hidden'), 220); }
-  return { open, close };
-})();
-
-//# sourceURL=js/components/bottom-sheet.js
-
-
-/* ==== js/components/calendar-grid.js ==== */
-window.CalendarGrid = (() => {
-  function monthKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; }
-  function daysInMonth(key) { const [y,m] = String(key).split('-').map(Number); return new Date(y, m, 0).getDate(); }
-  return { monthKey, daysInMonth };
-})();
-
-//# sourceURL=js/components/calendar-grid.js
-
-
-/* ==== js/components/summary-cards.js ==== */
-window.SummaryCards = (() => {
-  function render(container, cards = []) {
-    if (!container) return;
-    container.innerHTML = cards.map((card) => `<div class="module-summary-card"><span class="module-summary-label">${AppFormat?.escapeHtml?.(card.label) ?? card.label}</span><strong class="module-summary-value">${AppFormat?.escapeHtml?.(card.value) ?? card.value}</strong><span class="muted">${AppFormat?.escapeHtml?.(card.note || '') ?? ''}</span></div>`).join('');
-  }
-  return { render };
-})();
-
-//# sourceURL=js/components/summary-cards.js
-
-
-/* ==== js/components/skeleton.js ==== */
-window.Skeleton = (() => {
-  function cards(count = 3) { return Array.from({ length: count }, () => '<div class="skeleton-wrap"><div class="skeleton-card"><div class="skeleton skeleton-thumb"></div><div style="flex:1"><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line short"></div></div></div></div>').join(''); }
-  return { cards };
-})();
-
-//# sourceURL=js/components/skeleton.js
-
-
-/* ==== js/components/fab.js ==== */
-window.AppFab = (() => {
-  function close(root) { root?.classList?.remove('open'); }
-  function toggle(root) { root?.classList?.toggle('open'); }
-  return { close, toggle };
-})();
-
-//# sourceURL=js/components/fab.js
-
-
-/* ==== js/components/bill-preview.js ==== */
-window.BillPreview = (() => {
-  function loadCanvasImage(src) {
-    return new Promise((resolve) => {
-      if (!src) return resolve(null);
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = src;
-    });
-  }
-
-  function drawCenteredText(ctx, text, centerX, y) {
-    const safeText = String(text || '');
-    const metrics = ctx.measureText(safeText);
-    const visualWidth = Math.abs(metrics.actualBoundingBoxLeft || 0) + Math.abs(metrics.actualBoundingBoxRight || metrics.width || 0);
-    const x = centerX - visualWidth / 2 - (metrics.actualBoundingBoxLeft || 0);
-    const previousAlign = ctx.textAlign;
-    ctx.textAlign = 'left';
-    ctx.fillText(safeText, x, y);
-    ctx.textAlign = previousAlign;
-  }
-
-  function fitCenteredText(ctx, text, centerX, y, maxWidth, weight = 'bold', startSize = 22, minSize = 13) {
-    const safeText = String(text || '');
-    let size = startSize;
-    while (size > minSize) {
-      ctx.font = `${weight} ${size}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-      if (ctx.measureText(safeText).width <= maxWidth) break;
-      size -= 1;
-    }
-    drawCenteredText(ctx, safeText, centerX, y);
-    return size;
-  }
-
-  function defaultWrapText(ctx, text, x, y, maxWidth, lineHeight) {
-    const source = String(text || '');
-    const paragraphs = source.split(/\r?\n/);
-    let currentY = y;
-    paragraphs.forEach((paragraph, pIndex) => {
-      const words = paragraph.split(/\s+/).filter(Boolean);
-      if (!words.length) {
-        currentY += lineHeight;
-        return;
-      }
-      let line = '';
-      words.forEach((word) => {
-        const testLine = line ? `${line} ${word}` : word;
-        if (ctx.measureText(testLine).width > maxWidth && line) {
-          ctx.fillText(line, x, currentY);
-          line = word;
-          currentY += lineHeight;
-        } else {
-          line = testLine;
-        }
-      });
-      if (line) ctx.fillText(line, x, currentY);
-      if (pIndex < paragraphs.length - 1) currentY += lineHeight;
-    });
-    return currentY;
-  }
-
-  function compactDate(value, helpers = {}) {
-    if (helpers.formatThaiDate) return helpers.formatThaiDate(value);
-    if (!value) return '-';
-    const text = String(value).slice(0, 10);
-    const parts = text.split('-').map(Number);
-    if (parts.length === 3 && parts.every((v) => !Number.isNaN(v))) {
-      const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-      return `${parts[2]} ${months[(parts[1] || 1) - 1]} ${parts[0] + 543}`;
-    }
-    return text;
-  }
-
-  function formatNumber(value, helpers = {}) {
-    if (helpers.formatNumber) return helpers.formatNumber(value);
-    return Number(value || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
-  }
-
-  function formatMoney(value, helpers = {}) {
-    if (helpers.formatMoney) return helpers.formatMoney(value);
-    return Number(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  async function renderBillImage(draft = {}, helpers = {}) {
-    const width = helpers.width || 430;
-    const padding = helpers.padding || 22;
-    const lineGap = 18;
-    const items = Array.isArray(draft.items) ? draft.items : [];
-    const itemBlockHeight = helpers.itemBlockHeight || 52;
-    const hasRemark = !!String(draft.remark || '').trim();
-    const logoSize = helpers.logoSize || 54;
-    const headerHeight = 154;
-    const remarkReserve = hasRemark ? 96 : 24;
-    const thankYouHeight = 34;
-    const bottomPadding = helpers.bottomPadding || 42;
-    const discountRows = Number(draft.discount || 0) > 0 ? 2 : 1;
-    const height = Math.max(
-      320,
-      headerHeight +
-        (items.length * itemBlockHeight) +
-        remarkReserve +
-        thankYouHeight +
-        (discountRows * lineGap) +
-        bottomPadding +
-        34
-    );
-
-    const dpr = Math.min(window.devicePixelRatio || 2, 3);
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#111827';
-    ctx.textBaseline = 'top';
-
-    let y = padding;
-    const logoSrc = draft.logo_url || draft.logoUrl || helpers.logoUrl || 'assets/farm-logo.png';
-    const logo = await loadCanvasImage(logoSrc);
-    if (logo) {
-      ctx.drawImage(logo, Math.round((width - logoSize) / 2), y, logoSize, logoSize);
-      y += logoSize + 8;
-    }
-
-    ctx.fillStyle = '#111827';
-    fitCenteredText(ctx, draft.farm_name || draft.farmName || 'FARM', width / 2, y, width - (padding * 2), 'bold', 22, 13);
-    y += 30;
-    fitCenteredText(ctx, draft.bill_title || draft.title || helpers.title || 'บิลเงินสด', width / 2, y, width - (padding * 2), 'bold', 17, 13);
-    y += 28;
-
-    ctx.textAlign = 'left';
-    ctx.font = '14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillStyle = '#374151';
-    ctx.fillText('วันที่ขาย: ' + compactDate(draft.log_date, helpers), padding, y);
-    y += lineGap;
-    ctx.fillText('เวลาออกบิล: ' + (draft.issue_date || '-'), padding, y);
-    y += lineGap;
-    ctx.fillText('ชุดสัตว์: ' + (draft.batch_name || '-'), padding, y);
-    y += 20;
-
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-    ctx.stroke();
-    y += 12;
-
-    items.forEach((item) => {
-      const itemName = item.display_name || item.item_name || item.name || '-';
-      const unitLabel = item.unit_label || item.unit || '';
-      const qtyText = draft.sale_type === 'egg' && item.total_qty != null
-        ? `${formatNumber(item.qty, helpers)} ${unitLabel} (${formatNumber(item.total_qty, helpers)} ฟอง) x ${formatMoney(item.unit_price, helpers)}`
-        : `${formatNumber(item.qty, helpers)} ${unitLabel} x ${formatMoney(item.unit_price, helpers)}`;
-
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#111827';
-      ctx.font = 'bold 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillText(itemName, padding, y, width - (padding * 2));
-      y += 18;
-
-      ctx.font = '13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillStyle = '#4b5563';
-      ctx.fillText(qtyText, padding, y, width - (padding * 2) - 112);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#111827';
-      ctx.fillText(formatMoney(item.line_total, helpers), width - padding, y, 108);
-      y += itemBlockHeight - 18;
-    });
-
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-    ctx.stroke();
-    y += 12;
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#111827';
-    ctx.font = '14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText('รวมก่อนหักส่วนลด', padding, y);
-    ctx.textAlign = 'right';
-    ctx.fillText(formatMoney(draft.sub_total || draft.subTotal || draft.grand_total, helpers), width - padding, y);
-    y += lineGap;
-
-    if (Number(draft.discount || 0) > 0) {
-      ctx.textAlign = 'left';
-      ctx.fillText('ส่วนลด', padding, y);
-      ctx.textAlign = 'right';
-      ctx.fillText('-' + formatMoney(draft.discount, helpers), width - padding, y);
-      y += lineGap;
-    }
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#111827';
-    ctx.font = 'bold 16px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText('สุทธิ', padding, y);
-    ctx.textAlign = 'right';
-    ctx.font = 'bold 18px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText(formatMoney(draft.grand_total || draft.grandTotal || 0, helpers), width - padding, y);
-    y += 32;
-
-    if (hasRemark) {
-      ctx.textAlign = 'left';
-      ctx.font = '13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillStyle = '#4b5563';
-      const wrap = helpers.wrapText || defaultWrapText;
-      const remarkEndY = wrap(ctx, 'หมายเหตุ: ' + draft.remark, padding, y, width - (padding * 2), 17);
-      y = Number.isFinite(remarkEndY) ? remarkEndY + 18 : y + 48;
-    } else {
-      y += 12;
-    }
-
-    const thankYouY = Math.min(y, height - padding - 22);
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillStyle = '#0f766e';
-    ctx.fillText(helpers.thankYouText || 'ขอบคุณที่อุดหนุน', width / 2, thankYouY);
-    ctx.textAlign = 'left';
-
-    return canvas.toDataURL('image/png');
-  }
-
-  return { renderBillImage, loadCanvasImage, drawCenteredText, fitCenteredText };
-})();
-
-//# sourceURL=js/components/bill-preview.js
 
 
 /* ==== js/modules/nav.js ==== */
@@ -1833,327 +1430,391 @@ window.NavDrawer = (() => {
 //# sourceURL=js/modules/nav.js
 
 
-/* ==== js/modules/admin-permissions-page.js ==== */
-
-window.AdminPermissionsPage = (() => {
+/* ==== js/modules/medicine-page.js ==== */
+window.MedicinePage = (() => {
   const state = {
-    users: [],
-    batches: [],
-    selectedBatch: null,
-    selectedUser: null,
-    currentPermissions: {},
-    grantedMembers: [],
-    grantedLoaded: false
+    batchId: '',
+    batch: null,
+    permission: 'none',
+    batchPermission: 'read',
+    isOwner: false,
+    isAdmin: false,
+    modulePermissions: {},
+    items: [],
+    filter: 'all',
+    search: '',
+    editingItem: null
   };
-  const CACHE_TTL_MS = 90 * 1000;
+
+  const TYPE_LABELS = {
+    medicine: 'ยา',
+    vitamin: 'วิตามิน',
+    premix: 'พรีมิกซ์',
+    vaccine: 'วัคซีน',
+    chemical: 'เคมีภัณฑ์',
+    other: 'อื่น ๆ'
+  };
 
   async function bootstrap() {
     const ok = await AppAuth.ensureAuth();
     if (!ok) return;
-    bindBaseEvents();
-
-    const cached = readCache('ducky:admin:options');
-    if (cached) {
-      state.users = cached.users || [];
-      state.batches = cached.batches || [];
-      renderOptionLists();
-    }
-
-    const response = await AppApi.post({ action: 'getPermissionAdminOptions' });
-    if (!response || response.status !== 'ok') {
-      if (!cached) document.getElementById('adminPermissionSubtitle').textContent = response?.message || 'โหลดตัวเลือกไม่สำเร็จ';
+    state.batchId = new URLSearchParams(location.search).get('bid') || '';
+    bind();
+    if (!state.batchId) {
+      setText('medicineSubtitle', 'ไม่พบ batch id');
       return;
     }
-    state.users = response.users || [];
-    state.batches = response.batches || [];
-    writeCache('ducky:admin:options', { users: state.users, batches: state.batches });
-    renderOptionLists();
-
-    if (window.NavDrawer) {
-      NavDrawer.setBatchContext({ isAdmin: true, module_permissions: {}, batch: null });
-    }
+    await load();
   }
 
-  function bindBaseEvents() {
+  function bind() {
     document.getElementById('backBtn')?.addEventListener('click', () => history.back());
     document.getElementById('logoutBtn')?.addEventListener('click', AppAuth.logout);
-    document.getElementById('adminBatchSearch')?.addEventListener('change', onSelectionChange);
-    document.getElementById('adminUserSearch')?.addEventListener('change', onSelectionChange);
-    document.getElementById('adminPermissionForm')?.addEventListener('submit', onSubmit);
-    document.getElementById('adminLoadGrantedBtn')?.addEventListener('click', loadGrantedMembers);
+    document.getElementById('medicineSearch')?.addEventListener('input', (event) => {
+      state.search = String(event.target.value || '').trim().toLowerCase();
+      renderList();
+    });
+    document.getElementById('medicineFilterRow')?.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-filter]');
+      if (!btn) return;
+      state.filter = btn.dataset.filter || 'all';
+      document.querySelectorAll('#medicineFilterRow [data-filter]').forEach((el) => el.classList.toggle('is-active', el === btn));
+      renderList();
+    });
+    document.getElementById('medicineSheetCloseBtn')?.addEventListener('click', closeSheet);
+    document.getElementById('medicineSheetCancelBtn')?.addEventListener('click', closeSheet);
+    document.getElementById('medicineSheetBackdrop')?.addEventListener('click', closeSheet);
+    document.getElementById('medicineForm')?.addEventListener('submit', submitForm);
+    ['medicinePackageQty', 'medicineKgPerPackage', 'medicineTotalCost'].forEach((id) => {
+      document.getElementById(id)?.addEventListener('input', updateComputedWeight);
+    });
   }
 
-  function renderOptionLists() {
-    document.getElementById('adminBatchList').innerHTML = state.batches.map((batch) => `<option value="${escapeHtml(batch.label)}"></option>`).join('');
-    document.getElementById('adminUserList').innerHTML = state.users.map((user) => `<option value="${escapeHtml(user.label)}"></option>`).join('');
-  }
+  async function load() {
+    setText('medicineSubtitle', 'กำลังโหลดข้อมูล...');
+    const cacheKey = `ducky:medicine:${state.batchId}`;
+    const cached = readEnvelope(cacheKey, true);
+    if (cached) hydrateAndRender(cached, true);
 
-  async function onSelectionChange() {
-    state.selectedBatch = resolveBatch();
-    state.selectedUser = resolveUser();
-    state.grantedLoaded = false;
-    state.grantedMembers = [];
-    document.getElementById('adminGrantedCountBadge').textContent = 'ยังไม่โหลด';
-    document.getElementById('adminGrantedList').innerHTML = '<div class="empty-state">ยังไม่ได้ดึงข้อมูล</div>';
-
-    const matrix = document.getElementById('adminPermissionMatrix');
-    if (!state.selectedBatch || !state.selectedUser) {
-      state.currentPermissions = {};
-      matrix.innerHTML = '<div class="empty-state">เลือก batch และ user ก่อนเพื่อแสดงสิทธิ์รายโมดูล</div>';
+    const res = await AppApi.post({ action: 'getBatchEventsPageData', batch_id: state.batchId }, { timeoutMs: 14000 });
+    if (!res || res.status !== 'ok') {
+      if (!cached) {
+        setText('medicineSubtitle', res?.message || 'โหลดข้อมูลไม่สำเร็จ');
+        document.getElementById('medicineList').innerHTML = `<div class="empty-state">${esc(res?.message || 'โหลดข้อมูลไม่สำเร็จ')}</div>`;
+      }
       return;
     }
+    writeEnvelope(cacheKey, res);
+    hydrateAndRender(res, false);
+  }
 
-    const cache = readCache(memberCacheKey(state.selectedBatch.id));
-    const member = cache?.find((item) => String(item.user_id) === String(state.selectedUser.id));
-    state.currentPermissions = member?.permissions || {};
-    renderPermissionGrid(matrix, getModules(state.selectedBatch.specie), state.currentPermissions);
+  function hydrateAndRender(res, fromCache) {
+    state.batch = res.batch || null;
+    state.permission = res.permission || 'none';
+    state.batchPermission = res.batch_permission || res.permission || 'read';
+    state.isOwner = !!res.is_owner;
+    state.isAdmin = !!res.is_admin;
+    state.modulePermissions = res.module_permissions || { farm_events: state.permission };
+    state.items = Array.isArray(res.medical_items) ? res.medical_items : [];
+    render(fromCache);
+  }
 
-    if (!member) {
-      const perms = await fetchUserPermissions(state.selectedBatch.id, state.selectedUser.id);
-      state.currentPermissions = perms;
-      renderPermissionGrid(matrix, getModules(state.selectedBatch.specie), perms);
+  function render(fromCache) {
+    setText('medicineTitle', 'คลังยา / วิตามิน');
+    setText('medicineSubtitle', `${state.batch?.name || state.batchId} • เก็บ stock เป็นกรัม${fromCache ? ' • แสดงจาก cache' : ''}`);
+    const badge = document.getElementById('medicinePermissionBadge');
+    if (badge) {
+      badge.className = `badge-inline ${state.permission === 'write' ? 'success' : 'muted-badge'}`;
+      badge.textContent = state.permission === 'write' ? 'ดูและแก้ไข' : 'ดูอย่างเดียว';
     }
-  }
-
-  async function fetchUserPermissions(batchId, userId) {
-    const access = await AppApi.post({ action: 'getBatchAccessList', batch_id: batchId });
-    const members = access && access.status === 'ok' ? (access.members || []) : [];
-    if (members.length) writeCache(memberCacheKey(batchId), members);
-    const member = members.find((item) => String(item.user_id) === String(userId));
-    return member?.permissions || {};
-  }
-
-  async function onSubmit(event) {
-    event.preventDefault();
-    const batch = resolveBatch();
-    const user = resolveUser();
-    if (!batch || !user) return alert('กรุณาเลือก batch และ user');
-    const button = document.getElementById('adminPermissionSaveBtn');
-    const original = button.textContent;
-    button.disabled = true;
-    button.textContent = 'กำลังบันทึก...';
-
-    const selects = [...document.querySelectorAll('#adminPermissionMatrix select[data-module-key]')];
-    for (const select of selects) {
-      const response = await AppApi.post({
-        action: 'upsertBatchModulePermission',
-        batch_id: batch.id,
-        target_user_id: user.id,
-        module_key: select.dataset.moduleKey,
-        permission: select.value
+    if (window.NavDrawer) {
+      NavDrawer.setBatchContext({
+        id: state.batchId,
+        specie: state.batch?.specie,
+        permission: state.batchPermission,
+        isOwner: state.isOwner,
+        isAdmin: state.isAdmin,
+        module_permissions: state.modulePermissions
       });
-      if (!response || response.status !== 'ok') {
-        button.disabled = false;
-        button.textContent = original;
-        return alert(response?.message || `บันทึกสิทธิ์ ${select.dataset.moduleKey} ไม่สำเร็จ`);
-      }
     }
-
-    button.disabled = false;
-    button.textContent = original;
-    localStorage.removeItem(memberCacheKey(batch.id));
-    localStorage.removeItem(`ducky:batch-dashboard:${batch.id}`);
-    alert('บันทึกสิทธิ์เรียบร้อย');
-    if (state.grantedLoaded) await loadGrantedMembers();
+    renderSummary();
+    renderList();
+    renderFab();
   }
 
-  async function loadGrantedMembers() {
-    const batch = resolveBatch();
-    if (!batch) return alert('กรุณาเลือก batch ก่อน');
-    const badge = document.getElementById('adminGrantedCountBadge');
-    const list = document.getElementById('adminGrantedList');
-    const hint = document.getElementById('adminGrantedHint');
-    badge.textContent = 'กำลังโหลด';
-    list.innerHTML = '<div class="empty-state">กำลังโหลดรายการสิทธิ์...</div>';
-
-    let members = readCache(memberCacheKey(batch.id));
-    if (!members) {
-      const response = await AppApi.post({ action: 'getBatchAccessList', batch_id: batch.id });
-      if (!response || response.status !== 'ok') {
-        badge.textContent = 'ผิดพลาด';
-        list.innerHTML = `<div class="empty-state">${escapeHtml(response?.message || 'โหลดรายการสิทธิ์ไม่สำเร็จ')}</div>`;
-        return;
-      }
-      members = response.members || [];
-      writeCache(memberCacheKey(batch.id), members);
-    }
-
-    state.grantedLoaded = true;
-    state.grantedMembers = members || [];
-    badge.textContent = `${state.grantedMembers.length} คน`;
-    hint.textContent = 'แสดงเฉพาะผู้ที่ถูก grant สิทธิ์ใน batch ที่เลือก';
-    list.innerHTML = renderMemberCards(state.grantedMembers, batch.specie, true, batch.id);
+  function renderSummary() {
+    const target = document.getElementById('medicineSummaryCards');
+    if (!target) return;
+    const active = state.items.filter((item) => Number(item.current_qty || 0) > 0);
+    const low = state.items.filter((item) => Number(item.current_qty || 0) > 0 && Number(item.current_qty || 0) <= 500).length;
+    const premix = state.items.filter((item) => normalizeType(item.item_type) === 'premix').length;
+    target.innerHTML = [
+      ['รายการทั้งหมด', `${fmt(state.items.length)} รายการ`, 'ยา/วิตามิน/พรีมิกซ์'],
+      ['มีคงเหลือ', `${fmt(active.length)} รายการ`, 'พร้อมใช้งาน'],
+      ['ใกล้หมด', `${fmt(low)} รายการ`, 'เหลือไม่เกิน 500 กรัม'],
+      ['พรีมิกซ์', `${fmt(premix)} รายการ`, 'ซื้อเป็นถุง ใช้เป็นกรัม']
+    ].map(([label, value, note]) => `
+      <div class="module-summary-card">
+        <span class="module-summary-label">${esc(label)}</span>
+        <strong class="module-summary-value">${esc(value)}</strong>
+        <span class="muted">${esc(note)}</span>
+      </div>
+    `).join('');
   }
 
-  function renderPermissionGrid(container, modules, permissions) {
-    container.innerHTML = modules.map((module) => {
-      const current = permissions[module.key] || 'none';
-      return `
-        <div class="permission-card">
-          <div class="permission-card__title">${module.label}</div>
-          <div class="permission-card__key muted">${module.key}</div>
-          <select data-module-key="${module.key}" class="permission-card__select">
-            <option value="none" ${current === 'none' ? 'selected' : ''}>ไม่มีสิทธิ์</option>
-            <option value="view" ${current === 'view' ? 'selected' : ''}>ดูอย่างเดียว</option>
-            <option value="write" ${current === 'write' ? 'selected' : ''}>ดูและแก้ไข</option>
-          </select>
-        </div>`;
-    }).join('');
+  function filteredItems() {
+    return state.items.filter((item) => {
+      const type = normalizeType(item.item_type);
+      if (state.filter !== 'all' && type !== state.filter) return false;
+      if (!state.search) return true;
+      return [item.name, TYPE_LABELS[type], item.remark].join(' ').toLowerCase().includes(state.search);
+    });
   }
 
-  function renderMemberCards(members, specie, canRevoke, batchId) {
-    if (!members.length) return '<div class="empty-state">ยังไม่มีผู้ใช้คนอื่นได้รับสิทธิ์ใน batch นี้</div>';
-    const modules = getModules(specie);
-    return members.map((member) => {
-      const name = member.display_name || member.farm_name || member.email || member.user_id;
-      const subtitle = [member.email || '', member.role ? `role: ${member.role}` : ''].filter(Boolean).join(' • ');
-      return `
-        <div class="access-member-card">
-          <div class="access-member-head">
-            <div>
-              <div class="access-member-name">${escapeHtml(name)}</div>
-              <div class="muted">${escapeHtml(subtitle || member.user_id)}</div>
-            </div>
-            <div class="access-member-badges">
-              ${member.is_admin ? '<span class="badge-inline success">admin</span>' : ''}
-              ${canRevoke ? `<button type="button" class="secondary-btn access-revoke-all-btn" data-target-user-id="${member.user_id}" data-batch-id="${batchId}" data-action="admin-revoke-all">ถอนสิทธิ์ทั้งหมด</button>` : ''}
-            </div>
-          </div>
-          <div class="access-module-grid access-module-grid--3">
-            ${modules.map((module) => {
-              const permission = (member.permissions && member.permissions[module.key]) || 'none';
-              const revokeButton = canRevoke && permission !== 'none'
-                ? `<button type="button" class="access-link-btn" data-target-user-id="${member.user_id}" data-batch-id="${batchId}" data-module-key="${module.key}" data-action="admin-revoke-module">ถอนสิทธิ์โมดูล</button>`
-                : '<span class="muted">-</span>';
-              return `
-                <div class="access-module-card">
-                  <div class="access-module-card__title">${module.label}</div>
-                  <span class="badge-inline ${badgeClass(permission)}">${permissionLabel(permission)}</span>
-                  ${revokeButton}
-                </div>`;
-            }).join('')}
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  document.addEventListener('click', async (event) => {
-    const button = event.target.closest('[data-action]');
-    if (!button) return;
-    const action = button.dataset.action;
-    if (action === 'admin-revoke-all') {
-      if (!confirm('ต้องการถอนสิทธิ์ทั้งหมดของผู้ใช้นี้ใช่ไหม')) return;
-      const response = await AppApi.post({ action: 'revokeBatchUserPermissions', batch_id: button.dataset.batchId, target_user_id: button.dataset.targetUserId });
-      if (!response || response.status !== 'ok') return alert(response?.message || 'ถอนสิทธิ์ไม่สำเร็จ');
-      localStorage.removeItem(memberCacheKey(button.dataset.batchId));
-      localStorage.removeItem(`ducky:batch-dashboard:${button.dataset.batchId}`);
-      await loadGrantedMembers();
+  function renderList() {
+    const target = document.getElementById('medicineList');
+    const badge = document.getElementById('medicineCountBadge');
+    if (!target) return;
+    const rows = filteredItems();
+    if (badge) badge.textContent = `${rows.length} รายการ`;
+    if (!rows.length) {
+      target.innerHTML = '<div class="empty-state">ยังไม่มีรายการในคลัง ใช้ปุ่ม + เพื่อบันทึกการซื้อเข้า</div>';
       return;
     }
-    if (action === 'admin-revoke-module') {
-      if (!confirm('ต้องการถอนสิทธิ์ของโมดูลนี้ใช่ไหม')) return;
-      const response = await AppApi.post({ action: 'revokeBatchUserPermissions', batch_id: button.dataset.batchId, target_user_id: button.dataset.targetUserId, module_key: button.dataset.moduleKey });
-      if (!response || response.status !== 'ok') return alert(response?.message || 'ถอนสิทธิ์โมดูลไม่สำเร็จ');
-      localStorage.removeItem(memberCacheKey(button.dataset.batchId));
-      localStorage.removeItem(`ducky:batch-dashboard:${button.dataset.batchId}`);
-      await loadGrantedMembers();
-    }
-  });
+    target.innerHTML = rows.map((item) => renderItemCard(item)).join('');
+    target.querySelectorAll('[data-med-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const item = state.items.find((it) => String(it.id) === String(btn.dataset.itemId));
+        openSheet(btn.dataset.medAction, item || null);
+      });
+    });
+  }
 
-  function resolveBatch() {
-    const value = document.getElementById('adminBatchSearch')?.value || '';
-    return state.batches.find((batch) => batch.label === value) || null;
+  function renderItemCard(item) {
+    const type = normalizeType(item.item_type);
+    const qty = Number(item.current_qty || 0);
+    const low = qty > 0 && qty <= 500;
+    const canWrite = state.permission === 'write';
+    return `
+      <article class="medicine-card ${low ? 'medicine-low-stock' : ''}">
+        <div class="medicine-card__head">
+          <div>
+            <div class="medicine-card__title">${esc(item.name || '-')}</div>
+            <div class="medicine-card__meta">
+              <span class="medicine-pill medicine-pill--${esc(type)}">${esc(TYPE_LABELS[type] || 'อื่น ๆ')}</span>
+              ${low ? '<span class="medicine-pill">ใกล้หมด</span>' : ''}
+            </div>
+          </div>
+          <span class="medicine-pill">${esc(displayGram(qty))}</span>
+        </div>
+        <div class="medicine-stock">
+          <div><span>คงเหลือ</span><strong>${esc(displayGram(qty))}</strong></div>
+          <div><span>ต้นทุนเฉลี่ย</span><strong>${money(Number(item.unit_price || 0) * 1000)} ฿/กก.</strong></div>
+        </div>
+        ${item.remark ? `<div class="inline-note">${esc(item.remark)}</div>` : ''}
+        <div class="medicine-card__actions">
+          <button class="secondary-btn" type="button" data-med-action="purchase" data-item-id="${escAttr(item.id)}" ${canWrite ? '' : 'disabled'}>ซื้อเพิ่ม</button>
+          <button class="secondary-btn" type="button" data-med-action="use" data-item-id="${escAttr(item.id)}" ${canWrite ? '' : 'disabled'}>ใช้</button>
+          <button class="secondary-btn" type="button" data-med-action="adjust" data-item-id="${escAttr(item.id)}" ${canWrite ? '' : 'disabled'}>ปรับยอด</button>
+        </div>
+      </article>
+    `;
   }
-  function resolveUser() {
-    const value = document.getElementById('adminUserSearch')?.value || '';
-    return state.users.find((user) => user.label === value) || null;
+
+  function renderFab() {
+    const root = document.getElementById('medicineFabRoot');
+    if (!root) return;
+    if (state.permission !== 'write') {
+      root.innerHTML = '';
+      return;
+    }
+    root.innerHTML = `<button type="button" class="fab module-fab-main" id="medicineFabBtn" aria-label="ซื้อเข้า">＋</button>`;
+    document.getElementById('medicineFabBtn')?.addEventListener('click', () => openSheet('purchase', null));
   }
-  function getModules(specie) {
-    return specie === 'fish'
-      ? [
-          { key: 'batch_manage', label: 'จัดการชุดสัตว์' },
-          { key: 'fish_feed_manage', label: 'จัดการอาหาร' },
-          { key: 'fish_sale', label: 'ขายออก / บิล' },
-          { key: 'batch_access', label: 'สิทธิ์การเข้าถึง batch' },
-          { key: 'liff_routes', label: 'จัดการลิงก์ LIFF' },
-          { key: 'farm_events', label: 'กิจกรรม' },
-          { key: 'report', label: 'รายงาน' }
-        ]
-      : [
-          { key: 'batch_manage', label: 'จัดการชุดสัตว์' },
-          { key: 'feed_manage', label: 'จัดการอาหาร' },
-          { key: 'egg_daily', label: 'บันทึกไข่รายวัน' },
-          { key: 'egg_sale', label: 'ขายออก / บิล' },
-          { key: 'batch_access', label: 'สิทธิ์การเข้าถึง batch' },
-          { key: 'liff_routes', label: 'จัดการลิงก์ LIFF' },
-          { key: 'farm_events', label: 'กิจกรรม' },
-          { key: 'report', label: 'รายงาน' }
-        ];
+
+  function openSheet(mode, item) {
+    state.editingItem = item || null;
+    const form = document.getElementById('medicineForm');
+    form?.reset();
+    setValue('medicineMode', mode);
+    setValue('medicineItemId', item?.id || '');
+    setValue('medicineLogDate', todayKey());
+    document.querySelectorAll('.medicine-mode-panel').forEach((el) => el.classList.add('hidden'));
+
+    if (mode === 'purchase') {
+      document.getElementById('medicinePurchaseFields')?.classList.remove('hidden');
+      setText('medicineSheetTitle', item ? 'ซื้อเพิ่มเข้าคลัง' : 'ซื้อยา/วิตามิน/พรีมิกซ์เข้าคลัง');
+      setText('medicineSubmitBtn', item ? 'บันทึกซื้อเพิ่ม' : 'บันทึกซื้อเข้า');
+      setValue('medicineItemType', normalizeType(item?.item_type || 'medicine'));
+      setValue('medicineItemName', item?.name || '');
+      setValue('medicinePackageQty', '1');
+      setValue('medicineKgPerPackage', '');
+      setValue('medicineTotalCost', '');
+      setValue('medicineRemark', item?.remark || '');
+      document.getElementById('medicineItemName').readOnly = !!item;
+      updateComputedWeight();
+    } else if (mode === 'use') {
+      document.getElementById('medicineUseFields')?.classList.remove('hidden');
+      setText('medicineSheetTitle', 'ใช้จากคลัง');
+      setText('medicineSubmitBtn', 'บันทึกการใช้');
+      setValue('medicineUseItemName', item?.name || '');
+      setText('medicineUseStockNote', `คงเหลือ ${displayGram(item?.current_qty || 0)}`);
+      setValue('medicineRemark', 'ใช้จากคลังยา/วิตามิน');
+    } else if (mode === 'adjust') {
+      document.getElementById('medicineAdjustFields')?.classList.remove('hidden');
+      setText('medicineSheetTitle', 'ปรับยอดคงเหลือ');
+      setText('medicineSubmitBtn', 'บันทึกปรับยอด');
+      setValue('medicineAdjustItemName', item?.name || '');
+      setText('medicineAdjustStockNote', `คงเหลือเดิม ${displayGram(item?.current_qty || 0)}`);
+      setValue('medicineAdjustGram', Number(item?.current_qty || 0));
+      setValue('medicineRemark', 'ปรับยอดคลัง');
+    }
+    showSheet();
   }
-  function memberCacheKey(batchId) { return `ducky:access-members:${batchId}`; }
-  function permissionLabel(value) { return value === 'write' ? 'ดูและแก้ไข' : (value === 'view' ? 'ดูอย่างเดียว' : 'ไม่มีสิทธิ์'); }
-  function badgeClass(value) { return value === 'write' ? 'success' : (value === 'view' ? 'muted-badge' : 'danger-soft'); }
-  function escapeHtml(text) { return String(text || '').replace(/[&<>"']/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
-  function readCache(key) {
+
+  async function submitForm(event) {
+    event.preventDefault();
+    if (state.permission !== 'write') return alert('ไม่มีสิทธิ์แก้ไข');
+    const mode = val('medicineMode');
+    const item = state.editingItem;
+    let payload = {
+      action: 'saveMedicalInventoryLog',
+      batch_id: state.batchId,
+      item_id: val('medicineItemId'),
+      log_date: val('medicineLogDate') || todayKey(),
+      remark: val('medicineRemark')
+    };
+
+    if (mode === 'purchase') {
+      const packageQty = Number(val('medicinePackageQty') || 0);
+      const kgPerPackage = Number(val('medicineKgPerPackage') || 0);
+      const totalGram = roundQty(packageQty * kgPerPackage * 1000);
+      const totalCost = Math.max(0, Number(val('medicineTotalCost') || 0));
+      if (!val('medicineItemName')) return alert('กรุณาระบุชื่อรายการ');
+      if (!(totalGram > 0)) return alert('กรุณาระบุจำนวนถุงและกิโลกรัม/ถุง');
+      payload = {
+        ...payload,
+        trans_type: 'in',
+        item_type: val('medicineItemType') || normalizeType(item?.item_type || 'medicine'),
+        item_name: val('medicineItemName'),
+        unit: 'กรัม',
+        qty: totalGram,
+        package_qty: packageQty,
+        kg_per_package: kgPerPackage,
+        total_cost: totalCost,
+        unit_price: totalGram > 0 ? totalCost / totalGram : 0,
+        remark: val('medicineRemark') || `ซื้อเข้า ${packageQty} ถุง × ${kgPerPackage} กก.`
+      };
+    } else if (mode === 'use') {
+      const useGram = roundQty(Number(val('medicineUseGram') || 0));
+      if (!item?.id) return alert('ไม่พบรายการในคลัง');
+      if (!(useGram > 0)) return alert('กรุณาระบุจำนวนที่ใช้เป็นกรัม');
+      if (useGram > Number(item.current_qty || 0)) return alert('จำนวนในคลังไม่พอ');
+      payload = {
+        ...payload,
+        trans_type: 'use',
+        item_id: item.id,
+        qty: useGram,
+        unit: 'กรัม',
+        unit_price: Number(item.unit_price || 0),
+        remark: val('medicineRemark') || `ใช้ ${useGram} กรัม`
+      };
+    } else if (mode === 'adjust') {
+      const nextGram = roundQty(Number(val('medicineAdjustGram') || 0));
+      if (!item?.id) return alert('ไม่พบรายการในคลัง');
+      payload = {
+        ...payload,
+        trans_type: 'adjust',
+        item_id: item.id,
+        item_name: item.name,
+        item_type: normalizeType(item.item_type),
+        qty: nextGram,
+        unit: 'กรัม',
+        unit_price: Number(item.unit_price || 0),
+        remark: val('medicineRemark') || `ปรับยอดเป็น ${nextGram} กรัม`
+      };
+    }
+
+    const btn = document.getElementById('medicineSubmitBtn');
+    const old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'กำลังบันทึก...';
+    const res = await AppApi.post(payload, { timeoutMs: 18000 });
+    btn.disabled = false;
+    btn.textContent = old;
+    if (!res || res.status !== 'ok') return alert(res?.message || 'บันทึกไม่สำเร็จ');
+    localStorage.removeItem(`ducky:medicine:${state.batchId}`);
+    localStorage.removeItem(`ducky:farm-events:${state.batchId}`);
+    closeSheet();
+    await load();
+  }
+
+  function updateComputedWeight() {
+    const packageQty = Number(val('medicinePackageQty') || 0);
+    const kgPerPackage = Number(val('medicineKgPerPackage') || 0);
+    const grams = packageQty * kgPerPackage * 1000;
+    const totalCost = Number(val('medicineTotalCost') || 0);
+    const unitCost = grams > 0 ? totalCost / grams : 0;
+    setText('medicineComputedWeight', `รวม ${displayGram(grams)} • ต้นทุน ${money(unitCost * 1000)} ฿/กก.`);
+  }
+
+  function showSheet() {
+    const sheet = document.getElementById('medicineSheet');
+    if (!sheet) return;
+    sheet.classList.remove('hidden');
+    requestAnimationFrame(() => sheet.classList.add('show'));
+  }
+  function closeSheet() {
+    const sheet = document.getElementById('medicineSheet');
+    if (!sheet) return;
+    sheet.classList.remove('show');
+    setTimeout(() => sheet.classList.add('hidden'), 220);
+  }
+
+  function readEnvelope(key, allowStale) {
     try {
       const raw = localStorage.getItem(key);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      if (Date.now() - Number(parsed.savedAt || 0) > CACHE_TTL_MS) return null;
+      if (!allowStale && Date.now() - Number(parsed.savedAt || 0) > 60 * 1000) return null;
       return parsed.data || null;
     } catch (_) { return null; }
   }
-  function writeCache(key, data) {
+  function writeEnvelope(key, data) {
     try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data })); } catch (_) {}
   }
+
+  function normalizeType(value) {
+    const t = String(value || 'medicine').trim().toLowerCase();
+    if (t === 'ยา') return 'medicine';
+    if (t === 'วิตามิน') return 'vitamin';
+    if (t === 'พรีมิกซ์' || t === 'premix') return 'premix';
+    if (['medicine', 'vitamin', 'premix', 'vaccine', 'chemical', 'other'].includes(t)) return t;
+    return 'medicine';
+  }
+  function displayGram(value) {
+    const n = Number(value || 0);
+    if (Math.abs(n) >= 1000) return `${fmtQty(n / 1000)} กก.`;
+    return `${fmtQty(n)} กรัม`;
+  }
+  function fmtQty(value) {
+    const n = Number(value || 0);
+    return n.toLocaleString('th-TH', { minimumFractionDigits: Number.isInteger(n) ? 0 : 1, maximumFractionDigits: 2 });
+  }
+  function roundQty(value) { return Math.max(0, Number(Number(value || 0).toFixed(3))); }
+  function fmt(value) { return Number(value || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 }); }
+  function money(value) { return Number(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function todayKey() { return new Date().toISOString().slice(0, 10); }
+  function val(id) { return document.getElementById(id)?.value?.trim?.() || ''; }
+  function setValue(id, value) { const el = document.getElementById(id); if (el) el.value = value == null ? '' : String(value); }
+  function setText(id, value) { const el = document.getElementById(id); if (el) el.textContent = value == null ? '' : String(value); }
+  function esc(value) { return String(value ?? '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])); }
+  function escAttr(value) { return esc(value).replace(/`/g, '&#096;'); }
 
   return { bootstrap };
 })();
 
-//# sourceURL=js/modules/admin-permissions-page.js
-
-
-/* ==== js/core/zoom-lock.js ==== */
-(() => {
-  // Ducky Management Pro - global zoom lock for mobile browsers.
-  // Works together with CSS font-size:16px to prevent input focus zoom.
-  const viewportContent = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
-
-  function lockViewport() {
-    let meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.name = 'viewport';
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', viewportContent);
-  }
-
-  function preventIfCancelable(event) {
-    // Chrome/Safari can fire non-cancelable touch events while scrolling.
-    // Calling preventDefault() on those events causes console Intervention warnings.
-    if (event && event.cancelable) event.preventDefault();
-  }
-
-  lockViewport();
-
-  document.addEventListener('gesturestart', preventIfCancelable, { passive: false });
-  document.addEventListener('gesturechange', preventIfCancelable, { passive: false });
-  document.addEventListener('gestureend', preventIfCancelable, { passive: false });
-
-  let lastTouchEnd = 0;
-  document.addEventListener('touchend', (event) => {
-    const now = Date.now();
-    if (now - lastTouchEnd <= 320) preventIfCancelable(event);
-    lastTouchEnd = now;
-  }, { passive: false });
-
-  document.addEventListener('wheel', (event) => {
-    if (event.ctrlKey) preventIfCancelable(event);
-  }, { passive: false });
-})();
-
-//# sourceURL=js/core/zoom-lock.js
+//# sourceURL=js/modules/medicine-page.js
 
 
 /* ==== js/app.js ==== */
@@ -2236,3 +1897,46 @@ function registerServiceWorker() {
 }
 
 //# sourceURL=js/app.js
+
+
+/* ==== js/core/zoom-lock.js ==== */
+(() => {
+  // Ducky Management Pro - global zoom lock for mobile browsers.
+  // Works together with CSS font-size:16px to prevent input focus zoom.
+  const viewportContent = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+
+  function lockViewport() {
+    let meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'viewport';
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', viewportContent);
+  }
+
+  function preventIfCancelable(event) {
+    // Chrome/Safari can fire non-cancelable touch events while scrolling.
+    // Calling preventDefault() on those events causes console Intervention warnings.
+    if (event && event.cancelable) event.preventDefault();
+  }
+
+  lockViewport();
+
+  document.addEventListener('gesturestart', preventIfCancelable, { passive: false });
+  document.addEventListener('gesturechange', preventIfCancelable, { passive: false });
+  document.addEventListener('gestureend', preventIfCancelable, { passive: false });
+
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (event) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 320) preventIfCancelable(event);
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  document.addEventListener('wheel', (event) => {
+    if (event.ctrlKey) preventIfCancelable(event);
+  }, { passive: false });
+})();
+
+//# sourceURL=js/core/zoom-lock.js

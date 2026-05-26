@@ -1,1 +1,63 @@
-/* Index page scoped styles. Core batch-list/card styles are in css/core/components.css. */
+/* Index page: active/all status filter */
+.index-filter-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.index-status-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: var(--bg-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.index-status-toggle button {
+  min-width: 0;
+  min-height: 38px;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--text-sub) !important;
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: none !important;
+}
+
+.index-status-toggle button.is-active {
+  background: var(--primary) !important;
+  color: var(--bg-card) !important;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 16%, transparent) !important;
+}
+
+.batch-card--inactive {
+  opacity: .78;
+}
+
+.batch-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-sub);
+  background: var(--bg-soft);
+  border: 1px solid var(--border-soft);
+  white-space: nowrap;
+}
+
+.batch-status-pill.is-active {
+  color: #047857;
+  background: color-mix(in srgb, var(--success, #10b981) 12%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--success, #10b981) 24%, var(--border-soft));
+}
+
+.batch-status-pill.is-inactive {
+  color: var(--text-sub);
+  background: color-mix(in srgb, var(--text-sub) 9%, var(--bg-card));
+}

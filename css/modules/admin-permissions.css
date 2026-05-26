@@ -1,1 +1,171 @@
-/* Admin permission page scoped styles. Uses access.css for shared permission matrix. */
+/* Admin + Program permission pages - Tailwind-like polished layout */
+body[data-page="admin_permissions"],
+body[data-page="program_permissions"] {
+  min-height: 100dvh;
+}
+
+body[data-page="admin_permissions"] .module-page-layout,
+body[data-page="program_permissions"] .module-page-layout {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+body[data-page="admin_permissions"] .access-page-card,
+body[data-page="program_permissions"] .access-page-card {
+  display: grid;
+  gap: 12px;
+  overflow: hidden;
+  border-radius: 24px !important;
+}
+
+body[data-page="admin_permissions"] .section-card-head,
+body[data-page="program_permissions"] .section-card-head {
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+
+body[data-page="admin_permissions"] .section-card-head h3,
+body[data-page="program_permissions"] .section-card-head h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -.025em;
+}
+
+body[data-page="admin_permissions"] .form-stack,
+body[data-page="program_permissions"] .form-stack {
+  gap: 10px;
+}
+
+body[data-page="admin_permissions"] .field-label,
+body[data-page="program_permissions"] .field-label {
+  margin-top: 0;
+  color: var(--text-sub);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+body[data-page="admin_permissions"] input[list],
+body[data-page="program_permissions"] input[list] {
+  min-height: 48px;
+  border-radius: 16px !important;
+}
+
+body[data-page="admin_permissions"] .permission-card-grid,
+body[data-page="program_permissions"] .permission-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 2px;
+}
+
+body[data-page="admin_permissions"] .permission-card,
+body[data-page="program_permissions"] .permission-card {
+  padding: 12px;
+  gap: 8px;
+  background: color-mix(in srgb, var(--bg-card) 96%, transparent) !important;
+  border-radius: 18px !important;
+  min-height: 112px;
+}
+
+body[data-page="admin_permissions"] .permission-card__title,
+body[data-page="program_permissions"] .permission-card__title {
+  font-size: 12.5px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+
+body[data-page="admin_permissions"] .permission-card__key,
+body[data-page="program_permissions"] .permission-card__key {
+  display: block;
+  margin: -4px 0 0;
+  font-size: 10px;
+  color: var(--text-faint, var(--text-sub));
+}
+
+body[data-page="admin_permissions"] .permission-card__select,
+body[data-page="program_permissions"] .permission-card__select {
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: 13px !important;
+  font-size: 13px !important;
+  font-weight: 800;
+}
+
+body[data-page="program_permissions"] .permission-card p.muted {
+  display: none;
+}
+
+body[data-page="admin_permissions"] .access-action-row,
+body[data-page="program_permissions"] .access-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+body[data-page="admin_permissions"] .access-action-row button,
+body[data-page="program_permissions"] .access-action-row button {
+  flex: 1 1 150px;
+  min-height: 42px;
+  border-radius: 999px !important;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+body[data-page="admin_permissions"] #adminPermissionSaveBtn,
+body[data-page="program_permissions"] #programPermissionSaveBtn {
+  flex-basis: 100%;
+}
+
+body[data-page="admin_permissions"] .access-member-list,
+body[data-page="program_permissions"] .access-member-list {
+  gap: 8px;
+}
+
+body[data-page="admin_permissions"] .access-member-card,
+body[data-page="program_permissions"] .access-member-card {
+  border-radius: 18px !important;
+  background: color-mix(in srgb, var(--bg-soft) 72%, var(--bg-card)) !important;
+}
+
+body[data-page="admin_permissions"] .access-module-grid,
+body[data-page="program_permissions"] .access-module-grid {
+  gap: 6px;
+}
+
+body[data-page="admin_permissions"] .access-module-card,
+body[data-page="program_permissions"] .access-module-card {
+  min-width: 0;
+  border-radius: 16px !important;
+  padding: 10px;
+}
+
+body[data-page="admin_permissions"] .empty-state,
+body[data-page="program_permissions"] .empty-state {
+  grid-column: 1 / -1;
+  padding: 18px 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 430px) {
+  body[data-page="admin_permissions"] .permission-card-grid,
+  body[data-page="program_permissions"] .permission-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-page="admin_permissions"] .access-action-row,
+  body[data-page="program_permissions"] .access-action-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 360px) {
+  body[data-page="admin_permissions"] .permission-card-grid,
+  body[data-page="program_permissions"] .permission-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

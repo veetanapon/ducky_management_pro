@@ -1,33 +1,16 @@
-/* Ducky bundle: admin-permissions
- * Generated: 2026-05-26T09:41:55.001Z
+/* Ducky bundle: feed-order-bills
+ * Generated: 2026-05-26T09:41:55.294Z
  * Sources:
  * - js/config.js
- * - js/core/state.js
  * - js/core/cache.js
  * - js/core/api.js
  * - js/core/auth.js
  * - js/core/dom.js
  * - js/core/format.js
- * - js/core/image.js
- * - js/services/batch.service.js
- * - js/services/feed.service.js
- * - js/services/egg.service.js
- * - js/services/sale.service.js
- * - js/services/price.service.js
- * - js/services/permission.service.js
  * - js/services/menu-permission.service.js
- * - js/services/report.service.js
- * - js/services/liff.service.js
- * - js/services/event.service.js
- * - js/components/bottom-sheet.js
- * - js/components/calendar-grid.js
- * - js/components/summary-cards.js
- * - js/components/skeleton.js
- * - js/components/fab.js
- * - js/components/bill-preview.js
  * - js/modules/nav.js
- * - js/modules/admin-permissions-page.js
- * - js/core/zoom-lock.js
+ * - js/services/feed-order.service.js
+ * - js/modules/feed-order-bills-page.js
  * - js/app.js
  */
 
@@ -49,80 +32,6 @@ window.AppConfig = {
 };
 
 //# sourceURL=js/config.js
-
-
-/* ==== js/core/state.js ==== */
-window.AppState = (() => {
-  const state = {
-    auth: {
-      userId: null,
-      sessionToken: null,
-      sessionExpire: null
-    },
-    batches: [],
-    batchMeta: {
-      lastUpdate: null,
-      fetchedAt: null
-    },
-    ui: {
-      page: document.body?.dataset?.page || '',
-      search: '',
-      offlineMode: false,
-      fab: { actions: [] },
-      batchForm: {
-        mode: 'add',
-        editId: null,
-        imageBase64: null
-      }
-    }
-  };
-
-  const listeners = new Set();
-
-  function get() {
-    return state;
-  }
-
-  function patch(path, value) {
-    const keys = path.split('.');
-    let target = state;
-    while (keys.length > 1) {
-      target = target[keys.shift()];
-    }
-    target[keys[0]] = value;
-    emit();
-  }
-
-  function merge(partial) {
-    deepMerge(state, partial);
-    emit();
-  }
-
-  function subscribe(fn) {
-    listeners.add(fn);
-    return () => listeners.delete(fn);
-  }
-
-  function emit() {
-    listeners.forEach((fn) => fn(state));
-  }
-
-  function deepMerge(target, source) {
-    Object.keys(source).forEach((key) => {
-      const value = source[key];
-      if (value && typeof value === 'object' && !Array.isArray(value)) {
-        target[key] = target[key] || {};
-        deepMerge(target[key], value);
-      } else {
-        target[key] = value;
-      }
-    });
-  }
-
-  return { get, patch, merge, subscribe };
-})();
-
-//# sourceURL=js/core/state.js
 
 
 /* ==== js/core/cache.js ==== */
@@ -786,93 +695,6 @@ window.AppFormat = (() => {
 //# sourceURL=js/core/format.js
 
 
-/* ==== js/core/image.js ==== */
-window.AppImage = (() => {
-  function fileToBase64(file) { return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); }); }
-  function resizeDataUrl(dataUrl, maxW = 1200, maxH = 900, quality = 0.82) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        const ratio = Math.min(maxW / width, maxH / height, 1);
-        width = Math.round(width * ratio); height = Math.round(height * ratio);
-        const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.src = dataUrl;
-    });
-  }
-  return { fileToBase64, resizeDataUrl };
-})();
-
-//# sourceURL=js/core/image.js
-
-
-/* ==== js/services/batch.service.js ==== */
-window.BatchApi = {
-  list: (lastUpdate) => AppApi.postCached({ action: 'getAllBatches', lastUpdate }, { background: false }),
-  dashboard: (batchId) => AppApi.postCached({ action: 'getBatchDashboardSummary', batch_id: batchId }, { background: false }),
-  detail: (batchId) => AppApi.post({ action: 'getBatchFullDetail', batch_id: batchId }),
-  save: (payload) => AppApi.post(payload),
-  movement: (payload) => AppApi.post({ action: 'saveBatchMovement', ...payload })
-};
-
-//# sourceURL=js/services/batch.service.js
-
-
-/* ==== js/services/feed.service.js ==== */
-window.FeedApi = {
-  pageData: (batchId, month) => AppApi.postCached({ action: 'getModuleCalendarData', batch_id: batchId, module_type: 'feed_manage', month }, { background: false }),
-  saveLog: (payload) => AppApi.post({ action: 'saveFeedLog', ...payload }),
-  record: (payload) => AppApi.post({ action: 'getFeedLogRecord', ...payload })
-};
-
-//# sourceURL=js/services/feed.service.js
-
-
-/* ==== js/services/egg.service.js ==== */
-window.EggApi = {
-  pageData: (batchId, month) => AppApi.postCached({ action: 'getModuleCalendarData', batch_id: batchId, module_type: 'egg_daily', month }, { background: false }),
-  saveLog: (payload) => AppApi.post({ action: 'saveEggDailyLog', ...payload }),
-  record: (payload) => AppApi.post({ action: 'getEggDailyRecord', ...payload })
-};
-
-//# sourceURL=js/services/egg.service.js
-
-
-/* ==== js/services/sale.service.js ==== */
-window.SaleApi = {
-  pageData: (batchId, month) => AppApi.postCached({ action: 'getModuleCalendarData', batch_id: batchId, module_type: 'sale_manage', month }, { background: false }),
-  saveBill: (payload) => AppApi.post({ action: 'saveBatchSaleBill', ...payload }),
-  billRecord: (payload) => AppApi.post({ action: 'getSaleBillRecord', ...payload }),
-  billsForDate: (payload) => AppApi.post({ action: 'getSaleBillsForDate', ...payload }),
-  rangeSummary: (payload) => AppApi.post({ action: 'getSaleBillRangeSummary', ...payload })
-};
-
-//# sourceURL=js/services/sale.service.js
-
-
-/* ==== js/services/price.service.js ==== */
-window.PriceApi = {
-  adminData: () => AppApi.postCached({ action: 'getItemPriceAdminData' }, { background: false }),
-  effectiveEgg: (batchId) => AppApi.postCached({ action: 'getEffectiveEggPriceSet', batch_id: batchId }, { ttlMs: 12 * 60 * 60 * 1000, background: false }),
-  saveSet: (payload) => AppApi.post({ action: 'savePriceSet', ...payload })
-};
-
-//# sourceURL=js/services/price.service.js
-
-
-/* ==== js/services/permission.service.js ==== */
-window.PermissionApi = {
-  adminOptions: () => AppApi.postCached({ action: 'getPermissionAdminOptions' }, { ttlMs: 5 * 60 * 1000, background: false }),
-  accessList: (batchId) => AppApi.post({ action: 'getBatchAccessList', batch_id: batchId }),
-  accessSummary: (batchId) => AppApi.post({ action: 'getBatchAccessSummary', batch_id: batchId })
-};
-
-//# sourceURL=js/services/permission.service.js
-
-
 /* ==== js/services/menu-permission.service.js ==== */
 window.MenuPermissionApi = (() => {
   const STORAGE_KEY = 'menu_permissions';
@@ -1049,330 +871,6 @@ window.MenuPermissionApi = (() => {
 })();
 
 //# sourceURL=js/services/menu-permission.service.js
-
-
-/* ==== js/services/report.service.js ==== */
-window.ReportApi = {
-  pageData: (batchId) => AppApi.postCached(
-    { action: 'getReportPageData', batch_id: batchId },
-    { ttlMs: 20 * 60 * 1000, background: true, allowStale: true, timeoutMs: 10000 }
-  ),
-  rebuild: (batchId) => AppApi.post({ action: 'rebuildReportForBatch', batch_id: batchId }, { timeoutMs: 30000 }),
-  exportExcel: (batchId, month) => AppApi.post({ action: 'exportReportExcel', batch_id: batchId, month }, { timeoutMs: 30000 }),
-  publicView: (key) => AppApi.postPublic({ action: 'getReportPublicViewData', view_key: key }, { timeoutMs: 10000 })
-};
-
-//# sourceURL=js/services/report.service.js
-
-
-/* ==== js/services/liff.service.js ==== */
-window.LiffRouteApi = {
-  pageData: (batchId) => AppApi.postCached({ action: 'getLiffBatchRoutePageData', batch_id: batchId }, { ttlMs: 2 * 60 * 1000, background: false }),
-  save: (payload) => AppApi.post({ action: 'saveLiffBatchRoute', ...payload }),
-  generateKey: (batchId) => AppApi.post({ action: 'generateLiffRouteKey', batch_id: batchId })
-};
-
-//# sourceURL=js/services/liff.service.js
-
-
-/* ==== js/services/event.service.js ==== */
-window.EventApi = {
-  pageData: (batchId) => AppApi.postCached({ action: 'getBatchEventsPageData', batch_id: batchId }, { ttlMs: 60 * 1000, background: false }),
-  saveFeedConsumption: (payload) => AppApi.post({ action: 'saveFeedConsumptionLog', ...payload }),
-  saveEvent: (payload) => AppApi.post({ action: 'saveBatchEvent', ...payload }),
-  saveMedicalInventory: (payload) => AppApi.post({ action: 'saveMedicalInventoryLog', ...payload }),
-  deleteEvent: (payload) => AppApi.post({ action: 'deleteBatchEvent', ...payload })
-};
-
-//# sourceURL=js/services/event.service.js
-
-
-/* ==== js/components/bottom-sheet.js ==== */
-window.BottomSheet = (() => {
-  function open(id) { const sheet = document.getElementById(id); if (!sheet) return; sheet.classList.remove('hidden'); requestAnimationFrame(() => sheet.classList.add('show')); }
-  function close(id) { const sheet = document.getElementById(id); if (!sheet) return; sheet.classList.remove('show'); setTimeout(() => sheet.classList.add('hidden'), 220); }
-  return { open, close };
-})();
-
-//# sourceURL=js/components/bottom-sheet.js
-
-
-/* ==== js/components/calendar-grid.js ==== */
-window.CalendarGrid = (() => {
-  function monthKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; }
-  function daysInMonth(key) { const [y,m] = String(key).split('-').map(Number); return new Date(y, m, 0).getDate(); }
-  return { monthKey, daysInMonth };
-})();
-
-//# sourceURL=js/components/calendar-grid.js
-
-
-/* ==== js/components/summary-cards.js ==== */
-window.SummaryCards = (() => {
-  function render(container, cards = []) {
-    if (!container) return;
-    container.innerHTML = cards.map((card) => `<div class="module-summary-card"><span class="module-summary-label">${AppFormat?.escapeHtml?.(card.label) ?? card.label}</span><strong class="module-summary-value">${AppFormat?.escapeHtml?.(card.value) ?? card.value}</strong><span class="muted">${AppFormat?.escapeHtml?.(card.note || '') ?? ''}</span></div>`).join('');
-  }
-  return { render };
-})();
-
-//# sourceURL=js/components/summary-cards.js
-
-
-/* ==== js/components/skeleton.js ==== */
-window.Skeleton = (() => {
-  function cards(count = 3) { return Array.from({ length: count }, () => '<div class="skeleton-wrap"><div class="skeleton-card"><div class="skeleton skeleton-thumb"></div><div style="flex:1"><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line short"></div></div></div></div>').join(''); }
-  return { cards };
-})();
-
-//# sourceURL=js/components/skeleton.js
-
-
-/* ==== js/components/fab.js ==== */
-window.AppFab = (() => {
-  function close(root) { root?.classList?.remove('open'); }
-  function toggle(root) { root?.classList?.toggle('open'); }
-  return { close, toggle };
-})();
-
-//# sourceURL=js/components/fab.js
-
-
-/* ==== js/components/bill-preview.js ==== */
-window.BillPreview = (() => {
-  function loadCanvasImage(src) {
-    return new Promise((resolve) => {
-      if (!src) return resolve(null);
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = src;
-    });
-  }
-
-  function drawCenteredText(ctx, text, centerX, y) {
-    const safeText = String(text || '');
-    const metrics = ctx.measureText(safeText);
-    const visualWidth = Math.abs(metrics.actualBoundingBoxLeft || 0) + Math.abs(metrics.actualBoundingBoxRight || metrics.width || 0);
-    const x = centerX - visualWidth / 2 - (metrics.actualBoundingBoxLeft || 0);
-    const previousAlign = ctx.textAlign;
-    ctx.textAlign = 'left';
-    ctx.fillText(safeText, x, y);
-    ctx.textAlign = previousAlign;
-  }
-
-  function fitCenteredText(ctx, text, centerX, y, maxWidth, weight = 'bold', startSize = 22, minSize = 13) {
-    const safeText = String(text || '');
-    let size = startSize;
-    while (size > minSize) {
-      ctx.font = `${weight} ${size}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-      if (ctx.measureText(safeText).width <= maxWidth) break;
-      size -= 1;
-    }
-    drawCenteredText(ctx, safeText, centerX, y);
-    return size;
-  }
-
-  function defaultWrapText(ctx, text, x, y, maxWidth, lineHeight) {
-    const source = String(text || '');
-    const paragraphs = source.split(/\r?\n/);
-    let currentY = y;
-    paragraphs.forEach((paragraph, pIndex) => {
-      const words = paragraph.split(/\s+/).filter(Boolean);
-      if (!words.length) {
-        currentY += lineHeight;
-        return;
-      }
-      let line = '';
-      words.forEach((word) => {
-        const testLine = line ? `${line} ${word}` : word;
-        if (ctx.measureText(testLine).width > maxWidth && line) {
-          ctx.fillText(line, x, currentY);
-          line = word;
-          currentY += lineHeight;
-        } else {
-          line = testLine;
-        }
-      });
-      if (line) ctx.fillText(line, x, currentY);
-      if (pIndex < paragraphs.length - 1) currentY += lineHeight;
-    });
-    return currentY;
-  }
-
-  function compactDate(value, helpers = {}) {
-    if (helpers.formatThaiDate) return helpers.formatThaiDate(value);
-    if (!value) return '-';
-    const text = String(value).slice(0, 10);
-    const parts = text.split('-').map(Number);
-    if (parts.length === 3 && parts.every((v) => !Number.isNaN(v))) {
-      const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-      return `${parts[2]} ${months[(parts[1] || 1) - 1]} ${parts[0] + 543}`;
-    }
-    return text;
-  }
-
-  function formatNumber(value, helpers = {}) {
-    if (helpers.formatNumber) return helpers.formatNumber(value);
-    return Number(value || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
-  }
-
-  function formatMoney(value, helpers = {}) {
-    if (helpers.formatMoney) return helpers.formatMoney(value);
-    return Number(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  async function renderBillImage(draft = {}, helpers = {}) {
-    const width = helpers.width || 430;
-    const padding = helpers.padding || 22;
-    const lineGap = 18;
-    const items = Array.isArray(draft.items) ? draft.items : [];
-    const itemBlockHeight = helpers.itemBlockHeight || 52;
-    const hasRemark = !!String(draft.remark || '').trim();
-    const logoSize = helpers.logoSize || 54;
-    const headerHeight = 154;
-    const remarkReserve = hasRemark ? 96 : 24;
-    const thankYouHeight = 34;
-    const bottomPadding = helpers.bottomPadding || 42;
-    const discountRows = Number(draft.discount || 0) > 0 ? 2 : 1;
-    const height = Math.max(
-      320,
-      headerHeight +
-        (items.length * itemBlockHeight) +
-        remarkReserve +
-        thankYouHeight +
-        (discountRows * lineGap) +
-        bottomPadding +
-        34
-    );
-
-    const dpr = Math.min(window.devicePixelRatio || 2, 3);
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#111827';
-    ctx.textBaseline = 'top';
-
-    let y = padding;
-    const logoSrc = draft.logo_url || draft.logoUrl || helpers.logoUrl || 'assets/farm-logo.png';
-    const logo = await loadCanvasImage(logoSrc);
-    if (logo) {
-      ctx.drawImage(logo, Math.round((width - logoSize) / 2), y, logoSize, logoSize);
-      y += logoSize + 8;
-    }
-
-    ctx.fillStyle = '#111827';
-    fitCenteredText(ctx, draft.farm_name || draft.farmName || 'FARM', width / 2, y, width - (padding * 2), 'bold', 22, 13);
-    y += 30;
-    fitCenteredText(ctx, draft.bill_title || draft.title || helpers.title || 'บิลเงินสด', width / 2, y, width - (padding * 2), 'bold', 17, 13);
-    y += 28;
-
-    ctx.textAlign = 'left';
-    ctx.font = '14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillStyle = '#374151';
-    ctx.fillText('วันที่ขาย: ' + compactDate(draft.log_date, helpers), padding, y);
-    y += lineGap;
-    ctx.fillText('เวลาออกบิล: ' + (draft.issue_date || '-'), padding, y);
-    y += lineGap;
-    ctx.fillText('ชุดสัตว์: ' + (draft.batch_name || '-'), padding, y);
-    y += 20;
-
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-    ctx.stroke();
-    y += 12;
-
-    items.forEach((item) => {
-      const itemName = item.display_name || item.item_name || item.name || '-';
-      const unitLabel = item.unit_label || item.unit || '';
-      const qtyText = draft.sale_type === 'egg' && item.total_qty != null
-        ? `${formatNumber(item.qty, helpers)} ${unitLabel} (${formatNumber(item.total_qty, helpers)} ฟอง) x ${formatMoney(item.unit_price, helpers)}`
-        : `${formatNumber(item.qty, helpers)} ${unitLabel} x ${formatMoney(item.unit_price, helpers)}`;
-
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#111827';
-      ctx.font = 'bold 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillText(itemName, padding, y, width - (padding * 2));
-      y += 18;
-
-      ctx.font = '13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillStyle = '#4b5563';
-      ctx.fillText(qtyText, padding, y, width - (padding * 2) - 112);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#111827';
-      ctx.fillText(formatMoney(item.line_total, helpers), width - padding, y, 108);
-      y += itemBlockHeight - 18;
-    });
-
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-    ctx.stroke();
-    y += 12;
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#111827';
-    ctx.font = '14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText('รวมก่อนหักส่วนลด', padding, y);
-    ctx.textAlign = 'right';
-    ctx.fillText(formatMoney(draft.sub_total || draft.subTotal || draft.grand_total, helpers), width - padding, y);
-    y += lineGap;
-
-    if (Number(draft.discount || 0) > 0) {
-      ctx.textAlign = 'left';
-      ctx.fillText('ส่วนลด', padding, y);
-      ctx.textAlign = 'right';
-      ctx.fillText('-' + formatMoney(draft.discount, helpers), width - padding, y);
-      y += lineGap;
-    }
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#111827';
-    ctx.font = 'bold 16px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText('สุทธิ', padding, y);
-    ctx.textAlign = 'right';
-    ctx.font = 'bold 18px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText(formatMoney(draft.grand_total || draft.grandTotal || 0, helpers), width - padding, y);
-    y += 32;
-
-    if (hasRemark) {
-      ctx.textAlign = 'left';
-      ctx.font = '13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillStyle = '#4b5563';
-      const wrap = helpers.wrapText || defaultWrapText;
-      const remarkEndY = wrap(ctx, 'หมายเหตุ: ' + draft.remark, padding, y, width - (padding * 2), 17);
-      y = Number.isFinite(remarkEndY) ? remarkEndY + 18 : y + 48;
-    } else {
-      y += 12;
-    }
-
-    const thankYouY = Math.min(y, height - padding - 22);
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillStyle = '#0f766e';
-    ctx.fillText(helpers.thankYouText || 'ขอบคุณที่อุดหนุน', width / 2, thankYouY);
-    ctx.textAlign = 'left';
-
-    return canvas.toDataURL('image/png');
-  }
-
-  return { renderBillImage, loadCanvasImage, drawCenteredText, fitCenteredText };
-})();
-
-//# sourceURL=js/components/bill-preview.js
 
 
 /* ==== js/modules/nav.js ==== */
@@ -1833,327 +1331,751 @@ window.NavDrawer = (() => {
 //# sourceURL=js/modules/nav.js
 
 
-/* ==== js/modules/admin-permissions-page.js ==== */
+/* ==== js/services/feed-order.service.js ==== */
+window.FeedOrderService = (() => {
+  function normalizeActionText(res) {
+    return String(res?.code || res?.message || '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_');
+  }
 
-window.AdminPermissionsPage = (() => {
+  function shouldTryNextAction(res) {
+    const text = normalizeActionText(res);
+    return (
+      !res ||
+      text.includes('INVALID_ACTION') ||
+      text.includes('UNKNOWN_ACTION') ||
+      text.includes('ACTION_NOT_FOUND') ||
+      text.includes('NOT_FOUND_ACTION')
+    );
+  }
+
+  async function postAction(actions, payload = {}, options = {}) {
+    const list = Array.isArray(actions) ? actions : [actions];
+    let last = null;
+    for (const action of list) {
+      const res = await AppApi.post({ ...payload, action }, options);
+      last = res;
+      if (res && res.status === 'ok') return res;
+      if (!shouldTryNextAction(res)) return res;
+    }
+    return last;
+  }
+
+  function normalizeLotPayload(payload = {}) {
+    const out = { ...payload };
+    if (out.feed_order_id && !out.purchase_lot_id) out.purchase_lot_id = out.feed_order_id;
+    if (out.purchase_lot_id && !out.lot_id) out.lot_id = out.purchase_lot_id;
+    if (out.lot_id && !out.purchase_lot_id) out.purchase_lot_id = out.lot_id;
+    delete out.feed_order_id;
+    return out;
+  }
+
+  function getPageData(options = {}) {
+    return postAction([
+      'getFeedOrderBillPageData',
+      'getFeedOrderBillsPageData',
+      'getFeedOrderPageData'
+    ], {}, { timeoutMs: 20000, ...options });
+  }
+
+  function saveLot(payload) {
+    return postAction([
+      'saveFeedOrderLot',
+      'saveFeedOrderBill',
+      'createFeedOrderBill',
+      'createFeedOrderLot'
+    ], payload, { timeoutMs: 25000, dedupe: false });
+  }
+
+  function allocate(payload) {
+    return postAction([
+      'allocateFeedOrderToBatch',
+      'allocateFeedOrderBillToBatch',
+      'allocateFeedOrderLot',
+      'saveFeedOrderAllocation'
+    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
+  }
+
+  function savePayment(payload) {
+    return postAction([
+      'saveFeedOrderPayment',
+      'recordFeedOrderPayment',
+      'createFeedOrderPayment'
+    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
+  }
+
+  function setVisibility(payload) {
+    return postAction([
+      'setFeedOrderLotVisibility',
+      'updateFeedOrderLotVisibility',
+      'hideFeedOrderLot'
+    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
+  }
+
+  function saveClaim(payload) {
+    return postAction([
+      'saveFeedOrderClaim',
+      'recordFeedOrderClaim',
+      'createFeedOrderClaim'
+    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
+  }
+
+  return { getPageData, saveLot, allocate, savePayment, saveClaim, setVisibility };
+})();
+
+//# sourceURL=js/services/feed-order.service.js
+
+
+/* ==== js/modules/feed-order-bills-page.js ==== */
+window.FeedOrderBillsPage = (() => {
   const state = {
-    users: [],
+    rows: [],
     batches: [],
-    selectedBatch: null,
-    selectedUser: null,
-    currentPermissions: {},
-    grantedMembers: [],
-    grantedLoaded: false
+    summary: {},
+    filter: 'pending',
+    showHidden: false,
+    bootstrapped: false,
+    lastUpdated: '',
+    permission: 'none',
+    expandedLots: new Set()
   };
-  const CACHE_TTL_MS = 90 * 1000;
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (v) => String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const n = (v) => Number(v || 0);
+  const fmt = (v, digits = 0) => n(v).toLocaleString('th-TH', { maximumFractionDigits: digits });
+  const money = (v) => n(v).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const today = () => new Date().toISOString().slice(0, 10);
+  const nowText = () => new Date().toLocaleString('th-TH', { hour12: false });
+
+  function readLot(raw = {}) {
+    const purchaseQty = n(raw.purchase_qty ?? raw.qty_total ?? raw.total_qty ?? raw.qty ?? raw.feed_qty);
+    const returnedQty = n(raw.returned_qty ?? raw.returned_total ?? raw.return_qty ?? raw.claim_return_qty);
+    const replacementQty = n(raw.replacement_qty ?? raw.replacement_total ?? raw.claim_replacement_qty ?? raw.received_back_qty);
+    const netQty = n(raw.net_qty ?? raw.effective_qty ?? (purchaseQty - returnedQty + replacementQty));
+    const unitPrice = n(raw.unit_price ?? raw.purchase_unit_price ?? raw.price_per_unit);
+    const purchaseValue = n(raw.purchase_value ?? raw.gross_total ?? raw.grand_total ?? (purchaseQty * unitPrice));
+    const returnValue = n(raw.return_value ?? raw.claim_return_value ?? returnedQty * unitPrice);
+    const replacementValue = n(raw.replacement_value ?? raw.claim_replacement_value ?? raw.replacement_total_value);
+    const netValue = n(raw.net_value ?? raw.net_total ?? raw.effective_total ?? (purchaseValue - returnValue + replacementValue));
+    const paid = n(raw.paid_total ?? raw.payment_total ?? raw.paid_amount);
+    const outstanding = Math.max(0, n(raw.debt_total ?? raw.outstanding_total ?? raw.payable_total ?? (netValue - paid)));
+
+    const allocations = Array.isArray(raw.allocations) ? raw.allocations : [];
+    const payments = Array.isArray(raw.payments) ? raw.payments : [];
+    const claims = Array.isArray(raw.claims) ? raw.claims : [];
+    const allocated = n(raw.allocated_qty ?? raw.allocated_total ?? raw.qty_allocated ?? raw.allocation_total ?? allocations.reduce((s, a) => s + n(a.qty_allocated ?? a.qty ?? 0), 0));
+    const allocationCount = n(raw.allocation_count ?? allocations.length);
+    const claimCount = n(raw.claim_count ?? claims.length);
+    const isHidden = ['0', 'false', 'hidden', 'hide'].includes(String(raw.is_visible ?? raw.visible ?? 1).trim().toLowerCase());
+
+    const allocationDestinations = allocations
+      .map((a) => {
+        const name = String(a.batch_name || a.external_name || a.destination_name || a.batch_id || '').trim();
+        const qty = n(a.qty_allocated ?? a.qty ?? 0);
+        const date = String(a.allocation_date || a.log_date || '').trim();
+        if (!name && !qty) return null;
+        return {
+          date,
+          name: name || 'ไม่ระบุเล้า',
+          qty,
+          text: `${date ? date + ' • ' : ''}${name || 'ไม่ระบุเล้า'} ${fmt(qty, 2)} ลูก`
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+
+    const paymentRows = payments
+      .map((p) => ({
+        payment_date: String(p.payment_date || p.date || '').trim(),
+        amount: n(p.amount || p.payment_amount || 0),
+        payment_method: String(p.payment_method || '').trim(),
+        remark: String(p.remark || '').trim()
+      }))
+      .filter((p) => p.payment_date || p.amount)
+      .sort((a, b) => String(a.payment_date || '').localeCompare(String(b.payment_date || '')));
+
+    const latestPayment = paymentRows[paymentRows.length - 1] || payments[0] || null;
+    const latestPaymentDate = String(raw.last_payment_date || raw.payment_date_latest || latestPayment?.payment_date || '').trim();
+    const latestPaymentAmount = n(raw.last_payment_amount ?? latestPayment?.amount ?? 0);
+
+    // สถานะการจ่ายยึดจากยอดค้างจริงก่อนเสมอ
+    // ห้ามให้ข้อความ status จาก backend เช่น CLEARED มาทับ ถ้ายังมียอดค้างจ่ายอยู่
+    const isCleared = outstanding <= 0.0001 && netValue > 0;
+    const statusLabel = isCleared ? 'เคลียร์แล้ว' : (paid > 0 ? 'จ่ายบางส่วน' : 'ยังไม่จ่าย');
+
+    const title = String(raw.feed_name || raw.name || raw.lot_name || raw.title || 'ล็อตอาหาร').trim();
+    const supplier = String(raw.supplier_name || raw.supplier || raw.vendor_name || '').trim();
+    return {
+      ...raw,
+      id: String(raw.id || raw.lot_id || raw.feed_order_id || ''),
+      title,
+      supplier,
+      purchaseDate: raw.purchase_date || raw.log_date || raw.date || '',
+      purchaseQty,
+      returnedQty,
+      replacementQty,
+      netQty,
+      allocated,
+      allocationCount,
+      allocationDestinations,
+      paymentRows,
+      isHidden,
+      unitPrice,
+      purchaseValue,
+      netValue,
+      paid,
+      outstanding,
+      latestPaymentDate,
+      latestPaymentAmount,
+      claimCount,
+      isCleared,
+      statusLabel,
+      creatorLabel: String(raw.created_user_label || raw.created_user_name || raw.created_user_email || raw.created_user_id || '').trim(),
+      isOwnLot: raw.is_own_lot === 1 || raw.is_own_lot === true || raw.is_own_lot === '1',
+      allocations,
+      payments,
+      claims
+    };
+  }
+
+  function normalizePayload(res = {}) {
+    const rows = (res.lots || res.bills || res.rows || res.feed_order_bills || []).map(readLot);
+    const summary = res.summary || calcSummary(rows);
+    state.rows = rows;
+    state.batches = res.batches || res.batch_options || [];
+    state.summary = { ...calcSummary(rows), ...summary };
+    if (res.permission) state.permission = String(res.permission || state.permission || 'none').toLowerCase();
+    state.lastUpdated = res.generated_at || res.updated_at || nowText();
+  }
+
+  function calcSummary(rows) {
+    return {
+      lot_count: rows.length,
+      purchase_qty: rows.reduce((s, r) => s + n(r.purchaseQty), 0),
+      net_qty: rows.reduce((s, r) => s + n(r.netQty), 0),
+      purchase_value: rows.reduce((s, r) => s + n(r.purchaseValue), 0),
+      net_value: rows.reduce((s, r) => s + n(r.netValue), 0),
+      paid_total: rows.reduce((s, r) => s + n(r.paid), 0),
+      debt_total: rows.reduce((s, r) => s + n(r.outstanding), 0)
+    };
+  }
+
+  function displayRows() {
+    return state.showHidden ? state.rows : state.rows.filter((r) => !r.isHidden);
+  }
 
   async function bootstrap() {
+    if (state.bootstrapped) return;
+    state.bootstrapped = true;
     const ok = await AppAuth.ensureAuth();
     if (!ok) return;
-    bindBaseEvents();
-
-    const cached = readCache('ducky:admin:options');
-    if (cached) {
-      state.users = cached.users || [];
-      state.batches = cached.batches || [];
-      renderOptionLists();
-    }
-
-    const response = await AppApi.post({ action: 'getPermissionAdminOptions' });
-    if (!response || response.status !== 'ok') {
-      if (!cached) document.getElementById('adminPermissionSubtitle').textContent = response?.message || 'โหลดตัวเลือกไม่สำเร็จ';
+    if (window.MenuPermissionApi?.ensureLoaded) await MenuPermissionApi.ensureLoaded().catch(() => null);
+    state.permission = getProgramMenuPermission('feed_order_bills');
+    if (!canViewFeedOrder()) {
+      renderAccessDenied('ไม่มีสิทธิ์เข้าถึงเมนูบิลอาหารกลาง');
       return;
     }
-    state.users = response.users || [];
-    state.batches = response.batches || [];
-    writeCache('ducky:admin:options', { users: state.users, batches: state.batches });
-    renderOptionLists();
-
-    if (window.NavDrawer) {
-      NavDrawer.setBatchContext({ isAdmin: true, module_permissions: {}, batch: null });
-    }
+    bind();
+    applyPermissionUI();
+    await load();
   }
 
-  function bindBaseEvents() {
-    document.getElementById('backBtn')?.addEventListener('click', () => history.back());
-    document.getElementById('logoutBtn')?.addEventListener('click', AppAuth.logout);
-    document.getElementById('adminBatchSearch')?.addEventListener('change', onSelectionChange);
-    document.getElementById('adminUserSearch')?.addEventListener('change', onSelectionChange);
-    document.getElementById('adminPermissionForm')?.addEventListener('submit', onSubmit);
-    document.getElementById('adminLoadGrantedBtn')?.addEventListener('click', loadGrantedMembers);
+  function bind() {
+    $('backBtn')?.addEventListener('click', () => history.back());
+    $('logoutBtn')?.addEventListener('click', AppAuth.logout);
+    $('reloadBtn')?.addEventListener('click', () => load({ force: true }));
+    $('openLotBtn')?.addEventListener('click', () => { if (canWriteFeedOrder()) openLotSheet(); else alert('ไม่มีสิทธิ์เพิ่มล็อตอาหาร'); });
+    $('feedOrderFab')?.addEventListener('click', () => { if (canWriteFeedOrder()) openLotSheet(); else alert('ไม่มีสิทธิ์เพิ่มล็อตอาหาร'); });
+    $('feedOrderHiddenToggle')?.addEventListener('click', () => {
+      state.showHidden = !state.showHidden;
+      render();
+    });
+    document.addEventListener('click', onDocumentClick);
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeSheet();
+    });
   }
 
-  function renderOptionLists() {
-    document.getElementById('adminBatchList').innerHTML = state.batches.map((batch) => `<option value="${escapeHtml(batch.label)}"></option>`).join('');
-    document.getElementById('adminUserList').innerHTML = state.users.map((user) => `<option value="${escapeHtml(user.label)}"></option>`).join('');
-  }
-
-  async function onSelectionChange() {
-    state.selectedBatch = resolveBatch();
-    state.selectedUser = resolveUser();
-    state.grantedLoaded = false;
-    state.grantedMembers = [];
-    document.getElementById('adminGrantedCountBadge').textContent = 'ยังไม่โหลด';
-    document.getElementById('adminGrantedList').innerHTML = '<div class="empty-state">ยังไม่ได้ดึงข้อมูล</div>';
-
-    const matrix = document.getElementById('adminPermissionMatrix');
-    if (!state.selectedBatch || !state.selectedUser) {
-      state.currentPermissions = {};
-      matrix.innerHTML = '<div class="empty-state">เลือก batch และ user ก่อนเพื่อแสดงสิทธิ์รายโมดูล</div>';
+  async function load({ force = false } = {}) {
+    if (!canViewFeedOrder()) {
+      renderAccessDenied('ไม่มีสิทธิ์เข้าถึงเมนูบิลอาหารกลาง');
       return;
     }
-
-    const cache = readCache(memberCacheKey(state.selectedBatch.id));
-    const member = cache?.find((item) => String(item.user_id) === String(state.selectedUser.id));
-    state.currentPermissions = member?.permissions || {};
-    renderPermissionGrid(matrix, getModules(state.selectedBatch.specie), state.currentPermissions);
-
-    if (!member) {
-      const perms = await fetchUserPermissions(state.selectedBatch.id, state.selectedUser.id);
-      state.currentPermissions = perms;
-      renderPermissionGrid(matrix, getModules(state.selectedBatch.specie), perms);
-    }
-  }
-
-  async function fetchUserPermissions(batchId, userId) {
-    const access = await AppApi.post({ action: 'getBatchAccessList', batch_id: batchId });
-    const members = access && access.status === 'ok' ? (access.members || []) : [];
-    if (members.length) writeCache(memberCacheKey(batchId), members);
-    const member = members.find((item) => String(item.user_id) === String(userId));
-    return member?.permissions || {};
-  }
-
-  async function onSubmit(event) {
-    event.preventDefault();
-    const batch = resolveBatch();
-    const user = resolveUser();
-    if (!batch || !user) return alert('กรุณาเลือก batch และ user');
-    const button = document.getElementById('adminPermissionSaveBtn');
-    const original = button.textContent;
-    button.disabled = true;
-    button.textContent = 'กำลังบันทึก...';
-
-    const selects = [...document.querySelectorAll('#adminPermissionMatrix select[data-module-key]')];
-    for (const select of selects) {
-      const response = await AppApi.post({
-        action: 'upsertBatchModulePermission',
-        batch_id: batch.id,
-        target_user_id: user.id,
-        module_key: select.dataset.moduleKey,
-        permission: select.value
-      });
-      if (!response || response.status !== 'ok') {
-        button.disabled = false;
-        button.textContent = original;
-        return alert(response?.message || `บันทึกสิทธิ์ ${select.dataset.moduleKey} ไม่สำเร็จ`);
-      }
-    }
-
-    button.disabled = false;
-    button.textContent = original;
-    localStorage.removeItem(memberCacheKey(batch.id));
-    localStorage.removeItem(`ducky:batch-dashboard:${batch.id}`);
-    alert('บันทึกสิทธิ์เรียบร้อย');
-    if (state.grantedLoaded) await loadGrantedMembers();
-  }
-
-  async function loadGrantedMembers() {
-    const batch = resolveBatch();
-    if (!batch) return alert('กรุณาเลือก batch ก่อน');
-    const badge = document.getElementById('adminGrantedCountBadge');
-    const list = document.getElementById('adminGrantedList');
-    const hint = document.getElementById('adminGrantedHint');
-    badge.textContent = 'กำลังโหลด';
-    list.innerHTML = '<div class="empty-state">กำลังโหลดรายการสิทธิ์...</div>';
-
-    let members = readCache(memberCacheKey(batch.id));
-    if (!members) {
-      const response = await AppApi.post({ action: 'getBatchAccessList', batch_id: batch.id });
-      if (!response || response.status !== 'ok') {
-        badge.textContent = 'ผิดพลาด';
-        list.innerHTML = `<div class="empty-state">${escapeHtml(response?.message || 'โหลดรายการสิทธิ์ไม่สำเร็จ')}</div>`;
+    setSubtitle(force ? 'กำลังโหลดใหม่...' : 'กำลังโหลดข้อมูล...');
+    const btn = $('reloadBtn');
+    await withButton(btn, 'กำลังโหลด...', async () => {
+      const res = await FeedOrderService.getPageData({ dedupe: false });
+      if (!res || res.status !== 'ok') {
+        setSubtitle(res?.message || 'โหลดข้อมูลไม่สำเร็จ');
         return;
       }
-      members = response.members || [];
-      writeCache(memberCacheKey(batch.id), members);
+      normalizePayload(res);
+      render();
+    });
+  }
+
+  function setSubtitle(text) {
+    const el = $('feedOrderSubtitle');
+    if (el) el.textContent = text || '';
+  }
+
+  function render() {
+    applyPermissionUI();
+    setSubtitle(`อัปเดต ${state.lastUpdated || nowText()}`);
+    renderSummary();
+    renderList();
+  }
+
+  function renderSummary() {
+    const s = { ...calcSummary(displayRows()) }; // summary follows the current visible/hidden toggle
+    const target = $('feedOrderSummary');
+    if (!target) return;
+    target.innerHTML = [
+      summaryCard('ล็อตทั้งหมด', `${fmt(s.lot_count)} ล็อต`, 'บิลอาหารทั้งหมด'),
+      summaryCard('จำนวนซื้อเข้า (สุทธิ)', `${fmt(s.net_qty, 2)} ลูก`, `ซื้อเข้า ${fmt(s.purchase_qty, 2)} ลูก`),//, `หลังหักเคลม/รับคืน • ซื้อเข้า ${fmt(s.purchase_qty, 2)} ลูก`),
+      summaryCard('ราคาซื้อเข้า (สุทธิ)', `${money(s.net_value)} ฿`, `ตั้งต้น ${money(s.purchase_value)} บาท`)//, `หลังเคลม/รับคืน • ตั้งต้น ${money(s.purchase_value)} บาท`)
+    ].join('');
+  }
+
+  function summaryCard(label, value, sub) {
+    return `<article class="feed-order-summary-card"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(sub)}</small></article>`;
+  }
+
+  function filteredRows() {
+    const base = displayRows();
+    if (state.filter === 'cleared') return base.filter((r) => r.isCleared);
+    if (state.filter === 'pending') return base.filter((r) => !r.isCleared);
+    return base;
+  }
+
+  function renderList() {
+    document.querySelectorAll('[data-feed-order-filter]').forEach((btn) => btn.classList.toggle('is-active', btn.dataset.feedOrderFilter === state.filter));
+    const hiddenToggle = $('feedOrderHiddenToggle');
+    if (hiddenToggle) {
+      const hiddenCount = state.rows.filter((r) => r.isHidden).length;
+      hiddenToggle.classList.toggle('is-active', state.showHidden);
+      hiddenToggle.setAttribute('aria-pressed', state.showHidden ? 'true' : 'false');
+      hiddenToggle.textContent = state.showHidden ? `ซ่อนล็อตที่ถูกซ่อน (${fmt(hiddenCount)})` : `แสดงล็อตที่ซ่อน (${fmt(hiddenCount)})`;
+      hiddenToggle.hidden = hiddenCount <= 0;
     }
-
-    state.grantedLoaded = true;
-    state.grantedMembers = members || [];
-    badge.textContent = `${state.grantedMembers.length} คน`;
-    hint.textContent = 'แสดงเฉพาะผู้ที่ถูก grant สิทธิ์ใน batch ที่เลือก';
-    list.innerHTML = renderMemberCards(state.grantedMembers, batch.specie, true, batch.id);
-  }
-
-  function renderPermissionGrid(container, modules, permissions) {
-    container.innerHTML = modules.map((module) => {
-      const current = permissions[module.key] || 'none';
-      return `
-        <div class="permission-card">
-          <div class="permission-card__title">${module.label}</div>
-          <div class="permission-card__key muted">${module.key}</div>
-          <select data-module-key="${module.key}" class="permission-card__select">
-            <option value="none" ${current === 'none' ? 'selected' : ''}>ไม่มีสิทธิ์</option>
-            <option value="view" ${current === 'view' ? 'selected' : ''}>ดูอย่างเดียว</option>
-            <option value="write" ${current === 'write' ? 'selected' : ''}>ดูและแก้ไข</option>
-          </select>
-        </div>`;
-    }).join('');
-  }
-
-  function renderMemberCards(members, specie, canRevoke, batchId) {
-    if (!members.length) return '<div class="empty-state">ยังไม่มีผู้ใช้คนอื่นได้รับสิทธิ์ใน batch นี้</div>';
-    const modules = getModules(specie);
-    return members.map((member) => {
-      const name = member.display_name || member.farm_name || member.email || member.user_id;
-      const subtitle = [member.email || '', member.role ? `role: ${member.role}` : ''].filter(Boolean).join(' • ');
-      return `
-        <div class="access-member-card">
-          <div class="access-member-head">
-            <div>
-              <div class="access-member-name">${escapeHtml(name)}</div>
-              <div class="muted">${escapeHtml(subtitle || member.user_id)}</div>
-            </div>
-            <div class="access-member-badges">
-              ${member.is_admin ? '<span class="badge-inline success">admin</span>' : ''}
-              ${canRevoke ? `<button type="button" class="secondary-btn access-revoke-all-btn" data-target-user-id="${member.user_id}" data-batch-id="${batchId}" data-action="admin-revoke-all">ถอนสิทธิ์ทั้งหมด</button>` : ''}
-            </div>
-          </div>
-          <div class="access-module-grid access-module-grid--3">
-            ${modules.map((module) => {
-              const permission = (member.permissions && member.permissions[module.key]) || 'none';
-              const revokeButton = canRevoke && permission !== 'none'
-                ? `<button type="button" class="access-link-btn" data-target-user-id="${member.user_id}" data-batch-id="${batchId}" data-module-key="${module.key}" data-action="admin-revoke-module">ถอนสิทธิ์โมดูล</button>`
-                : '<span class="muted">-</span>';
-              return `
-                <div class="access-module-card">
-                  <div class="access-module-card__title">${module.label}</div>
-                  <span class="badge-inline ${badgeClass(permission)}">${permissionLabel(permission)}</span>
-                  ${revokeButton}
-                </div>`;
-            }).join('')}
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  document.addEventListener('click', async (event) => {
-    const button = event.target.closest('[data-action]');
-    if (!button) return;
-    const action = button.dataset.action;
-    if (action === 'admin-revoke-all') {
-      if (!confirm('ต้องการถอนสิทธิ์ทั้งหมดของผู้ใช้นี้ใช่ไหม')) return;
-      const response = await AppApi.post({ action: 'revokeBatchUserPermissions', batch_id: button.dataset.batchId, target_user_id: button.dataset.targetUserId });
-      if (!response || response.status !== 'ok') return alert(response?.message || 'ถอนสิทธิ์ไม่สำเร็จ');
-      localStorage.removeItem(memberCacheKey(button.dataset.batchId));
-      localStorage.removeItem(`ducky:batch-dashboard:${button.dataset.batchId}`);
-      await loadGrantedMembers();
+    const hint = $('feedOrderFilterHint');
+    if (hint) {
+      const count = filteredRows().length;
+      hint.textContent = `${fmt(count)} รายการ`;
+    }
+    const target = $('feedOrderList');
+    if (!target) return;
+    const rows = filteredRows();
+    if (!rows.length) {
+      target.innerHTML = state.showHidden ? '<div class="feed-order-empty">ยังไม่มีรายการตามเงื่อนไขนี้</div>' : '<div class="feed-order-empty">ยังไม่มีรายการตามเงื่อนไขนี้ หากเป็นล็อตเก่าที่ไม่ใช้แล้ว อาจถูกซ่อนไว้</div>';
       return;
     }
-    if (action === 'admin-revoke-module') {
-      if (!confirm('ต้องการถอนสิทธิ์ของโมดูลนี้ใช่ไหม')) return;
-      const response = await AppApi.post({ action: 'revokeBatchUserPermissions', batch_id: button.dataset.batchId, target_user_id: button.dataset.targetUserId, module_key: button.dataset.moduleKey });
-      if (!response || response.status !== 'ok') return alert(response?.message || 'ถอนสิทธิ์โมดูลไม่สำเร็จ');
-      localStorage.removeItem(memberCacheKey(button.dataset.batchId));
-      localStorage.removeItem(`ducky:batch-dashboard:${button.dataset.batchId}`);
-      await loadGrantedMembers();
+    target.innerHTML = rows.map(renderLotCard).join('');
+  }
+
+  function renderLotCard(row) {
+    const statusClass = row.isHidden ? 'is-hidden' : (row.isCleared ? 'is-cleared' : (row.paid > 0 ? 'is-partial' : 'is-unpaid'));
+    const isExpanded = state.expandedLots.has(String(row.id));
+    const allocationList = row.allocationDestinations.length
+      ? row.allocationDestinations.map((a) => `<li><strong>${esc(a.text)}</strong></li>`).join('')
+      : '<li><span>-</span><strong>ยังไม่ได้แบ่งเข้าเล้า</strong></li>';
+    const paymentList = row.paymentRows.length
+      ? row.paymentRows.map((p) => `<li><strong>${esc(p.payment_date || '-')} • ${money(p.amount)} บาท${p.payment_method ? ' • ' + esc(p.payment_method) : ''}</strong></li>`).join('')
+      : '<li><span>-</span><strong>ยังไม่มีประวัติจ่ายเงิน</strong></li>';
+    const claimChips = [
+      row.returnedQty ? `<span>เคลม/คืน ${fmt(row.returnedQty, 2)} ลูก</span>` : '',
+      row.replacementQty ? `<span>รับคืน ${fmt(row.replacementQty, 2)} ลูก</span>` : '',
+      row.claimCount ? `<span>ประวัติเคลม ${fmt(row.claimCount)} รายการ</span>` : ''
+    ].filter(Boolean).join('');
+
+    const compactSummary = `
+        <button type="button" class="feed-order-card-compact-summary" data-feed-action="toggle" data-id="${esc(row.id)}" aria-expanded="false" aria-label="ดูรายละเอียดล็อตอาหาร">
+          <span class="feed-order-compact-metric">
+            <small>จำนวนสุทธิ</small>
+            <strong>${fmt(row.netQty, 2)} ลูก</strong>
+          </span>
+          <span class="feed-order-compact-metric">
+            <small>มูลค่าสุทธิ</small>
+            <strong>${money(row.netValue)}</strong>
+          </span>
+          <span class="feed-order-compact-metric ${row.outstanding > 0 ? 'is-danger' : 'is-good'}">
+            <small>ค้างจ่าย</small>
+            <strong>${money(row.outstanding)}</strong>
+          </span>
+          <span class="feed-order-show-more" aria-hidden="true">เพิ่ม ▼</span>
+        </button>`;
+
+    const expandedContent = `
+        <div class="feed-order-expanded-toolbar">
+          <button type="button" class="feed-order-show-less" data-feed-action="toggle" data-id="${esc(row.id)}" aria-expanded="true">
+            ลด ▲
+          </button>
+        </div>
+
+        <div class="feed-order-card-grid">
+          ${metric('จำนวนซื้อเข้า', `${fmt(row.purchaseQty, 2)} ลูก`)}
+          ${metric('จำนวนสุทธิ', `${fmt(row.netQty, 2)} ลูก`)}
+          ${metric('แบ่งแล้ว', `${fmt(row.allocated, 2)} ลูก`)}
+          ${metric('มูลค่าซื้อเข้า', money(row.purchaseValue))}
+          ${metric('มูลค่าสุทธิ', money(row.netValue))}
+          ${metric('ค้างจ่าย', money(row.outstanding), row.outstanding > 0 ? 'danger' : 'good')}
+        </div>
+
+        <div class="feed-order-card-notes feed-order-card-notes--stacked">
+          <div>
+            <span>แบ่งไป</span>
+            <ul class="feed-order-mini-list">${allocationList}</ul>
+          </div>
+          <div>
+            <span>การจ่ายเงิน</span>
+            <ul class="feed-order-mini-list">${paymentList}</ul>
+          </div>
+        </div>
+
+        ${claimChips ? `<div class="feed-order-chip-row">${claimChips}</div>` : ''}
+
+        <div class="feed-order-actions">
+          ${canWriteFeedOrder() ? `
+            <button type="button" data-feed-action="allocate" data-id="${esc(row.id)}">แบ่งเข้าเล้า</button>
+            <button type="button" data-feed-action="payment" data-id="${esc(row.id)}">จ่ายเงิน</button>
+            <button type="button" data-feed-action="claim" data-id="${esc(row.id)}">เคลม/คืน</button>
+            <button type="button" data-feed-action="visibility" data-id="${esc(row.id)}">${row.isHidden ? 'แสดงอีกครั้ง' : 'ซ่อน'}</button>
+          ` : ''}
+          <button type="button" class="feed-order-detail-btn" data-feed-action="detail" data-id="${esc(row.id)}">รายละเอียด</button>
+        </div>`;
+
+    return `
+      <article class="feed-order-card ${isExpanded ? 'is-expanded' : 'is-collapsed'}" data-lot-id="${esc(row.id)}">
+        <div class="feed-order-card__head">
+          <div class="feed-order-title-wrap">
+            <h3>${esc(row.title)}</h3>
+            <div class="feed-order-card__meta">${esc([row.purchaseDate, row.supplier, row.creatorLabel ? 'ผู้บันทึก ' + row.creatorLabel : ''].filter(Boolean).join(' • ') || '-')}</div>
+          </div>
+          <span class="feed-order-status ${statusClass}">${esc(row.isHidden ? 'ซ่อนไว้' : row.statusLabel)}</span>
+        </div>
+        ${isExpanded ? expandedContent : compactSummary}
+      </article>`;
+  }
+
+  function metric(label, value, tone = '') {
+    return `<div class="feed-order-metric ${tone ? `is-${tone}` : ''}"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+  }
+
+  function onDocumentClick(event) {
+    const filter = event.target.closest('[data-feed-order-filter]');
+    if (filter) {
+      state.filter = filter.dataset.feedOrderFilter || 'pending';
+      renderList();
+      return;
     }
+    const action = event.target.closest('[data-feed-action]');
+    if (!action) return;
+    const lot = state.rows.find((r) => String(r.id) === String(action.dataset.id));
+    if (!lot) return;
+    const type = action.dataset.feedAction;
+    if (['allocate', 'payment', 'claim', 'visibility'].includes(type) && !canWriteFeedOrder()) {
+      alert('ไม่มีสิทธิ์แก้ไขบิลอาหารกลาง');
+      return;
+    }
+    if (type === 'toggle') toggleCard(lot);
+    else if (type === 'allocate') openAllocateSheet(lot);
+    else if (type === 'payment') openPaymentSheet(lot);
+    else if (type === 'claim') openClaimSheet(lot);
+    else if (type === 'visibility') toggleLotVisibility(lot);
+    else if (type === 'detail') openDetailSheet(lot);
+  }
+
+  function toggleCard(lot) {
+    const id = String(lot.id || '');
+    if (!id) return;
+    if (state.expandedLots.has(id)) state.expandedLots.delete(id);
+    else state.expandedLots.add(id);
+    renderList();
+  }
+
+  async function toggleLotVisibility(lot) {
+    const nextVisible = lot.isHidden ? 1 : 0;
+    const message = nextVisible
+      ? `ต้องการแสดงล็อต "${lot.title}" กลับมาในรายการใช่ไหม?`
+      : `ต้องการซ่อนล็อต "${lot.title}" จากหน้ารายการใช่ไหม?`;
+    if (!confirm(message)) return;
+    const res = await FeedOrderService.setVisibility({
+      purchase_lot_id: lot.id,
+      lot_id: lot.id,
+      is_visible: nextVisible
+    });
+    if (!res || res.status !== 'ok') {
+      alert(res?.message || 'ปรับสถานะการแสดงผลไม่สำเร็จ');
+      return;
+    }
+    if (nextVisible) state.showHidden = true;
+    await load({ force: true });
+  }
+
+  function batchOptions() {
+    return (state.batches || []).map((b) => {
+      const id = b.id || b.batch_id || b.value || '';
+      const label = b.name || b.batch_name || b.label || id;
+      return `<option value="${esc(id)}">${esc(label)}</option>`;
+    }).join('');
+  }
+
+  function openLotSheet() {
+    if (!canWriteFeedOrder()) {
+      alert('ไม่มีสิทธิ์เพิ่มล็อตอาหาร');
+      return;
+    }
+    openSheet('เพิ่มล็อตอาหาร', `
+      <form id="feedOrderLotForm" class="feed-order-form">
+        <label>วันที่ซื้อ<input name="purchase_date" type="date" value="${today()}" required></label>
+        <label>ชื่ออาหาร<input name="feed_name" type="text" placeholder="เช่น S9 A" required></label>
+        <label>Supplier / ร้าน<input name="supplier_name" type="text" placeholder="ชื่อร้านหรือโรงงาน"></label>
+        <div class="feed-order-form-grid">
+          <label>จำนวนซื้อเข้า<input name="qty_total" type="number" min="0" step="0.01" required></label>
+          <label>ราคาต่อหน่วย<input name="unit_price" type="number" min="0" step="0.01" required></label>
+        </div>
+        <label>หมายเหตุ<textarea name="remark" rows="3" placeholder="รายละเอียดเพิ่มเติม"></textarea></label>
+        <div class="sheet-footer-row"><button type="button" class="btn secondary" data-sheet-close>ยกเลิก</button><button class="btn primary" type="submit">บันทึกล็อตอาหาร</button></div>
+      </form>`, async (sheet) => {
+        sheet.querySelector('#feedOrderLotForm')?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          await submitForm(e.currentTarget, 'กำลังบันทึก...', async (payload) => FeedOrderService.saveLot(payload));
+        });
+      });
+  }
+
+  function openAllocateSheet(lot) {
+    openSheet(`แบ่งเข้าเล้า • ${lot.title}`, `
+      <form id="feedOrderAllocateForm" class="feed-order-form">
+        <input name="purchase_lot_id" type="hidden" value="${esc(lot.id)}"><input name="lot_id" type="hidden" value="${esc(lot.id)}">
+        <label>วันที่แบ่ง<input name="allocation_date" type="date" value="${today()}" required></label>
+        <label>เลือก batch / เล้า<select name="batch_id" required data-allocation-target><option value="">เลือก batch</option>${batchOptions()}<option value="outside">เล้านอกระบบ / ไม่ใช้ Ducky</option></select></label>
+        <div class="feed-order-form-grid">
+          <label>จำนวนที่แบ่ง<input name="qty_allocated" type="number" min="0" step="0.01" max="${esc(lot.netQty)}" required></label>
+          <label>ราคาต่อหน่วย<input name="unit_price" type="number" min="0" step="0.01" value="${esc(lot.unitPrice)}"></label>
+        </div>
+        <label>ชื่อ lot ที่จะเข้า batch<input name="feed_name" type="text" value="${esc(lot.title)}"></label>
+        <label>ชื่อเล้า/ปลายทางภายนอก<input name="external_name" type="text" placeholder="กรอกเมื่อเลือกเล้านอกระบบ"></label>
+        <label class="check-line"><input name="create_feed_lot" type="checkbox" value="1" checked><span>สร้าง lot ใน Ducky สำหรับ batch ที่เลือก</span></label>
+        <label>หมายเหตุ<textarea name="remark" rows="3" placeholder="เช่น แบ่งจากบิลอาหารกลาง"></textarea></label>
+        <div class="sheet-footer-row"><button type="button" class="btn secondary" data-sheet-close>ยกเลิก</button><button class="btn primary" type="submit">บันทึกการแบ่ง</button></div>
+      </form>`, async (sheet) => {
+        const select = sheet.querySelector('[data-allocation-target]');
+        const externalName = sheet.querySelector('input[name="external_name"]');
+        const createLot = sheet.querySelector('input[name="create_feed_lot"]');
+        const syncDestination = () => {
+          const isOutside = select?.value === 'outside';
+          if (externalName) externalName.required = !!isOutside;
+          if (createLot) {
+            createLot.disabled = !!isOutside;
+            if (isOutside) createLot.checked = false;
+          }
+        };
+        select?.addEventListener('change', syncDestination);
+        syncDestination();
+
+        sheet.querySelector('#feedOrderAllocateForm')?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          await submitForm(e.currentTarget, 'กำลังบันทึก...', async (payload) => FeedOrderService.allocate(payload));
+        });
+      });
+  }
+
+  function openPaymentSheet(lot) {
+    openSheet(`จ่ายเงิน • ${lot.title}`, `
+      <form id="feedOrderPaymentForm" class="feed-order-form">
+        <input name="purchase_lot_id" type="hidden" value="${esc(lot.id)}"><input name="lot_id" type="hidden" value="${esc(lot.id)}">
+        <label>วันที่จ่าย<input name="payment_date" type="date" value="${today()}" required></label>
+        <label>จำนวนเงิน<input name="amount" type="number" min="0" step="0.01" max="${esc(lot.outstanding || lot.netValue)}" required></label>
+        <label>วิธีจ่าย<input name="payment_method" type="text" placeholder="เงินสด / โอน / เครดิต"></label>
+        <label>หมายเหตุ<textarea name="remark" rows="3"></textarea></label>
+        <div class="sheet-footer-row"><button type="button" class="btn secondary" data-sheet-close>ยกเลิก</button><button class="btn primary" type="submit">บันทึกจ่ายเงิน</button></div>
+      </form>`, async (sheet) => {
+        sheet.querySelector('#feedOrderPaymentForm')?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          await submitForm(e.currentTarget, 'กำลังบันทึก...', async (payload) => FeedOrderService.savePayment(payload));
+        });
+      });
+  }
+
+  function openClaimSheet(lot) {
+    openSheet(`เคลม/คืน • ${lot.title}`, `
+      <form id="feedOrderClaimForm" class="feed-order-form">
+        <input name="purchase_lot_id" type="hidden" value="${esc(lot.id)}"><input name="lot_id" type="hidden" value="${esc(lot.id)}">
+        <label>วันที่เคลม<input name="claim_date" type="date" value="${today()}" required></label>
+        <div class="feed-order-form-grid">
+          <label>จำนวนส่งคืน<input name="return_qty" type="number" min="0" step="0.01" required></label>
+          <label>จำนวนรับกลับ<input name="replacement_qty" type="number" min="0" step="0.01"></label>
+        </div>
+        <label>ชื่ออาหารที่รับกลับ<input name="replacement_feed_name" type="text" value="${esc(lot.title)}"></label>
+        <label>ราคาอาหารที่รับกลับ<input name="replacement_unit_price" type="number" min="0" step="0.01" value="${esc(lot.unitPrice)}"></label>
+        <label>สาเหตุ / หมายเหตุ<textarea name="remark" rows="3" placeholder="เช่น อาหารมีกลิ่น / เปียก / คุณภาพไม่ดี"></textarea></label>
+        <div class="sheet-footer-row"><button type="button" class="btn secondary" data-sheet-close>ยกเลิก</button><button class="btn primary" type="submit">บันทึกเคลม/คืน</button></div>
+      </form>`, async (sheet) => {
+        sheet.querySelector('#feedOrderClaimForm')?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          await submitForm(e.currentTarget, 'กำลังบันทึก...', async (payload) => FeedOrderService.saveClaim(payload));
+        });
+      });
+  }
+
+  function openDetailSheet(lot) {
+    const allocationText = lot.allocationDestinations.length
+      ? lot.allocationDestinations.map((a, idx) => `${idx + 1}. ${a.text}`).join('\\n')
+      : 'ยังไม่ได้แบ่งเข้าเล้า';
+    const paymentText = lot.paymentRows.length
+      ? lot.paymentRows.map((p, idx) => `${idx + 1}. ${p.payment_date || '-'} • ${money(p.amount)} บาท${p.payment_method ? ' • ' + p.payment_method : ''}`).join('\\n')
+      : '-';
+    openSheet(`รายละเอียด • ${lot.title}`, `
+      <div class="feed-order-detail-list">
+        ${detailRow('วันที่ซื้อ', lot.purchaseDate || '-')}
+        ${detailRow('Supplier', lot.supplier || '-')}
+        ${detailRow('สถานะการแสดงผล', lot.isHidden ? 'ซ่อนไว้' : 'แสดงอยู่')}
+        ${detailRow('จำนวนซื้อเข้า', `${fmt(lot.purchaseQty, 2)} ลูก`)}
+        ${detailRow('จำนวนสุทธิ', `${fmt(lot.netQty, 2)} ลูก`)}
+        ${detailRow('จำนวนแบ่งแล้ว', `${fmt(lot.allocated, 2)} ลูก`)}
+        ${detailRow('แบ่งไป', allocationText)}
+        ${detailRow('มูลค่าซื้อเข้า', `${money(lot.purchaseValue)} บาท`)}
+        ${detailRow('มูลค่าสุทธิ', `${money(lot.netValue)} บาท`)}
+        ${detailRow('จ่ายไปแล้ว', `${money(lot.paid)} บาท`)}
+        ${detailRow('การจ่ายเงิน', paymentText)}
+        ${detailRow('ค้างจ่าย', `${money(lot.outstanding)} บาท`)}
+        ${detailRow('เคลม/คืน', lot.claimCount ? `${fmt(lot.claimCount)} รายการ • คืน ${fmt(lot.returnedQty, 2)} ลูก • รับคืน ${fmt(lot.replacementQty, 2)} ลูก` : '-')}
+      </div>`);
+  }
+
+  function detailRow(label, value) {
+    return `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+  }
+
+  async function submitForm(form, loadingText, callback) {
+    const btn = form.querySelector('button[type="submit"]');
+    const oldText = btn?.textContent || '';
+    const payload = formToObject(form);
+    await withButton(btn, loadingText, async () => {
+      const res = await callback(payload);
+      if (!res || res.status !== 'ok') {
+        alert(res?.message || 'บันทึกไม่สำเร็จ');
+        return;
+      }
+      closeSheet();
+      await load({ force: true });
+    }, oldText);
+  }
+
+  function formToObject(form) {
+    const out = {};
+    new FormData(form).forEach((value, key) => { out[key] = value; });
+    form.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+      out[input.name] = input.checked ? 1 : 0;
+    });
+    ['qty_total', 'unit_price', 'grand_total', 'qty_allocated', 'amount', 'return_qty', 'replacement_qty', 'replacement_unit_price', 'replacement_value'].forEach((key) => {
+      if (out[key] != null && out[key] !== '') out[key] = Number(out[key]);
+    });
+
+    if (out.feed_order_id && !out.purchase_lot_id) out.purchase_lot_id = out.feed_order_id;
+    if (out.purchase_lot_id && !out.lot_id) out.lot_id = out.purchase_lot_id;
+    if (out.lot_id && !out.purchase_lot_id) out.purchase_lot_id = out.lot_id;
+    delete out.feed_order_id;
+
+    if (out.batch_id === 'outside') {
+      out.destination_type = 'external';
+      out.batch_id = '';
+      out.create_feed_lot = 0;
+    } else if (out.batch_id) {
+      out.destination_type = 'batch';
+    }
+    return out;
+  }
+
+  async function withButton(button, loadingText, task, restoreText) {
+    if (!button) return task();
+    const oldText = restoreText || button.textContent;
+    button.disabled = true;
+    button.textContent = loadingText || oldText;
+    try { return await task(); }
+    finally {
+      button.disabled = false;
+      button.textContent = oldText;
+    }
+  }
+
+  function openSheet(title, body, onReady) {
+    closeSheet(true);
+    const wrap = document.createElement('div');
+    wrap.id = 'feedOrderDynamicSheet';
+    wrap.className = 'sheet-root feed-order-sheet-root';
+    wrap.innerHTML = `
+      <div class="sheet-backdrop" data-sheet-close></div>
+      <section class="sheet-panel feed-order-sheet-panel">
+        <header class="sheet-header"><h3>${esc(title)}</h3><button type="button" class="icon-btn" data-sheet-close>×</button></header>
+        <div class="sheet-body">${body}</div>
+      </section>`;
+    document.body.appendChild(wrap);
+    wrap.addEventListener('click', (event) => {
+      if (event.target.closest('[data-sheet-close]')) closeSheet();
+    });
+    requestAnimationFrame(() => wrap.classList.add('show'));
+    if (onReady) onReady(wrap);
+  }
+
+  function closeSheet(immediate = false) {
+    const sheet = $('feedOrderDynamicSheet');
+    if (!sheet) return;
+    sheet.classList.remove('show');
+    if (immediate) sheet.remove();
+    else setTimeout(() => sheet.remove(), 180);
+  }
+
+
+  function getProgramMenuPermission(menuKey) {
+    if (typeof window.AppAuth?.isAdminSession === 'function' && AppAuth.isAdminSession()) return 'write';
+    const role = String(window.AppAuth?.getSession?.('role') || '').trim().toLowerCase();
+    const admin = String(window.AppAuth?.getSession?.('is_admin') ?? '').trim().toLowerCase();
+    if (role === 'admin' || role === 'system_admin' || admin === 'true' || admin === '1' || admin === 'yes') return 'write';
+    return window.MenuPermissionApi?.permissionOf?.(menuKey) || 'none';
+  }
+
+  function canViewFeedOrder() {
+    return state.permission === 'view' || state.permission === 'write' || getProgramMenuPermission('feed_order_bills') === 'write' || getProgramMenuPermission('feed_order_bills') === 'view';
+  }
+
+  function canWriteFeedOrder() {
+    return state.permission === 'write' || getProgramMenuPermission('feed_order_bills') === 'write';
+  }
+
+  function applyPermissionUI() {
+    const writable = canWriteFeedOrder();
+    const openBtn = $('openLotBtn');
+    const fab = $('feedOrderFab');
+    if (openBtn) openBtn.hidden = !writable;
+    if (fab) fab.hidden = !writable;
+  }
+
+  function renderAccessDenied(message) {
+    setSubtitle(message || 'ไม่มีสิทธิ์เข้าถึงเมนูนี้');
+    const summary = $('feedOrderSummary');
+    const list = $('feedOrderList');
+    if (summary) summary.innerHTML = '';
+    if (list) list.innerHTML = `<div class="feed-order-empty">${esc(message || 'ไม่มีสิทธิ์เข้าถึงเมนูนี้')}</div>`;
+    const openBtn = $('openLotBtn');
+    const fab = $('feedOrderFab');
+    if (openBtn) openBtn.hidden = true;
+    if (fab) fab.hidden = true;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (document.body?.dataset?.page === 'feed_order_bills') bootstrap();
   });
 
-  function resolveBatch() {
-    const value = document.getElementById('adminBatchSearch')?.value || '';
-    return state.batches.find((batch) => batch.label === value) || null;
-  }
-  function resolveUser() {
-    const value = document.getElementById('adminUserSearch')?.value || '';
-    return state.users.find((user) => user.label === value) || null;
-  }
-  function getModules(specie) {
-    return specie === 'fish'
-      ? [
-          { key: 'batch_manage', label: 'จัดการชุดสัตว์' },
-          { key: 'fish_feed_manage', label: 'จัดการอาหาร' },
-          { key: 'fish_sale', label: 'ขายออก / บิล' },
-          { key: 'batch_access', label: 'สิทธิ์การเข้าถึง batch' },
-          { key: 'liff_routes', label: 'จัดการลิงก์ LIFF' },
-          { key: 'farm_events', label: 'กิจกรรม' },
-          { key: 'report', label: 'รายงาน' }
-        ]
-      : [
-          { key: 'batch_manage', label: 'จัดการชุดสัตว์' },
-          { key: 'feed_manage', label: 'จัดการอาหาร' },
-          { key: 'egg_daily', label: 'บันทึกไข่รายวัน' },
-          { key: 'egg_sale', label: 'ขายออก / บิล' },
-          { key: 'batch_access', label: 'สิทธิ์การเข้าถึง batch' },
-          { key: 'liff_routes', label: 'จัดการลิงก์ LIFF' },
-          { key: 'farm_events', label: 'กิจกรรม' },
-          { key: 'report', label: 'รายงาน' }
-        ];
-  }
-  function memberCacheKey(batchId) { return `ducky:access-members:${batchId}`; }
-  function permissionLabel(value) { return value === 'write' ? 'ดูและแก้ไข' : (value === 'view' ? 'ดูอย่างเดียว' : 'ไม่มีสิทธิ์'); }
-  function badgeClass(value) { return value === 'write' ? 'success' : (value === 'view' ? 'muted-badge' : 'danger-soft'); }
-  function escapeHtml(text) { return String(text || '').replace(/[&<>"']/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
-  function readCache(key) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (Date.now() - Number(parsed.savedAt || 0) > CACHE_TTL_MS) return null;
-      return parsed.data || null;
-    } catch (_) { return null; }
-  }
-  function writeCache(key, data) {
-    try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data })); } catch (_) {}
-  }
-
-  return { bootstrap };
+  return { bootstrap, load };
 })();
 
-//# sourceURL=js/modules/admin-permissions-page.js
-
-
-/* ==== js/core/zoom-lock.js ==== */
-(() => {
-  // Ducky Management Pro - global zoom lock for mobile browsers.
-  // Works together with CSS font-size:16px to prevent input focus zoom.
-  const viewportContent = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
-
-  function lockViewport() {
-    let meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.name = 'viewport';
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', viewportContent);
-  }
-
-  function preventIfCancelable(event) {
-    // Chrome/Safari can fire non-cancelable touch events while scrolling.
-    // Calling preventDefault() on those events causes console Intervention warnings.
-    if (event && event.cancelable) event.preventDefault();
-  }
-
-  lockViewport();
-
-  document.addEventListener('gesturestart', preventIfCancelable, { passive: false });
-  document.addEventListener('gesturechange', preventIfCancelable, { passive: false });
-  document.addEventListener('gestureend', preventIfCancelable, { passive: false });
-
-  let lastTouchEnd = 0;
-  document.addEventListener('touchend', (event) => {
-    const now = Date.now();
-    if (now - lastTouchEnd <= 320) preventIfCancelable(event);
-    lastTouchEnd = now;
-  }, { passive: false });
-
-  document.addEventListener('wheel', (event) => {
-    if (event.ctrlKey) preventIfCancelable(event);
-  }, { passive: false });
-})();
-
-//# sourceURL=js/core/zoom-lock.js
+//# sourceURL=js/modules/feed-order-bills-page.js
 
 
 /* ==== js/app.js ==== */
