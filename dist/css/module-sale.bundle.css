@@ -1,5 +1,5 @@
 /* Ducky CSS bundle: module-sale
- * Generated: 2026-05-26T09:42:04.385Z
+ * Generated: 2026-05-28T05:12:10.616Z
  */
 
 /* ==== css/core/app.css ==== */
@@ -1244,7 +1244,7 @@ input#saleDiscount {
 
 #accessAdminFormCard .form-stack,
 #adminPermissionForm.form-stack {
-  gap: 10px;
+  gap: 6px;
 }
 
 #eggDailySheet .inline-note,
@@ -1357,12 +1357,12 @@ textarea {
   max-width: 460px;
   margin: 0 auto;
   padding: 0px;
-  background: var(--bg-card);
+  background: var(--bg-card) !important;
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -18px 40px rgba(15,23,42,.18);
   display: flex;
   flex-direction: column;
-  max-height: min(92vh, 860px);
+  max-height: min(92vh, 860px) !important;
   transform: translateY(100%);
   transition: transform .22s ease;
 }
@@ -1581,8 +1581,8 @@ textarea {
 .sheet-panel {
   /* fallback first */
   max-height: 82vh;
-  max-height: calc(100svh - var(--sheet-top-gap) - env(safe-area-inset-top));
-  max-height: min(82dvh, calc(100dvh - var(--sheet-top-gap) - env(safe-area-inset-top)));
+  max-height: calc(100svh - var(--sheet-top-gap) - env(safe-area-inset-top)) !important;
+  max-height: min(82dvh, calc(100dvh - var(--sheet-top-gap) - env(safe-area-inset-top))) !important;
   min-height: 0;
 }
 
@@ -3272,6 +3272,25 @@ body[data-module="feed_manage"] .feed-consumed-note {
   font-weight: 700;
 }
 
+#saleBillSheet .sheet-footer--sale {
+  display: grid;
+  gap: 8px;
+}
+
+#saleBillSheet .sale-bill-footer-reject-row,
+#saleBillSheet .sale-bill-footer-row {
+  width: 100%;
+}
+
+#saleBillSheet .sale-bill-footer-reject-row {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+#saleBillSheet .sale-bill-footer-reject-row.hidden {
+  display: none !important;
+}
+
 #saleBillSheet .sale-bill-footer-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -3280,18 +3299,47 @@ body[data-module="feed_manage"] .feed-consumed-note {
   align-items: stretch;
 }
 
-#saleBillSheet .sale-bill-footer-row > button {
+#saleBillSheet .sale-bill-footer-row > button,
+#saleBillSheet .sale-bill-footer-reject-row > button {
   width: 100%;
   min-width: 0;
   margin: 0;
 }
 
 #saleBillSheet #addSaleItemBtn,
-#saleBillSheet #salePreviewBtn {
+#saleBillSheet #salePreviewBtn,
+#saleBillSheet #saleRejectPreBillBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
+
+/* //#saleBillSheet .sale-bill-footer-row.has-prebill-review {
+//  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+//} */
+
+#saleBillSheet #saleRejectPreBillBtn {
+  min-height: 44px;
+/* //  display: inline-flex;
+//  align-items: center;
+//  justify-content: center; */
+  border-color: color-mix(in srgb, var(--danger) 42%, var(--border-soft)) !important;
+  background: color-mix(in srgb, var(--danger) 8%, var(--bg-card)) !important;
+  color: var(--danger) !important;
+  font-weight: 900;
+}
+
+#saleBillSheet #saleRejectPreBillBtn.hidden,
+#saleBillSheet #saleRejectPreBillBtn[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 430px) {
+  #saleBillSheet .sale-bill-footer-row.has-prebill-review {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 
 .sale-discount-wrap label {
   margin-top: 0px;
@@ -3349,12 +3397,12 @@ body[data-module="feed_manage"] .feed-consumed-note {
 }
 
 #saleBillSheet .sale-item-card {
-  border: 1px solid var(--border-soft);
-  border-radius: 18px;
-  background: var(--bg-soft);
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 18px !important;
+  background: var(--bg-soft) !important;
   padding: 12px;
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 #saleBillSheet .sale-item-head {
@@ -3571,11 +3619,11 @@ body[data-module="feed_manage"] .feed-consumed-note {
 
 .sale-bill-picker-card {
   width: 100%;
-  border: 1px solid var(--border-soft);
-  background: color-mix(in srgb, var(--primary) 7%, var(--bg-soft));
-  color: var(--text-main);
-  border-radius: 16px;
-  padding: 10px;
+  border: 1px solid var(--border-soft) !important;
+  background: color-mix(in srgb, var(--primary) 7%, var(--bg-soft)) !important;
+  color: var(--text-main) !important;
+  border-radius: 14px !important;
+  padding: 10px !important;
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) minmax(92px, auto);
   gap: 10px;

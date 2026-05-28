@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>บิลอาหารกลาง | Ducky Management Pro</title>
-  <link rel="stylesheet" href="dist/css/feed-order-bills.bundle.css?v=20260526094230" />
+  <link rel="stylesheet" href="dist/css/feed-order-bills.bundle.css?v=20260528051226" />
 </head>
+
 <body data-page="feed_order_bills">
   <header class="app-header container feed-order-header">
     <button class="icon-btn hamburger-btn" id="menuBtn" data-nav-toggle type="button" aria-label="เปิดเมนู">☰</button>
@@ -24,9 +27,6 @@
       <div class="feed-order-hero__top">
         <div class="feed-order-hero-copy">
           <h2>จัดการบิลการสั่งอาหารกลาง</h2>
-          <!-- <div class="feed-order-hero-text">
-            ใช้บันทึกล็อตอาหารกลาง การแบ่งเข้าเล้า การทยอยจ่ายเงิน และประวัติเคลม/คืน โดยไม่เปลี่ยน logic ต้นทุนเดิมของ batch
-          </div> -->
         </div>
         <span class="feed-order-badge">Central Feed</span>
       </div>
@@ -43,7 +43,12 @@
       </div>
     </section>
 
-    <section id="feedOrderSummary" class="summary-grid-3 feed-order-summary-grid" aria-label="สรุปบิลอาหารกลาง"></section>
+    <section id="feedOrderSummary" class="summary-grid-3 feed-order-summary-grid" aria-label="สรุปบิลอาหารกลาง">
+    </section>
+
+    <button type="button" class="btn feed-order-bulk-pay-action" id="openBulkPaymentBtn">
+      <span>จ่ายยอดรวม</span>
+    </button>
 
     <section class="card-panel feed-order-list-section">
       <div class="feed-order-list-head">
@@ -57,10 +62,6 @@
         <button type="button" data-feed-order-filter="cleared">เคลียร์แล้ว</button>
       </div>
 
-      <div class="feed-order-list-tools">
-        <button type="button" id="feedOrderHiddenToggle" class="feed-order-hidden-toggle" aria-pressed="false">แสดงล็อตที่ซ่อน</button>
-      </div>
-
       <div class="feed-order-list" id="feedOrderList">
         <div class="feed-order-empty">กำลังโหลด...</div>
       </div>
@@ -68,6 +69,7 @@
   </main>
 
   <button id="feedOrderFab" class="feed-order-fab" type="button" aria-label="เพิ่มล็อตอาหาร">+</button>
-  <script src="dist/js/feed-order-bills.bundle.js?v=20260526094223" defer></script>
+  <script src="dist/js/feed-order-bills.bundle.js?v=20260528051222" defer></script>
 </body>
+
 </html>

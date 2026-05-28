@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Sale Manage | Ducky Management Pro</title>
-  <link rel="stylesheet" href="dist/css/module-sale.bundle.css?v=20260526094230" />
+  <link rel="stylesheet" href="dist/css/module-sale.bundle.css?v=20260528051226" />
 </head>
 <body data-page="module_calendar" data-module="sale_manage">
   <header class="app-header container">
@@ -135,9 +135,14 @@
         <h3 style="margin:0">รายการขาย</h3>
         <div id="saleItemsList" class="sale-items-list"></div>
       </form>
-      <div class="sheet-footer sheet-footer--dual">
-        <button class="text-btn" id="addSaleItemBtn" type="button">+ เพิ่มรายการ</button>
-        <button class="secondary-btn" id="salePreviewBtn" form="saleBillForm" type="submit">Preview บิล</button>
+      <div class="sheet-footer sheet-footer--sale">
+        <div class="sale-bill-footer-reject-row">
+          <button class="secondary-btn danger-btn hidden" id="saleRejectPreBillBtn" type="button" hidden>Reject PreBill</button>
+        </div>
+        <div class="sale-bill-footer-row">
+          <button class="text-btn" id="addSaleItemBtn" type="button">+ เพิ่มรายการ</button>
+          <button class="secondary-btn" id="salePreviewBtn" form="saleBillForm" type="submit">Preview บิล</button>
+        </div>
       </div>
     </div>
   </div>
@@ -179,6 +184,6 @@
       </div>
     </div>
   </div>
-  <script src="dist/js/module-sale.bundle.js?v=20260526094223" defer></script>
+  <script src="dist/js/module-sale.bundle.js?v=20260528051222" defer></script>
 </body>
 </html>

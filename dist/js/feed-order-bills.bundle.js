@@ -1,5 +1,5 @@
 /* Ducky bundle: feed-order-bills
- * Generated: 2026-05-26T09:41:55.294Z
+ * Generated: 2026-05-28T05:12:04.640Z
  * Sources:
  * - js/config.js
  * - js/core/cache.js
@@ -130,7 +130,7 @@ window.AppApi = (() => {
     'upsertUserMenuPermission','revokeUserMenuPermission','migrateExistingUsersToFullMenuPermissions','add_batch','edit_batch','delete_batch','saveBatchMovement','saveBatchSaleBill','deleteBatchSaleBill','saveFeedLog',
     'saveEggDailyLog','approvePreBill','rejectPreBill','upsertBatchModulePermission','revokeBatchUserPermissions',
     'saveLiffBatchRoute','deactivateLiffBatchRoute','savePriceSet','savePriceSetBinding','removePriceSetBinding','deletePriceSet',
-    'rebuildReportForBatch','saveFeedConsumptionLog','approvePreFeedConsumption','rejectPreFeedConsumption','saveBatchEvent','saveMedicalInventoryLog','deleteBatchEvent','createReportViewLink','saveFeedOrderLot','saveFeedOrderBill','createFeedOrderBill','allocateFeedOrderToBatch','allocateFeedOrderBillToBatch','saveFeedOrderAllocation','saveFeedOrderPayment','recordFeedOrderPayment','createFeedOrderPayment','saveFeedOrderClaim','recordFeedOrderClaim','createFeedOrderClaim','setFeedOrderLotVisibility','updateFeedOrderLotVisibility','hideFeedOrderLot'
+    'rebuildReportForBatch','saveFeedConsumptionLog','approvePreFeedConsumption','rejectPreFeedConsumption','saveBatchEvent','saveMedicalInventoryLog','deleteBatchEvent','createReportViewLink','saveFeedOrderLot','saveFeedOrderBill','createFeedOrderBill','allocateFeedOrderToBatch','allocateFeedOrderBillToBatch','saveFeedOrderAllocation','saveFeedOrderPayment','recordFeedOrderPayment','createFeedOrderPayment','saveFeedOrderBulkPayment','recordFeedOrderBulkPayment','applyFeedOrderBulkPayment','saveFeedOrderClaim','recordFeedOrderClaim','createFeedOrderClaim','setFeedOrderLotVisibility','updateFeedOrderLotVisibility','hideFeedOrderLot'
   ]);
   const CACHE_TTL = {
     getMyMenuPermissions: 5 * 60 * 1000,
@@ -1332,102 +1332,6 @@ window.NavDrawer = (() => {
 
 
 /* ==== js/services/feed-order.service.js ==== */
-window.FeedOrderService = (() => {
-  function normalizeActionText(res) {
-    return String(res?.code || res?.message || '')
-      .toUpperCase()
-      .replace(/[^A-Z0-9]+/g, '_');
-  }
-
-  function shouldTryNextAction(res) {
-    const text = normalizeActionText(res);
-    return (
-      !res ||
-      text.includes('INVALID_ACTION') ||
-      text.includes('UNKNOWN_ACTION') ||
-      text.includes('ACTION_NOT_FOUND') ||
-      text.includes('NOT_FOUND_ACTION')
-    );
-  }
-
-  async function postAction(actions, payload = {}, options = {}) {
-    const list = Array.isArray(actions) ? actions : [actions];
-    let last = null;
-    for (const action of list) {
-      const res = await AppApi.post({ ...payload, action }, options);
-      last = res;
-      if (res && res.status === 'ok') return res;
-      if (!shouldTryNextAction(res)) return res;
-    }
-    return last;
-  }
-
-  function normalizeLotPayload(payload = {}) {
-    const out = { ...payload };
-    if (out.feed_order_id && !out.purchase_lot_id) out.purchase_lot_id = out.feed_order_id;
-    if (out.purchase_lot_id && !out.lot_id) out.lot_id = out.purchase_lot_id;
-    if (out.lot_id && !out.purchase_lot_id) out.purchase_lot_id = out.lot_id;
-    delete out.feed_order_id;
-    return out;
-  }
-
-  function getPageData(options = {}) {
-    return postAction([
-      'getFeedOrderBillPageData',
-      'getFeedOrderBillsPageData',
-      'getFeedOrderPageData'
-    ], {}, { timeoutMs: 20000, ...options });
-  }
-
-  function saveLot(payload) {
-    return postAction([
-      'saveFeedOrderLot',
-      'saveFeedOrderBill',
-      'createFeedOrderBill',
-      'createFeedOrderLot'
-    ], payload, { timeoutMs: 25000, dedupe: false });
-  }
-
-  function allocate(payload) {
-    return postAction([
-      'allocateFeedOrderToBatch',
-      'allocateFeedOrderBillToBatch',
-      'allocateFeedOrderLot',
-      'saveFeedOrderAllocation'
-    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
-  }
-
-  function savePayment(payload) {
-    return postAction([
-      'saveFeedOrderPayment',
-      'recordFeedOrderPayment',
-      'createFeedOrderPayment'
-    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
-  }
-
-  function setVisibility(payload) {
-    return postAction([
-      'setFeedOrderLotVisibility',
-      'updateFeedOrderLotVisibility',
-      'hideFeedOrderLot'
-    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
-  }
-
-  function saveClaim(payload) {
-    return postAction([
-      'saveFeedOrderClaim',
-      'recordFeedOrderClaim',
-      'createFeedOrderClaim'
-    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
-  }
-
-  return { getPageData, saveLot, allocate, savePayment, saveClaim, setVisibility };
-})();
-
-//# sourceURL=js/services/feed-order.service.js
-
-
-/* ==== js/modules/feed-order-bills-page.js ==== */
 window.FeedOrderBillsPage = (() => {
   const state = {
     rows: [],
@@ -1493,6 +1397,7 @@ window.FeedOrderBillsPage = (() => {
         payment_date: String(p.payment_date || p.date || '').trim(),
         amount: n(p.amount || p.payment_amount || 0),
         payment_method: String(p.payment_method || '').trim(),
+        payment_group_id: String(p.payment_group_id || '').trim(),
         remark: String(p.remark || '').trim()
       }))
       .filter((p) => p.payment_date || p.amount)
@@ -1543,9 +1448,12 @@ window.FeedOrderBillsPage = (() => {
   }
 
   function normalizePayload(res = {}) {
-    const rows = (res.lots || res.bills || res.rows || res.feed_order_bills || []).map(readLot);
+    const rows = (res.lots || res.bills || res.rows || res.feed_order_bills || [])
+      .map(readLot)
+      .filter((row) => !row.isHidden);
     const summary = res.summary || calcSummary(rows);
     state.rows = rows;
+    state.showHidden = false;
     state.batches = res.batches || res.batch_options || [];
     state.summary = { ...calcSummary(rows), ...summary };
     if (res.permission) state.permission = String(res.permission || state.permission || 'none').toLowerCase();
@@ -1565,7 +1473,13 @@ window.FeedOrderBillsPage = (() => {
   }
 
   function displayRows() {
-    return state.showHidden ? state.rows : state.rows.filter((r) => !r.isHidden);
+    return state.rows.filter((r) => !r.isHidden);
+  }
+
+  function pendingRowsForSummary() {
+    return state.rows
+      .filter((r) => !r.isHidden && !r.isCleared && n(r.outstanding) > 0)
+      .sort((a, b) => String(a.purchaseDate || '').localeCompare(String(b.purchaseDate || '')) || String(a.id || '').localeCompare(String(b.id || '')));
   }
 
   async function bootstrap() {
@@ -1589,11 +1503,8 @@ window.FeedOrderBillsPage = (() => {
     $('logoutBtn')?.addEventListener('click', AppAuth.logout);
     $('reloadBtn')?.addEventListener('click', () => load({ force: true }));
     $('openLotBtn')?.addEventListener('click', () => { if (canWriteFeedOrder()) openLotSheet(); else alert('ไม่มีสิทธิ์เพิ่มล็อตอาหาร'); });
+    $('openBulkPaymentBtn')?.addEventListener('click', () => { if (canWriteFeedOrder()) openBulkPaymentSheet(); else alert('ไม่มีสิทธิ์จ่ายยอดบิลอาหารกลาง'); });
     $('feedOrderFab')?.addEventListener('click', () => { if (canWriteFeedOrder()) openLotSheet(); else alert('ไม่มีสิทธิ์เพิ่มล็อตอาหาร'); });
-    $('feedOrderHiddenToggle')?.addEventListener('click', () => {
-      state.showHidden = !state.showHidden;
-      render();
-    });
     document.addEventListener('click', onDocumentClick);
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') closeSheet();
@@ -1608,7 +1519,7 @@ window.FeedOrderBillsPage = (() => {
     setSubtitle(force ? 'กำลังโหลดใหม่...' : 'กำลังโหลดข้อมูล...');
     const btn = $('reloadBtn');
     await withButton(btn, 'กำลังโหลด...', async () => {
-      const res = await FeedOrderService.getPageData({ dedupe: false });
+      const res = await FeedOrderService.getPageData({ include_hidden: 0, dedupe: false });
       if (!res || res.status !== 'ok') {
         setSubtitle(res?.message || 'โหลดข้อมูลไม่สำเร็จ');
         return;
@@ -1631,13 +1542,14 @@ window.FeedOrderBillsPage = (() => {
   }
 
   function renderSummary() {
-    const s = { ...calcSummary(displayRows()) }; // summary follows the current visible/hidden toggle
+    const pending = pendingRowsForSummary();
+    const s = { ...calcSummary(pending) };
     const target = $('feedOrderSummary');
     if (!target) return;
     target.innerHTML = [
-      summaryCard('ล็อตทั้งหมด', `${fmt(s.lot_count)} ล็อต`, 'บิลอาหารทั้งหมด'),
-      summaryCard('จำนวนซื้อเข้า (สุทธิ)', `${fmt(s.net_qty, 2)} ลูก`, `ซื้อเข้า ${fmt(s.purchase_qty, 2)} ลูก`),//, `หลังหักเคลม/รับคืน • ซื้อเข้า ${fmt(s.purchase_qty, 2)} ลูก`),
-      summaryCard('ราคาซื้อเข้า (สุทธิ)', `${money(s.net_value)} ฿`, `ตั้งต้น ${money(s.purchase_value)} บาท`)//, `หลังเคลม/รับคืน • ตั้งต้น ${money(s.purchase_value)} บาท`)
+      summaryCard('บิลค้างจ่าย', `${fmt(s.lot_count)} ล็อต`, 'เฉพาะบิลที่ยังค้างและไม่ถูกซ่อน'),
+      summaryCard('จำนวนสุทธิค้าง', `${fmt(s.net_qty, 2)} ลูก`, `ซื้อเข้า ${fmt(s.purchase_qty, 2)} ลูก`),
+      summaryCard('ยอดค้างรวม', `${money(s.debt_total)} ฿`, `จ่ายแล้ว ${money(s.paid_total)} บาท`)
     ].join('');
   }
 
@@ -1655,13 +1567,7 @@ window.FeedOrderBillsPage = (() => {
   function renderList() {
     document.querySelectorAll('[data-feed-order-filter]').forEach((btn) => btn.classList.toggle('is-active', btn.dataset.feedOrderFilter === state.filter));
     const hiddenToggle = $('feedOrderHiddenToggle');
-    if (hiddenToggle) {
-      const hiddenCount = state.rows.filter((r) => r.isHidden).length;
-      hiddenToggle.classList.toggle('is-active', state.showHidden);
-      hiddenToggle.setAttribute('aria-pressed', state.showHidden ? 'true' : 'false');
-      hiddenToggle.textContent = state.showHidden ? `ซ่อนล็อตที่ถูกซ่อน (${fmt(hiddenCount)})` : `แสดงล็อตที่ซ่อน (${fmt(hiddenCount)})`;
-      hiddenToggle.hidden = hiddenCount <= 0;
-    }
+    if (hiddenToggle) hiddenToggle.hidden = true;
     const hint = $('feedOrderFilterHint');
     if (hint) {
       const count = filteredRows().length;
@@ -1671,7 +1577,7 @@ window.FeedOrderBillsPage = (() => {
     if (!target) return;
     const rows = filteredRows();
     if (!rows.length) {
-      target.innerHTML = state.showHidden ? '<div class="feed-order-empty">ยังไม่มีรายการตามเงื่อนไขนี้</div>' : '<div class="feed-order-empty">ยังไม่มีรายการตามเงื่อนไขนี้ หากเป็นล็อตเก่าที่ไม่ใช้แล้ว อาจถูกซ่อนไว้</div>';
+      target.innerHTML = '<div class="feed-order-empty">ยังไม่มีรายการตามเงื่อนไขนี้</div>';
       return;
     }
     target.innerHTML = rows.map(renderLotCard).join('');
@@ -1885,6 +1791,111 @@ window.FeedOrderBillsPage = (() => {
       });
   }
 
+  function renderBulkPaymentPlan(plan = {}) {
+    const rows = Array.isArray(plan.payments) ? plan.payments : [];
+    const list = rows.length
+      ? rows.map((item, index) => `
+        <li>
+          <div>
+            <strong>${index + 1}. ${esc(item.purchase_date || '-')} • ${esc(item.feed_name || 'ล็อตอาหาร')}</strong>
+            <small>ค้างก่อนจ่าย ${money(item.outstanding_before)} บาท → เหลือ ${money(item.outstanding_after)} บาท</small>
+          </div>
+          <span>${money(item.amount)} บาท</span>
+        </li>
+      `).join('')
+      : '<li><div><strong>ยังไม่มีบิลที่ถูกหัก</strong><small>กรุณาตรวจสอบยอดเงิน</small></div><span>0.00 บาท</span></li>';
+    const unapplied = n(plan.unapplied_amount || 0);
+    return `
+      <div class="feed-order-bulk-plan-head">
+        <div><span>รหัสกลุ่มจ่าย</span><strong>${esc(plan.payment_group_id || '-')}</strong></div>
+        <div><span>ยอดที่จะหักจริง</span><strong>${money(plan.applied_amount || 0)} บาท</strong></div>
+      </div>
+      <ul class="feed-order-bulk-plan-list">${list}</ul>
+      ${unapplied > 0 ? `<p class="feed-order-bulk-warning">ยอดที่เกินและยังไม่ถูกใช้ ${money(unapplied)} บาท</p>` : ''}
+      <small>ตรวจสอบรายการด้านบนก่อนกด “ยืนยันหักยอด” ระบบจะบันทึกตามลำดับบิลเก่าสุดก่อน</small>
+    `;
+  }
+
+  function openBulkPaymentSheet() {
+    const pending = pendingRowsForSummary();
+    if (!pending.length) return alert('ยังไม่มีบิลค้างจ่ายให้หักยอด');
+    const totalOutstanding = pending.reduce((sum, row) => sum + n(row.outstanding), 0);
+    const previewRows = pending.slice(0, 5).map((row, index) => `
+      <li><strong>${index + 1}. ${esc(row.purchaseDate || '-')} • ${esc(row.title)}</strong><span>${money(row.outstanding)} บาท</span></li>
+    `).join('');
+    const moreText = pending.length > 5 ? `<small>และอีก ${fmt(pending.length - 5)} บิล ระบบจะหักจากบิลเก่าสุดก่อน</small>` : '<small>ระบบจะหักจากบิลเก่าสุดก่อน</small>';
+    openSheet('จ่ายยอดรวม / Preview ก่อนบันทึก', `
+      <form id="feedOrderBulkPaymentForm" class="feed-order-form">
+        <input name="payment_group_id" type="hidden" value="">
+        <label>วันที่จ่าย<input name="payment_date" type="date" value="${today()}" required></label>
+        <label>จำนวนเงินที่จะหัก<input name="amount" type="number" min="0" step="0.01" max="${esc(totalOutstanding)}" placeholder="เช่น 120000" required></label>
+        <label>วิธีจ่าย<input name="payment_method" type="text" placeholder="เงินสด / โอน / เครดิต"></label>
+        <label>หมายเหตุ<textarea name="remark" rows="3" placeholder="เช่น โอนยอดรวมจากร้านอาหาร"></textarea></label>
+        <div class="feed-order-bulk-preview">
+          <div><span>ยอดค้างทั้งหมด</span><strong>${money(totalOutstanding)} บาท</strong></div>
+          <ul>${previewRows}</ul>
+          ${moreText}
+        </div>
+        <div id="feedOrderBulkPaymentPreviewResult" class="feed-order-bulk-preview-result" hidden></div>
+        <div class="sheet-footer-row feed-order-bulk-footer">
+          <button type="button" class="btn secondary" data-sheet-close>ยกเลิก</button>
+          <button type="button" class="btn secondary" data-preview-bulk-payment>ดูตัวอย่าง</button>
+          <button class="btn primary" type="submit" data-confirm-bulk-payment disabled>ยืนยันหักยอด</button>
+        </div>
+      </form>`, async (sheet) => {
+        const form = sheet.querySelector('#feedOrderBulkPaymentForm');
+        const previewBtn = sheet.querySelector('[data-preview-bulk-payment]');
+        const confirmBtn = sheet.querySelector('[data-confirm-bulk-payment]');
+        const resultBox = sheet.querySelector('#feedOrderBulkPaymentPreviewResult');
+        const groupInput = form?.querySelector('input[name="payment_group_id"]');
+        const resetPreview = () => {
+          if (confirmBtn) confirmBtn.disabled = true;
+          if (groupInput) groupInput.value = '';
+          if (resultBox) {
+            resultBox.hidden = true;
+            resultBox.innerHTML = '';
+          }
+        };
+        form?.querySelectorAll('input[name="amount"], input[name="payment_date"], input[name="payment_method"], textarea[name="remark"]').forEach((el) => {
+          el.addEventListener('input', resetPreview);
+          el.addEventListener('change', resetPreview);
+        });
+        previewBtn?.addEventListener('click', async () => {
+          if (!form) return;
+          const payload = formToObject(form);
+          if (!(n(payload.amount) > 0)) return alert('กรุณากรอกจำนวนเงินที่จะหักก่อน');
+          await withButton(previewBtn, 'กำลังคำนวณ...', async () => {
+            const res = await FeedOrderService.previewBulkPayment(payload);
+            if (!res || res.status !== 'ok') {
+              alert(res?.message || 'ดูตัวอย่างไม่สำเร็จ');
+              resetPreview();
+              return;
+            }
+            if (groupInput) groupInput.value = res.payment_group_id || '';
+            if (resultBox) {
+              resultBox.hidden = false;
+              resultBox.innerHTML = renderBulkPaymentPlan(res);
+            }
+            if (confirmBtn) confirmBtn.disabled = !(Array.isArray(res.payments) && res.payments.length);
+          });
+        });
+        form?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (confirmBtn?.disabled || !groupInput?.value) {
+            alert('กรุณากด “ดูตัวอย่าง” และตรวจสอบรายการก่อนยืนยัน');
+            return;
+          }
+          await submitForm(e.currentTarget, 'กำลังหักยอด...', async (payload) => FeedOrderService.saveBulkPayment(payload), (res) => {
+            const applied = money(res.applied_amount || 0);
+            const count = fmt((res.payments || []).length);
+            const group = res.payment_group_id ? `\nรหัสกลุ่มจ่าย: ${res.payment_group_id}` : '';
+            const extra = n(res.unapplied_amount) > 0 ? `\nยอดที่เกินและยังไม่ได้ใช้: ${money(res.unapplied_amount)} บาท` : '';
+            alert(`หักยอดสำเร็จ ${applied} บาท ใน ${count} บิล${group}${extra}`);
+          });
+        });
+      });
+  }
+
   function openPaymentSheet(lot) {
     openSheet(`จ่ายเงิน • ${lot.title}`, `
       <form id="feedOrderPaymentForm" class="feed-order-form">
@@ -1952,7 +1963,7 @@ window.FeedOrderBillsPage = (() => {
     return `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
   }
 
-  async function submitForm(form, loadingText, callback) {
+  async function submitForm(form, loadingText, callback, onSuccess) {
     const btn = form.querySelector('button[type="submit"]');
     const oldText = btn?.textContent || '';
     const payload = formToObject(form);
@@ -1963,6 +1974,7 @@ window.FeedOrderBillsPage = (() => {
         return;
       }
       closeSheet();
+      if (onSuccess) await onSuccess(res);
       await load({ force: true });
     }, oldText);
   }
@@ -2051,8 +2063,10 @@ window.FeedOrderBillsPage = (() => {
   function applyPermissionUI() {
     const writable = canWriteFeedOrder();
     const openBtn = $('openLotBtn');
+    const bulkBtn = $('openBulkPaymentBtn');
     const fab = $('feedOrderFab');
     if (openBtn) openBtn.hidden = !writable;
+    if (bulkBtn) bulkBtn.hidden = !writable;
     if (fab) fab.hidden = !writable;
   }
 
@@ -2063,8 +2077,10 @@ window.FeedOrderBillsPage = (() => {
     if (summary) summary.innerHTML = '';
     if (list) list.innerHTML = `<div class="feed-order-empty">${esc(message || 'ไม่มีสิทธิ์เข้าถึงเมนูนี้')}</div>`;
     const openBtn = $('openLotBtn');
+    const bulkBtn = $('openBulkPaymentBtn');
     const fab = $('feedOrderFab');
     if (openBtn) openBtn.hidden = true;
+    if (bulkBtn) bulkBtn.hidden = true;
     if (fab) fab.hidden = true;
   }
 
@@ -2073,6 +2089,118 @@ window.FeedOrderBillsPage = (() => {
   });
 
   return { bootstrap, load };
+})();
+
+//# sourceURL=js/services/feed-order.service.js
+
+
+/* ==== js/modules/feed-order-bills-page.js ==== */
+window.FeedOrderService = (() => {
+  function normalizeActionText(res) {
+    return String(res?.code || res?.message || '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_');
+  }
+
+  function shouldTryNextAction(res) {
+    const text = normalizeActionText(res);
+    return (
+      !res ||
+      text.includes('INVALID_ACTION') ||
+      text.includes('UNKNOWN_ACTION') ||
+      text.includes('ACTION_NOT_FOUND') ||
+      text.includes('NOT_FOUND_ACTION')
+    );
+  }
+
+  async function postAction(actions, payload = {}, options = {}) {
+    const list = Array.isArray(actions) ? actions : [actions];
+    let last = null;
+    for (const action of list) {
+      const res = await AppApi.post({ ...payload, action }, options);
+      last = res;
+      if (res && res.status === 'ok') return res;
+      if (!shouldTryNextAction(res)) return res;
+    }
+    return last;
+  }
+
+  function normalizeLotPayload(payload = {}) {
+    const out = { ...payload };
+    if (out.feed_order_id && !out.purchase_lot_id) out.purchase_lot_id = out.feed_order_id;
+    if (out.purchase_lot_id && !out.lot_id) out.lot_id = out.purchase_lot_id;
+    if (out.lot_id && !out.purchase_lot_id) out.purchase_lot_id = out.lot_id;
+    delete out.feed_order_id;
+    return out;
+  }
+
+  function getPageData(options = {}) {
+    const { include_hidden, ...apiOptions } = options || {};
+    return postAction([
+      'getFeedOrderBillPageData',
+      'getFeedOrderBillsPageData',
+      'getFeedOrderPageData'
+    ], { include_hidden: include_hidden == null ? 0 : include_hidden }, { timeoutMs: 20000, ...apiOptions });
+  }
+
+  function saveLot(payload) {
+    return postAction([
+      'saveFeedOrderLot',
+      'saveFeedOrderBill',
+      'createFeedOrderBill',
+      'createFeedOrderLot'
+    ], payload, { timeoutMs: 25000, dedupe: false });
+  }
+
+  function allocate(payload) {
+    return postAction([
+      'allocateFeedOrderToBatch',
+      'allocateFeedOrderBillToBatch',
+      'allocateFeedOrderLot',
+      'saveFeedOrderAllocation'
+    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
+  }
+
+  function savePayment(payload) {
+    return postAction([
+      'saveFeedOrderPayment',
+      'recordFeedOrderPayment',
+      'createFeedOrderPayment'
+    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
+  }
+
+  function previewBulkPayment(payload) {
+    return postAction([
+      'previewFeedOrderBulkPayment',
+      'previewFeedOrderBulkPaymentPlan'
+    ], payload, { timeoutMs: 25000, dedupe: false });
+  }
+
+  function saveBulkPayment(payload) {
+    return postAction([
+      'saveFeedOrderBulkPayment',
+      'recordFeedOrderBulkPayment',
+      'applyFeedOrderBulkPayment'
+    ], payload, { timeoutMs: 35000, dedupe: false });
+  }
+
+  function setVisibility(payload) {
+    return postAction([
+      'setFeedOrderLotVisibility',
+      'updateFeedOrderLotVisibility',
+      'hideFeedOrderLot'
+    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
+  }
+
+  function saveClaim(payload) {
+    return postAction([
+      'saveFeedOrderClaim',
+      'recordFeedOrderClaim',
+      'createFeedOrderClaim'
+    ], normalizeLotPayload(payload), { timeoutMs: 25000, dedupe: false });
+  }
+
+  return { getPageData, saveLot, allocate, savePayment, previewBulkPayment, saveBulkPayment, saveClaim, setVisibility };
 })();
 
 //# sourceURL=js/modules/feed-order-bills-page.js

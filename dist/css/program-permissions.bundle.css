@@ -1,5 +1,5 @@
 /* Ducky CSS bundle: program-permissions
- * Generated: 2026-05-26T09:42:04.397Z
+ * Generated: 2026-05-28T05:12:10.640Z
  */
 
 /* ==== css/core/app.css ==== */
@@ -1244,7 +1244,7 @@ input#saleDiscount {
 
 #accessAdminFormCard .form-stack,
 #adminPermissionForm.form-stack {
-  gap: 10px;
+  gap: 6px;
 }
 
 #eggDailySheet .inline-note,
@@ -1357,12 +1357,12 @@ textarea {
   max-width: 460px;
   margin: 0 auto;
   padding: 0px;
-  background: var(--bg-card);
+  background: var(--bg-card) !important;
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -18px 40px rgba(15,23,42,.18);
   display: flex;
   flex-direction: column;
-  max-height: min(92vh, 860px);
+  max-height: min(92vh, 860px) !important;
   transform: translateY(100%);
   transition: transform .22s ease;
 }
@@ -1581,8 +1581,8 @@ textarea {
 .sheet-panel {
   /* fallback first */
   max-height: 82vh;
-  max-height: calc(100svh - var(--sheet-top-gap) - env(safe-area-inset-top));
-  max-height: min(82dvh, calc(100dvh - var(--sheet-top-gap) - env(safe-area-inset-top)));
+  max-height: calc(100svh - var(--sheet-top-gap) - env(safe-area-inset-top)) !important;
+  max-height: min(82dvh, calc(100dvh - var(--sheet-top-gap) - env(safe-area-inset-top))) !important;
   min-height: 0;
 }
 
@@ -3220,7 +3220,7 @@ body[data-page="program_permissions"] .module-page-layout {
 body[data-page="admin_permissions"] .access-page-card,
 body[data-page="program_permissions"] .access-page-card {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   overflow: hidden;
   border-radius: 24px !important;
 }
@@ -3256,6 +3256,7 @@ body[data-page="admin_permissions"] input[list],
 body[data-page="program_permissions"] input[list] {
   min-height: 48px;
   border-radius: 16px !important;
+  padding: 0 12px;
 }
 
 body[data-page="admin_permissions"] .permission-card-grid,
@@ -3353,6 +3354,7 @@ body[data-page="program_permissions"] .empty-state {
   grid-column: 1 / -1;
   padding: 18px 12px;
   font-weight: 800;
+  display:none;
 }
 
 @media (max-width: 430px) {

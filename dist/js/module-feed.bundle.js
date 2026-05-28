@@ -1,5 +1,5 @@
 /* Ducky bundle: module-feed
- * Generated: 2026-05-26T09:41:55.711Z
+ * Generated: 2026-05-28T05:12:04.961Z
  * Sources:
  * - js/config.js
  * - js/core/state.js
@@ -221,7 +221,7 @@ window.AppApi = (() => {
     'upsertUserMenuPermission','revokeUserMenuPermission','migrateExistingUsersToFullMenuPermissions','add_batch','edit_batch','delete_batch','saveBatchMovement','saveBatchSaleBill','deleteBatchSaleBill','saveFeedLog',
     'saveEggDailyLog','approvePreBill','rejectPreBill','upsertBatchModulePermission','revokeBatchUserPermissions',
     'saveLiffBatchRoute','deactivateLiffBatchRoute','savePriceSet','savePriceSetBinding','removePriceSetBinding','deletePriceSet',
-    'rebuildReportForBatch','saveFeedConsumptionLog','approvePreFeedConsumption','rejectPreFeedConsumption','saveBatchEvent','saveMedicalInventoryLog','deleteBatchEvent','createReportViewLink','saveFeedOrderLot','saveFeedOrderBill','createFeedOrderBill','allocateFeedOrderToBatch','allocateFeedOrderBillToBatch','saveFeedOrderAllocation','saveFeedOrderPayment','recordFeedOrderPayment','createFeedOrderPayment','saveFeedOrderClaim','recordFeedOrderClaim','createFeedOrderClaim','setFeedOrderLotVisibility','updateFeedOrderLotVisibility','hideFeedOrderLot'
+    'rebuildReportForBatch','saveFeedConsumptionLog','approvePreFeedConsumption','rejectPreFeedConsumption','saveBatchEvent','saveMedicalInventoryLog','deleteBatchEvent','createReportViewLink','saveFeedOrderLot','saveFeedOrderBill','createFeedOrderBill','allocateFeedOrderToBatch','allocateFeedOrderBillToBatch','saveFeedOrderAllocation','saveFeedOrderPayment','recordFeedOrderPayment','createFeedOrderPayment','saveFeedOrderBulkPayment','recordFeedOrderBulkPayment','applyFeedOrderBulkPayment','saveFeedOrderClaim','recordFeedOrderClaim','createFeedOrderClaim','setFeedOrderLotVisibility','updateFeedOrderLotVisibility','hideFeedOrderLot'
   ]);
   const CACHE_TTL = {
     getMyMenuPermissions: 5 * 60 * 1000,
@@ -1153,13 +1153,24 @@ window.BillPreview = (() => {
 
   function drawCenteredText(ctx, text, centerX, y) {
     const safeText = String(text || '');
-    const metrics = ctx.measureText(safeText);
-    const visualWidth = Math.abs(metrics.actualBoundingBoxLeft || 0) + Math.abs(metrics.actualBoundingBoxRight || metrics.width || 0);
-    const x = centerX - visualWidth / 2 - (metrics.actualBoundingBoxLeft || 0);
     const previousAlign = ctx.textAlign;
+    const previousDirection = ('direction' in ctx) ? ctx.direction : null;
+
+    // Use an explicit LTR + left-aligned draw position for centered Thai text.
+    // Some mobile WebViews misplace canvas text when using textAlign='center',
+    // especially after drawing right-aligned amount columns.
+    if ('direction' in ctx) ctx.direction = 'ltr';
     ctx.textAlign = 'left';
-    ctx.fillText(safeText, x, y);
+
+    const metrics = ctx.measureText(safeText);
+    const left = Number(metrics.actualBoundingBoxLeft || 0);
+    const right = Number(metrics.actualBoundingBoxRight || metrics.width || 0);
+    const visualWidth = Math.abs(left) + Math.abs(right);
+    const x = Math.round(centerX - visualWidth / 2 - left);
+    ctx.fillText(safeText, x, Math.round(y));
+
     ctx.textAlign = previousAlign;
+    if (previousDirection != null) ctx.direction = previousDirection;
   }
 
   function fitCenteredText(ctx, text, centerX, y, maxWidth, weight = 'bold', startSize = 22, minSize = 13) {
@@ -1255,6 +1266,7 @@ window.BillPreview = (() => {
     canvas.style.height = `${height}px`;
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
+    if ('direction' in ctx) ctx.direction = 'ltr';
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
@@ -1360,10 +1372,10 @@ window.BillPreview = (() => {
     }
 
     const thankYouY = Math.min(y, height - padding - 22);
-    ctx.textAlign = 'center';
+    ctx.textAlign = 'left';
     ctx.font = 'bold 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.fillStyle = '#0f766e';
-    ctx.fillText(helpers.thankYouText || 'ขอบคุณที่อุดหนุน', width / 2, thankYouY);
+    drawCenteredText(ctx, helpers.thankYouText || 'ขอบคุณที่อุดหนุน', width / 2, thankYouY);
     ctx.textAlign = 'left';
 
     return canvas.toDataURL('image/png');
@@ -1907,6 +1919,7 @@ function bindBaseEvents() {
     document.getElementById('billBackToEditBtn')?.addEventListener('click', backToEditBill);
     document.getElementById('billDownloadBtn')?.addEventListener('click', downloadBillImage);
     document.getElementById('billConfirmBtn')?.addEventListener('click', confirmBill);
+    document.getElementById('saleRejectPreBillBtn')?.addEventListener('click', rejectCurrentPreBill);
     document.getElementById('saleBillPickerCloseBtn')?.addEventListener('click', closeSaleBillPicker);
     document.getElementById('saleBillPickerBackdrop')?.addEventListener('click', closeSaleBillPicker);
     document.getElementById('saleBillPickerList')?.addEventListener('click', onSaleBillPickerClick);
@@ -2676,8 +2689,10 @@ function openFeedSheet(mode) {
     document.getElementById('saleItemsList').innerHTML = '';
     (items || []).forEach((item) => appendSaleItemRow({ item_name: item.item_name || item.sale_item || '', unit: item.unit || item.sale_unit || '', qty: item.qty != null ? item.qty : item.sale_qty, unit_price: item.unit_price, total_qty: item.total_qty, display_name: item.display_name || item.sale_item || '' }));
     if (!document.querySelector('#saleItemsList .sale-item-card')) appendSaleItemRow();
-    const note = document.getElementById('salePriceSetNote'); if (note) { note.classList.remove('hidden'); note.textContent = `กำลังตรวจ PreBill ${state.preBillReviewId} • แก้ไขได้ก่อนกดยืนยัน`; }
-    normalizeSaleLayout(); showSheet(document.getElementById('saleBillSheet'));
+    const note = document.getElementById('salePriceSetNote'); if (note) { note.classList.remove('hidden'); note.textContent = `กำลังตรวจ PreBill ${state.preBillReviewId} • แก้ไขได้ก่อนกดยืนยัน หรือกด Reject เพื่อไม่ออกบิล`; }
+    normalizeSaleLayout();
+    updatePreBillReviewUI();
+    showSheet(document.getElementById('saleBillSheet'));
   }
 
   function saleTypeIcon(type) {
@@ -2842,12 +2857,14 @@ function openFeedSheet(mode) {
     }
 
     normalizeSaleLayout();
+    updatePreBillReviewUI();
     showSheet(document.getElementById('saleBillSheet'));
   }
 
 
   async function openSaleBillSheetForEdit(bill, items) {
     if (!bill) return;
+    state.preBillReviewId = '';
     state.saleEditBillId = bill.bill_id || '';
     document.getElementById('saleBillDate').value = bill.log_date || todayString();
     document.getElementById('saleBuyerName').value = bill.buyer || bill.sale_name || '';
@@ -2874,6 +2891,7 @@ function openFeedSheet(mode) {
     }));
     if (!document.querySelector('#saleItemsList .sale-item-card')) appendSaleItemRow();
     normalizeSaleLayout();
+    updatePreBillReviewUI();
     showSheet(document.getElementById('saleBillSheet'));
   }
 
@@ -3112,6 +3130,7 @@ function openFeedSheet(mode) {
     document.getElementById('billPreviewImage').src = dataUrl;
     document.getElementById('billPreviewImage').classList.remove('hidden');
     document.getElementById('billPreviewMeta').textContent = `ก่อนหักส่วนลด ${formatMoney(draft.sub_total)} บาท • ส่วนลด ${formatMoney(draft.discount || 0)} บาท • สุทธิ ${formatMoney(draft.grand_total)} บาท`;
+    updatePreBillReviewUI();
     hideSheet(document.getElementById('saleBillSheet'));
     showSheet(document.getElementById('billPreviewSheet'));
   }
@@ -3181,6 +3200,38 @@ function openFeedSheet(mode) {
     await load(state.batch.id);
     alert(`${state.preBillReviewId ? 'อนุมัติ PreBill และสร้างบิลสำเร็จ' : 'บันทึกบิลสำเร็จ'} เลขที่ ${response.bill?.bill_id || '-'}`);
     state.preBillReviewId = '';
+    updatePreBillReviewUI();
+  }
+
+  async function rejectCurrentPreBill() {
+    const preBillId = String(state.preBillReviewId || '').trim();
+    if (!preBillId) return alert('ไม่พบ PreBill ที่ต้องการ Reject');
+    const reason = prompt(`ระบุเหตุผลที่ Reject PreBill ${preBillId} (ไม่บังคับ)`, '');
+    if (reason === null) return;
+    if (!confirm(`ยืนยัน Reject PreBill ${preBillId} ใช่ไหม?`)) return;
+
+    const button = document.getElementById('saleRejectPreBillBtn');
+    const original = button?.textContent || 'Reject PreBill';
+    if (button) { button.disabled = true; button.textContent = 'กำลัง Reject...'; }
+    const response = await AppApi.post({
+      action: 'rejectPreBill',
+      batch_id: state.batch?.id || '',
+      pre_bill_id: preBillId,
+      reject_reason: reason || ''
+    });
+    if (button) { button.disabled = false; button.textContent = original; }
+    if (!response || response.status !== 'ok') return alert(response?.message || 'Reject PreBill ไม่สำเร็จ');
+
+    const billDate = document.getElementById('saleBillDate')?.value || state.month;
+    closeBillPreview();
+    closeSaleBillSheet();
+    closeSaleBillPicker();
+    state.preBillReviewId = '';
+    updatePreBillReviewUI();
+    clearModuleCaches(state.batch.id, ['sale_manage']);
+    state.month = String(billDate || state.month).slice(0, 7);
+    await load(state.batch.id);
+    alert('Reject PreBill สำเร็จ');
   }
 
   function downloadBillImage() { if (!state.billPreviewImage) return; const link = document.createElement('a'); link.href = state.billPreviewImage; link.download = `cash-bill-${state.batch.id}-${Date.now()}.png`; link.click(); }
@@ -3194,13 +3245,45 @@ function openFeedSheet(mode) {
     if (stockNote && stockNote.parentNode === form) form.insertBefore(discountWrap, stockNote); else form.appendChild(discountWrap);
   }
   function normalizeSaleLayout() {
-    const addBtn = document.getElementById('addSaleItemBtn'); const footer = document.querySelector('#saleBillSheet .sheet-footer');
+    const addBtn = document.getElementById('addSaleItemBtn');
+    const footer = document.querySelector('#saleBillSheet .sheet-footer');
     if (!addBtn || !footer) return;
-    let row = footer.querySelector('.sale-bill-footer-row');
-    if (!row) { row = document.createElement('div'); row.className = 'sale-bill-footer-row'; footer.prepend(row); }
-    const submitBtn = footer.querySelector('#salePreviewBtn'); addBtn.type = 'button';
-    if (!row.contains(addBtn)) row.appendChild(addBtn);
-    if (submitBtn && !row.contains(submitBtn)) row.appendChild(submitBtn);
+    footer.classList.add('sheet-footer--sale');
+
+    let rejectRow = footer.querySelector('.sale-bill-footer-reject-row');
+    if (!rejectRow) {
+      rejectRow = document.createElement('div');
+      rejectRow.className = 'sale-bill-footer-reject-row';
+      footer.prepend(rejectRow);
+    }
+
+    let actionRow = footer.querySelector('.sale-bill-footer-row');
+    if (!actionRow) {
+      actionRow = document.createElement('div');
+      actionRow.className = 'sale-bill-footer-row';
+      footer.appendChild(actionRow);
+    }
+
+    const rejectBtn = footer.querySelector('#saleRejectPreBillBtn');
+    const submitBtn = footer.querySelector('#salePreviewBtn');
+    addBtn.type = 'button';
+    if (rejectBtn && !rejectRow.contains(rejectBtn)) rejectRow.appendChild(rejectBtn);
+    if (!actionRow.contains(addBtn)) actionRow.appendChild(addBtn);
+    if (submitBtn && !actionRow.contains(submitBtn)) actionRow.appendChild(submitBtn);
+    updatePreBillReviewUI();
+  }
+
+  function updatePreBillReviewUI() {
+    const isReview = !!String(state.preBillReviewId || '').trim();
+    const rejectBtn = document.getElementById('saleRejectPreBillBtn');
+    const rejectRow = document.querySelector('#saleBillSheet .sale-bill-footer-reject-row');
+    if (rejectBtn) {
+      rejectBtn.hidden = !isReview;
+      rejectBtn.classList.toggle('hidden', !isReview);
+    }
+    if (rejectRow) rejectRow.classList.toggle('hidden', !isReview);
+    const confirmBtn = document.getElementById('billConfirmBtn');
+    if (confirmBtn) confirmBtn.textContent = isReview ? 'อนุมัติ PreBill' : 'ยืนยันบิล';
   }
 
 
@@ -3387,10 +3470,16 @@ function openFeedSheet(mode) {
       text = truncateCanvasText_(ctx, text, maxWidth);
     }
 
-    ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     if ('direction' in ctx) ctx.direction = 'ltr';
-    ctx.fillText(text, Math.round(centerX), Math.round(y));
+    if (window.BillPreview?.drawCenteredText) {
+      BillPreview.drawCenteredText(ctx, text, centerX, y);
+    } else {
+      const previousAlign = ctx.textAlign;
+      ctx.textAlign = 'center';
+      ctx.fillText(text, Math.round(centerX), Math.round(y));
+      ctx.textAlign = previousAlign;
+    }
     return size;
   }
 

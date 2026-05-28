@@ -1,5 +1,5 @@
 /* Ducky bundle: module-batch-manage
- * Generated: 2026-05-26T09:41:55.613Z
+ * Generated: 2026-05-28T05:12:04.829Z
  * Sources:
  * - js/config.js
  * - js/core/state.js
@@ -221,7 +221,7 @@ window.AppApi = (() => {
     'upsertUserMenuPermission','revokeUserMenuPermission','migrateExistingUsersToFullMenuPermissions','add_batch','edit_batch','delete_batch','saveBatchMovement','saveBatchSaleBill','deleteBatchSaleBill','saveFeedLog',
     'saveEggDailyLog','approvePreBill','rejectPreBill','upsertBatchModulePermission','revokeBatchUserPermissions',
     'saveLiffBatchRoute','deactivateLiffBatchRoute','savePriceSet','savePriceSetBinding','removePriceSetBinding','deletePriceSet',
-    'rebuildReportForBatch','saveFeedConsumptionLog','approvePreFeedConsumption','rejectPreFeedConsumption','saveBatchEvent','saveMedicalInventoryLog','deleteBatchEvent','createReportViewLink','saveFeedOrderLot','saveFeedOrderBill','createFeedOrderBill','allocateFeedOrderToBatch','allocateFeedOrderBillToBatch','saveFeedOrderAllocation','saveFeedOrderPayment','recordFeedOrderPayment','createFeedOrderPayment','saveFeedOrderClaim','recordFeedOrderClaim','createFeedOrderClaim','setFeedOrderLotVisibility','updateFeedOrderLotVisibility','hideFeedOrderLot'
+    'rebuildReportForBatch','saveFeedConsumptionLog','approvePreFeedConsumption','rejectPreFeedConsumption','saveBatchEvent','saveMedicalInventoryLog','deleteBatchEvent','createReportViewLink','saveFeedOrderLot','saveFeedOrderBill','createFeedOrderBill','allocateFeedOrderToBatch','allocateFeedOrderBillToBatch','saveFeedOrderAllocation','saveFeedOrderPayment','recordFeedOrderPayment','createFeedOrderPayment','saveFeedOrderBulkPayment','recordFeedOrderBulkPayment','applyFeedOrderBulkPayment','saveFeedOrderClaim','recordFeedOrderClaim','createFeedOrderClaim','setFeedOrderLotVisibility','updateFeedOrderLotVisibility','hideFeedOrderLot'
   ]);
   const CACHE_TTL = {
     getMyMenuPermissions: 5 * 60 * 1000,
@@ -1153,13 +1153,24 @@ window.BillPreview = (() => {
 
   function drawCenteredText(ctx, text, centerX, y) {
     const safeText = String(text || '');
-    const metrics = ctx.measureText(safeText);
-    const visualWidth = Math.abs(metrics.actualBoundingBoxLeft || 0) + Math.abs(metrics.actualBoundingBoxRight || metrics.width || 0);
-    const x = centerX - visualWidth / 2 - (metrics.actualBoundingBoxLeft || 0);
     const previousAlign = ctx.textAlign;
+    const previousDirection = ('direction' in ctx) ? ctx.direction : null;
+
+    // Use an explicit LTR + left-aligned draw position for centered Thai text.
+    // Some mobile WebViews misplace canvas text when using textAlign='center',
+    // especially after drawing right-aligned amount columns.
+    if ('direction' in ctx) ctx.direction = 'ltr';
     ctx.textAlign = 'left';
-    ctx.fillText(safeText, x, y);
+
+    const metrics = ctx.measureText(safeText);
+    const left = Number(metrics.actualBoundingBoxLeft || 0);
+    const right = Number(metrics.actualBoundingBoxRight || metrics.width || 0);
+    const visualWidth = Math.abs(left) + Math.abs(right);
+    const x = Math.round(centerX - visualWidth / 2 - left);
+    ctx.fillText(safeText, x, Math.round(y));
+
     ctx.textAlign = previousAlign;
+    if (previousDirection != null) ctx.direction = previousDirection;
   }
 
   function fitCenteredText(ctx, text, centerX, y, maxWidth, weight = 'bold', startSize = 22, minSize = 13) {
@@ -1255,6 +1266,7 @@ window.BillPreview = (() => {
     canvas.style.height = `${height}px`;
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
+    if ('direction' in ctx) ctx.direction = 'ltr';
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
@@ -1360,10 +1372,10 @@ window.BillPreview = (() => {
     }
 
     const thankYouY = Math.min(y, height - padding - 22);
-    ctx.textAlign = 'center';
+    ctx.textAlign = 'left';
     ctx.font = 'bold 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.fillStyle = '#0f766e';
-    ctx.fillText(helpers.thankYouText || 'ขอบคุณที่อุดหนุน', width / 2, thankYouY);
+    drawCenteredText(ctx, helpers.thankYouText || 'ขอบคุณที่อุดหนุน', width / 2, thankYouY);
     ctx.textAlign = 'left';
 
     return canvas.toDataURL('image/png');
