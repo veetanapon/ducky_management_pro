@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>System Health | Ducky Management Pro</title>
+  <link rel="stylesheet" href="css/dist/system-health.bundle.css?v=20260606-174915">
+
+</head>
+
+<body data-page="system_health" class="dm-supabase-theme">
+  <header class="app-header container">
+    <div class="header-leading">
+      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="เปิดเมนู">☰</button>
+      <div>
+        <h1>System Health</h1>
+        <p class="muted">Data source & rollback control</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="healthRefreshIcon" type="button" title="โหลดใหม่" aria-label="โหลดใหม่">↻</button>
+      <button class="icon-btn" onclick="history.back()" type="button" title="ย้อนกลับ" aria-label="ย้อนกลับ">←</button>
+      <button class="icon-btn" onclick="AppAuth.logout()" type="button" title="ออกจากระบบ"
+        aria-label="ออกจากระบบ">⎋</button>
+    </div>
+  </header>
+
+  <main class="container page-body health-page">
+    <section class="health-mode-card card-panel" aria-labelledby="healthModeTitle">
+      <div class="health-db-icon" aria-hidden="true">▣</div>
+      <div class="health-mode-main">
+        <div class="health-card-kicker">Ducky Database</div>
+        <h2 id="healthModeTitle">Data source mode</h2>
+        <p id="modeDescription" class="muted">กำลังโหลดโหมดปัจจุบัน...</p>
+      </div>
+      <!-- <div class="health-mode-status">
+        <span id="modeDot" class="mode-dot is-loading"></span>
+        <strong id="modeBadge">-</strong>
+        <small id="modeHint">-</small>
+      </div> -->
+    </section>
+
+    <section class="card-panel health-control-panel">
+      <div class="section-card-head">
+        <div>
+          <h3>เลือกโหมดการใช้งาน</h3>
+          <p class="muted">ใช้สำหรับสลับฐานข้อมูลหลัก หรือ rollback ชั่วคราว</p>
+        </div>
+        <span class="badge-inline" id="healthStatusBadge">-</span>
+      </div>
+
+      <div class="health-mode-row">
+        <label class="mode-option mode-supabase">
+          <input type="radio" name="dataSourceMode" value="supabase_full" />
+          <span class="mode-option-icon">DB</span>
+          <span><b>Supabase full</b><small>ใช้ Supabase เป็นฐานข้อมูลหลัก</small></span>
+        </label>
+        <label class="mode-option mode-sheet">
+          <input type="radio" name="dataSourceMode" value="sheet_only" />
+          <span class="mode-option-icon">GS</span>
+          <span><b>Sheet fallback</b><small>ใช้ Google Sheets เป็นฐานข้อมูลหลัก</small></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card-panel health-actions-panel">
+      <div class="section-card-head">
+        <div>
+          <h3>Functions</h3>
+          <!-- <p class="muted">กดเฉพาะรายการที่จำเป็น ไม่แสดงผลลัพธ์เป็น JSON ดิบ</p> -->
+        </div>
+        <span class="badge-inline muted-badge" id="lastCheckedBadge">ยังไม่ตรวจ</span>
+      </div>
+
+      <div class="health-icon-actions" aria-label="เครื่องมือระบบ">
+        <button class="health-icon-action" id="refreshModeBtn" type="button" title="โหลดโหมดปัจจุบัน">
+          <span>↻</span><b>โหลดโหมด</b><small>Refresh</small>
+        </button>
+        <button class="health-icon-action primary" id="saveModeBtn" type="button" title="บันทึกโหมด">
+          <span>✓</span><b>บันทึก</b><small>Apply mode</small>
+        </button>
+        <button class="health-icon-action" id="healthBtn" type="button" title="ตรวจสถานะการเชื่อมต่อ">
+          <span>⌁</span><b>ตรวจระบบ</b><small>Health check</small>
+        </button>
+        <button class="health-icon-action danger" id="rollbackBtn" type="button" title="สลับเป็น Sheet fallback">
+          <span>↩</span><b>Rollback</b><small>Sheet only</small>
+        </button>
+      </div>
+
+      <div class="health-result-card" id="healthResultCard">
+        <div class="health-result-icon">i</div>
+        <div>
+          <b>พร้อมใช้งาน</b>
+          <p class="muted">เลือกโหมดและกดตรวจระบบเพื่อดูสถานะล่าสุด</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script defer src="js/dist/system-health.bundle.js?v=20260606-174915"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,365 @@
+/* ===== Batch dashboard compact module menu ===== */
+body[data-page="batch_dashboard"] .module-intro-card {
+  padding: 12px 14px;
+}
+
+body[data-page="batch_dashboard"] .module-intro-card .muted {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+body[data-page="batch_dashboard"] .module-card-grid--menu {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+body[data-page="batch_dashboard"] .module-menu-card {
+  position: relative;
+  min-width: 0;
+  min-height: 86px;
+  padding: 12px 6px 8px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  text-align: center;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
+}
+
+body[data-page="batch_dashboard"] .module-menu-card:active {
+  transform: translateY(1px);
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-soft));
+  border: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border-soft));
+  color: var(--primary-dark);
+  line-height: 1;
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body[data-page="batch_dashboard"] .module-menu-card .module-card-title {
+  width: 100%;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-page="batch_dashboard"] .module-card-permission-icon {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--bg-card) 88%, transparent);
+  color: var(--text-sub);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, .06);
+}
+
+body[data-page="batch_dashboard"] .module-card-permission-icon svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body[data-page="batch_dashboard"] .module-card-permission-icon.success {
+  color: var(--primary-dark);
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border-soft));
+}
+
+body[data-page="batch_dashboard"] .module-card-permission-icon.muted-badge {
+  color: var(--text-sub);
+  background: var(--bg-soft);
+}
+
+@media (max-width: 860px) {
+  body[data-page="batch_dashboard"] .module-card-grid--menu {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  body[data-page="batch_dashboard"] .module-menu-card {
+    min-height: 80px;
+    padding-inline: 4px;
+  }
+
+  body[data-page="batch_dashboard"] .module-menu-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 13px;
+  }
+
+  body[data-page="batch_dashboard"] .module-menu-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  body[data-page="batch_dashboard"] .module-menu-card .module-card-title {
+    font-size: 11px;
+  }
+}
+
+/* Asset icon support: loads /assets/module-icon/*.png first, then falls back to built-in SVG. */
+body[data-page="batch_dashboard"] .module-menu-icon--asset {
+  background: #f5f5f3;
+  border-color: #e8e6df;
+  overflow: hidden;
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon-img {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+  display: block;
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon-fallback {
+  width: 100%;
+  height: 100%;
+  display: none;
+  place-items: center;
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon-fallback svg {
+  width: 23px;
+  height: 23px;
+}
+
+
+/* ===== Phase 6: Supabase-style batch dashboard refinements ===== */
+body[data-page="batch_dashboard"] .batch-dashboard-layout {
+  gap: 10px;
+}
+
+body[data-page="batch_dashboard"] .batch-dashboard-hero {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-card);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .045);
+}
+
+body[data-page="batch_dashboard"] .batch-dashboard-hero .hero-image {
+  width: 100%;
+  /*height: clamp(136px, 26vw, 190px*/
+  max-height: 200px;
+  margin: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  object-fit: cover;
+}
+
+body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-card);
+  font-size: 12px;
+}
+
+body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border-right: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg-card);
+}
+
+body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid > div:nth-child(2n) {
+  border-right: 0;
+}
+
+body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid > div:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid strong {
+  display: block;
+  color: var(--text-sub);
+  font-size: 10.5px;
+  line-height: 1.15;
+  font-weight: 850;
+}
+
+body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid span {
+  min-width: 0;
+  color: var(--text-main);
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 920;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-page="batch_dashboard"] #batchRemark {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--border-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-soft) 68%, var(--bg-card));
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+body[data-page="batch_dashboard"] .module-card-grid.module-card-grid--menu {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  margin: 0 0 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .04);
+}
+
+body[data-page="batch_dashboard"] .module-card-grid--menu .empty-state {
+  grid-column: 1 / -1;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--bg-card);
+}
+
+body[data-page="batch_dashboard"] .module-card-grid--menu .module-menu-card {
+  min-height: 96px;
+  padding: 12px 8px 10px;
+  border: 0 !important;
+  border-right: 1px solid var(--border-soft) !important;
+  border-bottom: 1px solid var(--border-soft) !important;
+  border-radius: 0 !important;
+  background: var(--bg-card) !important;
+  box-shadow: none !important;
+  transition: background-color .16s ease, transform .12s ease;
+}
+
+body[data-page="batch_dashboard"] .module-card-grid--menu .module-menu-card:nth-child(3n) {
+  border-right: 0 !important;
+}
+
+body[data-page="batch_dashboard"] .module-card-grid--menu .module-menu-card:hover,
+body[data-page="batch_dashboard"] .module-card-grid--menu .module-menu-card:focus-visible {
+  background: color-mix(in srgb, var(--primary) 5%, var(--bg-card)) !important;
+  outline: none;
+}
+
+body[data-page="batch_dashboard"] .module-card-grid--menu .module-menu-card:active {
+  transform: translateY(1px);
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px !important;
+  background: color-mix(in srgb, var(--primary) 7%, var(--bg-soft)) !important;
+  border-color: var(--border-soft) !important;
+}
+
+body[data-page="batch_dashboard"] .module-menu-icon-img {
+  width: 24px;
+  height: 24px;
+}
+
+body[data-page="batch_dashboard"] .module-menu-card .module-card-title {
+  font-size: 12px;
+  line-height: 1.22;
+  font-weight: 900;
+}
+
+body[data-page="batch_dashboard"] .module-card-permission-icon {
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+@media (max-width: 520px) {
+  body[data-page="batch_dashboard"] .batch-dashboard-layout {
+    gap: 8px;
+  }
+
+  body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid > div {
+    padding: 8px 9px;
+  }
+
+  body[data-page="batch_dashboard"] .module-card-grid.module-card-grid--menu {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body[data-page="batch_dashboard"] .module-card-grid--menu .module-menu-card {
+    min-height: 92px;
+  }
+
+  body[data-page="batch_dashboard"] .module-card-grid--menu .module-menu-card:nth-child(3n) {
+    border-right: 1px solid var(--border-soft) !important;
+  }
+
+  body[data-page="batch_dashboard"] .module-card-grid--menu .module-menu-card:nth-child(2n) {
+    border-right: 0 !important;
+  }
+}
+
+@media (max-width: 360px) {
+  body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid > div,
+  body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid > div:nth-child(2n),
+  body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid > div:nth-last-child(-n + 2) {
+    border-right: 0;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  body[data-page="batch_dashboard"] .hero-meta.hero-meta-grid > div:last-child {
+    border-bottom: 0;
+  }
+}

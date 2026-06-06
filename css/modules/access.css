@@ -1,0 +1,227 @@
+/* ===== 09 Access / permissions ===== */
+
+.access-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 0 10px;
+  flex-wrap: wrap;
+}
+
+.access-refresh-btn {
+  width: auto;
+  min-height: 38px;
+  padding: 10px 14px;
+}
+
+.access-grant-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--bg-soft);
+}
+
+.access-grant-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.access-save-btn {
+  width: 100%;
+  min-height: 42px;
+}
+
+.access-member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.access-member-card {
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--bg-soft);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.access-member-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.access-member-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.access-member-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.access-revoke-all-btn {
+  width: auto;
+  min-height: 36px;
+  padding: 8px 12px;
+}
+
+.access-module-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.access-module-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+}
+
+.access-module-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.access-link-btn {
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0;
+}
+
+.access-member-list.is-idle {
+  gap: 0;
+}
+
+/*
+  Do not hide .access-page-card here.
+  admin-permissions.html and batch-access.html use .access-page-card
+  as their main visible content wrapper.
+*/
+.module-page-intro,
+.module-intro-card {
+  display: none;
+}
+
+.access-page-card {
+  display: block;
+}
+
+.permission-card-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.permission-card-grid--3,
+.access-module-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.permission-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--bg-soft);
+  min-width: 0;
+}
+
+.permission-card__title,
+.access-module-card__title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.permission-card__key {
+  font-size: 11px;
+  display: none;
+}
+
+.access-action-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+.access-action-row--single {
+  grid-template-columns: 1fr;
+}
+
+.access-module-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.access-module-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-card);
+}
+
+/* Batch access owner summary is a 2-cell shared-border component.
+   Keep only the outer radius and make the middle divider a single straight line. */
+body[data-page="batch_access"] #accessOwnerSummary {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--dm-border, var(--border-soft));
+  border-radius: var(--dm-radius, 8px);
+  background: var(--dm-surface, var(--bg-card));
+  box-shadow: var(--dm-shadow, 0 1px 2px rgba(15, 23, 42, .035));
+}
+
+body[data-page="batch_access"] #accessOwnerSummary > .module-summary-card {
+  border: 0 !important;
+  border-right: 1px solid var(--dm-border, var(--border-soft)) !important;
+  border-bottom: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+body[data-page="batch_access"] #accessOwnerSummary > .module-summary-card:nth-child(2n) {
+  border-right: 0 !important;
+}
+
+/*@media (max-width: 520px) {
+  body[data-page="batch_access"] #accessOwnerSummary {
+    grid-template-columns: 1fr !important;
+  }
+
+  body[data-page="batch_access"] #accessOwnerSummary > .module-summary-card {
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--dm-border, var(--border-soft)) !important;
+  }
+
+  body[data-page="batch_access"] #accessOwnerSummary > .module-summary-card:last-child {
+    border-bottom: 0 !important;
+  }
+}
+*/

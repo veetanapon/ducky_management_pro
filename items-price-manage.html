@@ -1,134 +1,132 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>จัดการราคาไข่ | Ducky Management Pro</title>
-  <link rel="stylesheet" href="dist/css/items-price-manage.bundle.css?v=20260528051226" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+    <title>จัดการราคาไข่ | Ducky Management Pro</title>
+    <link rel="stylesheet" href="css/dist/items-price-manage.bundle.css?v=20260606-174915">
+
 </head>
+
 <body data-page="items_price_manage">
-  <header class="app-header container">
-    <div class="header-leading">
-      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
-      <div>
-        <h1>จัดการราคาไข่</h1>
-        <p class="muted" id="priceManageSubtitle">กำลังโหลดชุดราคา...</p>
-      </div>
+    <header class="app-header container">
+        <div class="header-leading">
+            <button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
+            <div>
+                <h1>จัดการราคาไข่</h1>
+                <p class="muted" id="priceManageSubtitle">กำลังโหลดชุดราคา...</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="backBtn" type="button">←</button>
+            <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+        </div>
+    </header>
+    <main class="container page-body module-page-layout item-price-page-layout">
+        <section class="card-panel module-page-intro item-price-hero-card" style="display:none">
+            <div class="section-card-head">
+                <h3>ชุดราคาไข่ตามน้ำหนัก</h3>
+                <span class="badge-inline success">admin</span>
+            </div>
+            <p class="muted" id="moduleHint">หน้านี้แสดงชุดราคาที่มีอยู่ ใช้ปุ่ม FAB เพื่อสร้าง แก้ไข
+                หรือผูกชุดราคาเข้ากับ user / batch</p>
+        </section>
+        <section class="module-summary-grid module-summary-grid--2" id="itemPriceSummaryCards"></section>
+        <section class="card-panel item-price-list-card">
+            <div class="section-card-head">
+                <h3>ชุดราคาที่มีอยู่</h3>
+                <span class="badge-inline muted-badge" id="priceSetCountBadge">0 ชุด</span>
+            </div>
+            <p class="muted item-price-selected-note" id="activeSetHint">ยังไม่ได้เลือกชุดราคา</p>
+            <div class="price-set-list" id="priceSetList"></div>
+        </section>
+    </main>
+    <div id="moduleFabRoot"></div>
+    <div class="sheet hidden" id="priceSetEditorSheet">
+        <div class="sheet-backdrop" id="priceSetEditorBackdrop"></div>
+        <div class="sheet-panel">
+            <div class="sheet-header">
+                <span id="priceSetEditorTitle">สร้างชุดราคา</span>
+                <button id="priceSetEditorCloseBtn" type="button">×</button>
+            </div>
+            <form class="sheet-body form-stack item-price-form" id="priceSetForm">
+                <input id="priceSetId" type="hidden" />
+                <div class="sheet-field-grid sheet-field-grid--2 item-price-top-grid">
+                    <div>
+                        <label class="field-label">ชื่อชุดราคา</label>
+                        <input id="priceSetName" placeholder="เช่น ราคาหน้าเล้า เมษายน 2569" required="" type="text" />
+                    </div>
+                    <div>
+                        <label class="field-label">ระดับชุดราคา (ใช้กับ)</label>
+                        <select id="priceSetScopeType">
+                            <option value="system">ทั้งระบบ</option>
+                            <option value="user">เฉพาะผู้ใช้</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="inline-note">สร้างชุดราคาก่อนได้เลย ยังไม่ต้องผูกกับ user หรือ batch ตั้งแต่ตอนนี้ก็ได้
+                </div>
+                <label class="field-label">หมายเหตุ</label>
+                <textarea id="priceSetRemark" placeholder="หมายเหตุเพิ่มเติม (optional)" rows="3"></textarea>
+                <div class="sheet-section-head compact-top">
+                    <h3 style="margin:0">รายการราคา</h3>
+                    <button class="secondary-btn small-btn" id="addPriceItemBtn" type="button">+ เพิ่มรายการ</button>
+                </div>
+                <!-- <div class="inline-note">ระบบ fix สำหรับ <b>เป็ด</b> และขายไข่แบบ <b>ตามน้ำหนัก</b> ก่อน โดยใช้ <b>item_name</b> เป็น key หลัก เช่น 23.6, 23.1, 22, บาง, บุบ และใช้ <b>display_name</b> สำหรับข้อความแสดงผล</div> -->
+                <div class="price-item-list" id="priceItemList"></div>
+            </form>
+            <div class="sheet-footer item-price-editor-footer">
+                <div class="sheet-footer--dual">
+                    <button class="secondary-btn" id="newPriceSetBtn" type="button">เริ่มชุดใหม่</button>
+                    <button form="priceSetForm" id="savePriceSetBtn" type="submit">บันทึกชุดราคา</button>
+                </div>
+                <div class="sheet-footer--single hidden" id="deletePriceSetWrap">
+                    <button class="secondary-btn item-price-danger-btn" id="deletePriceSetBtn"
+                        type="button">ลบชุดราคานี้</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="header-actions">
-      <button class="icon-btn" id="backBtn" type="button">←</button>
-      <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+    <div class="sheet hidden" id="bindingSheet">
+        <div class="sheet-backdrop" id="bindingBackdrop"></div>
+        <div class="sheet-panel">
+            <div class="sheet-header">
+                <span>ผูกชุดราคา</span>
+                <button id="bindingCloseBtn" type="button">×</button>
+            </div>
+            <form class="sheet-body form-stack item-price-form" id="bindingForm">
+                <label class="field-label">ชุดราคาที่เลือก</label>
+                <input id="bindingPriceSetSearch" readonly="" type="text" />
+                <div class="sheet-field-grid sheet-field-grid--2">
+                    <div>
+                        <label class="field-label">ผูกกับ</label>
+                        <select id="bindingType">
+                            <option value="batch">batch</option>
+                            <option value="user">user</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">เป้าหมาย</label>
+                        <input id="bindingTargetSearch" list="bindingTargetList" placeholder="เลือก user หรือ batch"
+                            required="" type="search" />
+                        <datalist id="bindingTargetList"></datalist>
+                    </div>
+                </div>
+                <div class="inline-note" id="bindingCountBadge">ยังไม่มีการผูกใช้งาน</div>
+                <div class="price-binding-list is-idle" id="bindingList">
+                    <div class="empty-state">ยังไม่มีการผูกชุดราคานี้</div>
+                </div>
+            </form>
+            <div class="sheet-footer sheet-footer--dual">
+                <button class="secondary-btn" id="loadBindingsBtn" type="button">โหลดรายการผูก</button>
+                <button form="bindingForm" id="saveBindingBtn" type="submit">บันทึกการผูก</button>
+            </div>
+        </div>
     </div>
-  </header>
+    <script defer src="js/dist/items-price-manage.bundle.js?v=20260606-174915"></script>
 
-  <main class="container page-body module-page-layout item-price-page-layout">
-    <section class="card-panel module-page-intro item-price-hero-card">
-      <div class="section-card-head">
-        <h3>ชุดราคาไข่ตามน้ำหนัก</h3>
-        <span class="badge-inline success">admin</span>
-      </div>
-      <p class="muted" id="moduleHint">หน้านี้แสดงชุดราคาที่มีอยู่ ใช้ปุ่ม FAB เพื่อสร้าง แก้ไข หรือผูกชุดราคาเข้ากับ user / batch</p>
-    </section>
-
-    <section id="itemPriceSummaryCards" class="module-summary-grid module-summary-grid--2"></section>
-
-    <section class="card-panel item-price-list-card">
-      <div class="section-card-head">
-        <h3>ชุดราคาที่มีอยู่</h3>
-        <span class="badge-inline muted-badge" id="priceSetCountBadge">0 ชุด</span>
-      </div>
-      <p class="muted item-price-selected-note" id="activeSetHint">ยังไม่ได้เลือกชุดราคา</p>
-      <div id="priceSetList" class="price-set-list"></div>
-    </section>
-  </main>
-
-  <div id="moduleFabRoot"></div>
-
-  <div id="priceSetEditorSheet" class="sheet hidden">
-    <div class="sheet-backdrop" id="priceSetEditorBackdrop"></div>
-    <div class="sheet-panel">
-      <div class="sheet-header">
-        <span id="priceSetEditorTitle">สร้างชุดราคา</span>
-        <button id="priceSetEditorCloseBtn" type="button">&times;</button>
-      </div>
-      <form id="priceSetForm" class="sheet-body form-stack item-price-form">
-        <input type="hidden" id="priceSetId" />
-
-        <div class="sheet-field-grid sheet-field-grid--2 item-price-top-grid">
-          <div>
-            <label class="field-label">ชื่อชุดราคา</label>
-            <input id="priceSetName" type="text" placeholder="เช่น ราคาหน้าเล้า เมษายน 2569" required />
-          </div>
-          <div>
-            <label class="field-label">ระดับชุดราคา (ใช้กับ)</label>
-            <select id="priceSetScopeType">
-              <option value="system">ทั้งระบบ</option>
-              <option value="user">เฉพาะผู้ใช้</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="inline-note">สร้างชุดราคาก่อนได้เลย ยังไม่ต้องผูกกับ user หรือ batch ตั้งแต่ตอนนี้ก็ได้</div>
-
-        <label class="field-label">หมายเหตุ</label>
-        <textarea id="priceSetRemark" rows="3" placeholder="หมายเหตุเพิ่มเติม (optional)"></textarea>
-
-        <div class="sheet-section-head compact-top">
-          <h3 style="margin:0">รายการราคา</h3>
-          <button type="button" class="secondary-btn small-btn" id="addPriceItemBtn">+ เพิ่มรายการ</button>
-        </div>
-        <!-- <div class="inline-note">ระบบ fix สำหรับ <b>เป็ด</b> และขายไข่แบบ <b>ตามน้ำหนัก</b> ก่อน โดยใช้ <b>item_name</b> เป็น key หลัก เช่น 23.6, 23.1, 22, บาง, บุบ และใช้ <b>display_name</b> สำหรับข้อความแสดงผล</div> -->
-        <div id="priceItemList" class="price-item-list"></div>
-      </form>
-      <div class="sheet-footer item-price-editor-footer">
-        <div class="sheet-footer--dual">
-          <button type="button" class="secondary-btn" id="newPriceSetBtn">เริ่มชุดใหม่</button>
-          <button type="submit" id="savePriceSetBtn" form="priceSetForm">บันทึกชุดราคา</button>
-        </div>
-        <div class="sheet-footer--single hidden" id="deletePriceSetWrap">
-          <button type="button" class="secondary-btn item-price-danger-btn" id="deletePriceSetBtn">ลบชุดราคานี้</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="bindingSheet" class="sheet hidden">
-    <div class="sheet-backdrop" id="bindingBackdrop"></div>
-    <div class="sheet-panel">
-      <div class="sheet-header">
-        <span>ผูกชุดราคา</span>
-        <button id="bindingCloseBtn" type="button">&times;</button>
-      </div>
-      <form id="bindingForm" class="sheet-body form-stack item-price-form">
-        <label class="field-label">ชุดราคาที่เลือก</label>
-        <input type="text" id="bindingPriceSetSearch" readonly />
-
-        <div class="sheet-field-grid sheet-field-grid--2">
-          <div>
-            <label class="field-label">ผูกกับ</label>
-            <select id="bindingType">
-              <option value="batch">batch</option>
-              <option value="user">user</option>
-            </select>
-          </div>
-          <div>
-            <label class="field-label">เป้าหมาย</label>
-            <input type="search" id="bindingTargetSearch" list="bindingTargetList" placeholder="เลือก user หรือ batch" required />
-            <datalist id="bindingTargetList"></datalist>
-          </div>
-        </div>
-
-        <div class="inline-note" id="bindingCountBadge">ยังไม่มีการผูกใช้งาน</div>
-        <div id="bindingList" class="price-binding-list is-idle">
-          <div class="empty-state">ยังไม่มีการผูกชุดราคานี้</div>
-        </div>
-      </form>
-      <div class="sheet-footer sheet-footer--dual">
-        <button type="button" class="secondary-btn" id="loadBindingsBtn">โหลดรายการผูก</button>
-        <button type="submit" id="saveBindingBtn" form="bindingForm">บันทึกการผูก</button>
-      </div>
-    </div>
-  </div>
-  <script src="dist/js/items-price-manage.bundle.js?v=20260528051222" defer></script>
 </body>
+
 </html>

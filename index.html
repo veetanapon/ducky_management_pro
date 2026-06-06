@@ -1,107 +1,111 @@
 <!DOCTYPE html>
 
 <html lang="th">
-<head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
-<title>Ducky Management Pro</title>
 
-<link href="css/core/app.css" rel="stylesheet"/>
-<link href="css/modules/index.css" rel="stylesheet"/>
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    name="viewport" />
+  <title>Ducky Management Pro</title>
+  <link rel="stylesheet" href="css/dist/index.bundle.css?v=20260606-174915">
+
 </head>
+
 <body data-page="index">
-<header class="app-header container">
-<div class="header-leading">
-<button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
-<div>
-<h1>My Batch Lists</h1>
-<p class="muted" id="pageSubtitle">รายการชุดสัตว์ที่เข้าถึงได้</p>
-</div>
-</div>
-<div class="header-actions">
-<button class="icon-btn" id="refreshBtn" title="รีเฟรช" type="button">↻</button>
-<button class="icon-btn" id="logoutBtn" title="ออกจากระบบ" type="button">⎋</button>
-</div>
-</header>
-<main class="container page-body">
-<section class="search-bar index-filter-panel">
-<input id="batchSearch" placeholder="ค้นหาชื่อชุดสัตว์..." type="search"/>
-<div aria-label="ตัวกรองสถานะชุดสัตว์" class="index-status-toggle" role="tablist">
-<button class="is-active" data-batch-status-filter="active" type="button">เฉพาะที่ Active</button>
-<button data-batch-status-filter="all" type="button">ทั้งหมด</button>
-</div>
-</section>
-<section class="banner warning hidden" id="offlineBanner">
+  <header class="app-header container">
+    <div class="header-leading">
+      <button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
+      <div>
+        <h1>My Batch Lists</h1>
+        <p class="muted" id="pageSubtitle">รายการชุดสัตว์ที่เข้าถึงได้</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="refreshBtn" title="รีเฟรช" type="button">↻</button>
+      <button class="icon-btn" id="logoutBtn" title="ออกจากระบบ" type="button">⎋</button>
+    </div>
+  </header>
+  <main class="container page-body">
+    <section class="search-bar index-filter-panel">
+      <input id="batchSearch" placeholder="ค้นหาชื่อชุดสัตว์..." type="search" />
+      <div aria-label="ตัวกรองสถานะชุดสัตว์" class="index-status-toggle" role="tablist">
+        <button class="is-active" data-batch-status-filter="active" type="button">เฉพาะที่ Active</button>
+        <button data-batch-status-filter="all" type="button">ทั้งหมด</button>
+      </div>
+    </section>
+    <section class="banner warning hidden" id="offlineBanner">
       กำลังแสดงข้อมูลจากเครื่อง อาจยังไม่เป็นข้อมูลล่าสุด
     </section>
-<section class="batch-list" id="batchLists"></section>
-</main>
-<button aria-label="actions" class="fab" id="fabMain" type="button">＋</button>
-<div class="fab-menu hidden" id="fabMenu"></div>
-<div aria-hidden="true" class="sheet hidden" id="addSheet">
-<div class="sheet-backdrop" data-close-sheet=""></div>
-<div class="sheet-panel">
-<div class="sheet-header">
-<span id="sheetTitle">เพิ่มชุดสัตว์ใหม่</span>
-<button class="icon-btn" id="closeSheetBtn" type="button">×</button>
-</div>
-<form class="sheet-body" id="batchForm">
-<input id="ab_species" list="speciesList" placeholder="ชนิดสัตว์" required=""/>
-<datalist id="speciesList">
-<option value="เป็ด"></option>
-<option value="ปลา"></option>
-</datalist>
-<input id="ab_name" placeholder="ชื่อชุดสัตว์" required=""/>
-<div class="grid-2">
-<input id="ab_initqty" min="0" placeholder="จำนวนเริ่มต้น" step="1" type="number"/>
-<input id="ab_currqty" min="0" placeholder="จำนวนปัจจุบัน" step="1" type="number"/>
-</div>
-<input id="ab_unitprice" min="0" placeholder="ราคาต่อหน่วย" step="0.01" type="number"/>
-<div class="grid-2">
-<select id="ab_status">
-<option value="1">Active</option>
-<option value="0">Inactive</option>
-</select>
-<input id="ab_startDate" type="date"/>
-</div>
-<input id="ab_endDate" type="date"/>
-<textarea id="ab_remark" placeholder="หมายเหตุเพิ่มเติม" rows="3"></textarea>
-<label class="upload">
-<span>📷 เลือกรูป</span>
-<input accept="image/*" id="batchImage" type="file"/>
-</label>
-<img alt="preview" class="image-preview hidden" id="imagePreview"/>
-<button id="submitBatchBtn" type="submit">บันทึกข้อมูล</button>
-</form>
-</div>
-</div>
-<template id="batchCardTemplate">
-<article class="swipe-wrap">
-<div class="swipe-actions">
-<button class="swipe-btn edit" data-action="edit" type="button">✎</button>
-<button class="swipe-btn delete" data-action="delete" type="button">🗑</button>
-</div>
-<div class="batch-card compact swipe-content">
-<div class="batch-thumb"><img alt=""/></div>
-<div class="batch-info">
-<div class="batch-header-row">
-<span class="batch-title"></span>
-<span class="batch-subtitle"></span>
-</div>
-<div class="batch-stats-row">
-<div class="batch-stat">
-<span class="label js-start"></span>
-<span class="value js-current"></span>
-</div>
-<div class="batch-stat text-right">
-<span class="label js-right-label"></span>
-<span class="value js-right-value"></span>
-</div>
-</div>
-</div>
-</div>
-</article>
-</template>
-  <script src="dist/js/index.bundle.js?v=20260528051222" defer></script>
+    <section class="batch-list" id="batchLists"></section>
+  </main>
+  <button aria-label="actions" class="fab" id="fabMain" type="button">＋</button>
+  <div class="fab-menu hidden" id="fabMenu"></div>
+  <div aria-hidden="true" class="sheet hidden" id="addSheet">
+    <div class="sheet-backdrop" data-close-sheet=""></div>
+    <div class="sheet-panel">
+      <div class="sheet-header">
+        <span id="sheetTitle">เพิ่มชุดสัตว์ใหม่</span>
+        <button class="icon-btn" id="closeSheetBtn" type="button">×</button>
+      </div>
+      <form class="sheet-body" id="batchForm">
+        <input id="ab_species" list="speciesList" placeholder="ชนิดสัตว์" required="" />
+        <datalist id="speciesList">
+          <option value="เป็ด"></option>
+          <option value="ปลา"></option>
+        </datalist>
+        <input id="ab_name" placeholder="ชื่อชุดสัตว์" required="" />
+        <div class="grid-2">
+          <input id="ab_initqty" min="0" placeholder="จำนวนเริ่มต้น" step="1" type="number" />
+          <input id="ab_currqty" min="0" placeholder="จำนวนปัจจุบัน" step="1" type="number" />
+        </div>
+        <input id="ab_unitprice" min="0" placeholder="ราคาต่อหน่วย" step="0.01" type="number" />
+        <div class="grid-2">
+          <select id="ab_status">
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+          <input id="ab_startDate" type="date" />
+        </div>
+        <input id="ab_endDate" type="date" />
+        <textarea id="ab_remark" placeholder="หมายเหตุเพิ่มเติม" rows="3"></textarea>
+        <label class="upload">
+          <span>📷 เลือกรูป</span>
+          <input accept="image/*" id="batchImage" type="file" />
+        </label>
+        <img alt="preview" class="image-preview hidden" id="imagePreview" />
+        <button id="submitBatchBtn" type="submit">บันทึกข้อมูล</button>
+      </form>
+    </div>
+  </div>
+  <template id="batchCardTemplate">
+    <article class="swipe-wrap">
+      <div class="swipe-actions">
+        <button class="swipe-btn edit" data-action="edit" type="button">✎</button>
+        <button class="swipe-btn delete" data-action="delete" type="button">🗑</button>
+      </div>
+      <div class="batch-card compact swipe-content">
+        <div class="batch-thumb"><img alt="" /></div>
+        <div class="batch-info">
+          <div class="batch-header-row">
+            <span class="batch-title"></span>
+            <span class="batch-subtitle"></span>
+          </div>
+          <div class="batch-stats-row">
+            <div class="batch-stat">
+              <span class="label js-start"></span>
+              <span class="value js-current"></span>
+            </div>
+            <div class="batch-stat text-right">
+              <span class="label js-right-label"></span>
+              <span class="value js-right-value"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </template>
+  <script defer src="js/dist/index.bundle.js?v=20260606-174915"></script>
+
 </body>
+
 </html>

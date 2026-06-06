@@ -1,15 +1,20 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    name="viewport" />
   <title>Feed Manage | Ducky Management Pro</title>
-  <link rel="stylesheet" href="dist/css/module-feed.bundle.css?v=20260528051226" />
+  <link rel="stylesheet" href="css/dist/module-feed.bundle.css?v=20260606-174915">
+
 </head>
-<body data-page="module_calendar" data-module="feed_manage">
+
+<body data-module="feed_manage" data-page="module_calendar">
   <header class="app-header container">
     <div class="header-leading">
-      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
+      <button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
       <div>
         <h1 id="moduleTitle">จัดการอาหาร</h1>
         <p class="muted" id="moduleSubtitle">กำลังโหลดข้อมูล...</p>
@@ -20,25 +25,22 @@
       <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
     </div>
   </header>
-
   <main class="container page-body module-page-layout">
-    <section class="card-panel module-page-intro">
+    <section class="card-panel module-page-intro" style="display:none">
       <div class="section-card-head">
         <h3>ภาพรวมจัดการอาหาร</h3>
         <span class="badge-inline muted-badge" id="modulePermissionBadge">กำลังโหลด</span>
       </div>
       <p class="muted" id="moduleHint">กำลังโหลดข้อมูลสรุป...</p>
     </section>
-
-    <section id="moduleSummaryCards" class="module-summary-grid"></section>
-
+    <section class="module-summary-grid" id="moduleSummaryCards"></section>
     <section class="card-panel module-calendar-panel">
       <div class="section-card-head">
         <h3 id="calendarTitle">ปฏิทินการบันทึก</h3>
         <div class="module-calendar-nav">
-          <button type="button" class="secondary-btn calendar-nav-btn" id="calendarPrevBtn">‹</button>
+          <button class="secondary-btn calendar-nav-btn" id="calendarPrevBtn" type="button">‹</button>
           <span class="badge-inline muted-badge" id="calendarMonthLabel">-</span>
-          <button type="button" class="secondary-btn calendar-nav-btn" id="calendarNextBtn">›</button>
+          <button class="secondary-btn calendar-nav-btn" id="calendarNextBtn" type="button">›</button>
         </div>
       </div>
       <div class="module-calendar-legend">
@@ -48,9 +50,8 @@
       <div class="module-calendar-weekdays">
         <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
       </div>
-      <div id="moduleCalendarGrid" class="module-calendar-grid"></div>
+      <div class="module-calendar-grid" id="moduleCalendarGrid"></div>
     </section>
-
     <!-- <section class="card-panel">
       <div class="section-card-head">
         <h3>บันทึกล่าสุด</h3>
@@ -59,40 +60,38 @@
       <div id="recentLogList" class="log-list"></div>
     </section> -->
   </main>
-
   <div id="moduleFabRoot"></div>
-
-  <div id="feedLogSheet" class="sheet hidden">
+  <div class="sheet hidden" id="feedLogSheet">
     <div class="sheet-backdrop" id="feedLogBackdrop"></div>
     <div class="sheet-panel">
       <div class="sheet-header">
         <span id="feedLogTitle">จัดการอาหาร</span>
-        <button id="feedLogCloseBtn" type="button">&times;</button>
+        <button id="feedLogCloseBtn" type="button">×</button>
       </div>
-      <form id="feedLogForm" class="sheet-body form-stack">
-        <input type="hidden" id="feedTransType" />
-        <input type="hidden" id="feedEditMode" value="create" />
-        <input type="hidden" id="feedEditDate" value="" />
+      <form class="sheet-body form-stack" id="feedLogForm">
+        <input id="feedTransType" type="hidden" />
+        <input id="feedEditMode" type="hidden" value="create" />
+        <input id="feedEditDate" type="hidden" value="" />
         <label class="field-label">วันที่บันทึก</label>
-        <input id="feedLogDate" type="date" required />
+        <input id="feedLogDate" required="" type="date" />
         <div class="inline-note" id="feedFormHint">ระบุอาหารที่รับเข้า หรือตัดจ่ายจาก lot ที่มีอยู่</div>
-
         <div class="sheet-section-head compact-top">
           <h3 style="margin:0">รายการอาหาร</h3>
-          <button type="button" class="secondary-btn small-btn" id="addFeedEntryBtn">+ เพิ่ม lot</button>
+          <button class="secondary-btn small-btn" id="addFeedEntryBtn" type="button">+ เพิ่ม lot</button>
         </div>
-        <div id="feedEntryList" class="feed-entry-list"></div>
+        <div class="feed-entry-list" id="feedEntryList"></div>
         <datalist id="feedLotOptions"></datalist>
-
         <label class="field-label">หมายเหตุรวม</label>
-        <textarea id="feedRemark" rows="2" placeholder="หมายเหตุเพิ่มเติม (optional)"></textarea>
+        <textarea id="feedRemark" placeholder="หมายเหตุเพิ่มเติม (optional)" rows="2"></textarea>
       </form>
       <div class="sheet-footer sheet-footer--dual">
         <button class="secondary-btn" id="feedLogCancelBtn" type="button">ยกเลิก</button>
-        <button id="feedLogSubmitBtn" form="feedLogForm" type="submit">บันทึก</button>
+        <button form="feedLogForm" id="feedLogSubmitBtn" type="submit">บันทึก</button>
       </div>
     </div>
   </div>
-  <script src="dist/js/module-feed.bundle.js?v=20260528051222" defer></script>
+  <script defer src="js/dist/module-feed.bundle.js?v=20260606-174915"></script>
+
 </body>
+
 </html>

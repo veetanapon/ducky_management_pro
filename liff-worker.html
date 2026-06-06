@@ -1,86 +1,93 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <title>กรอกข้อมูลรายวัน | Ducky Management Pro</title>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <link rel="stylesheet" href="dist/css/liff-worker.bundle.css?v=20260528051226" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+        name="viewport" />
+    <title>กรอกข้อมูลรายวัน | Ducky Management Pro</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link rel="stylesheet" href="css/dist/liff-worker.bundle.css?v=20260606-174915">
 </head>
+
 <body class="worker-liff-page">
-  <main class="liff-shell">
-    <header class="liff-header-card">
-      <div class="liff-header-top">
-        <span id="routeBadge" class="route-badge">กำลังโหลดลิงก์...</span>
-        <span class="route-status-dot" aria-hidden="true"></span>
-      </div>
-      <h1>บันทึกไข่ / อาหาร / ส่งบิล</h1>
-      <p id="batchName" class="liff-subtitle">ลิงก์นี้ใช้สำหรับบันทึกข้อมูลเข้าฟาร์มโดยตรง</p>
-    </header>
+    <main class="liff-shell">
+        <header class="liff-header-card">
+            <div class="liff-header-top">
+                <span class="route-badge" id="routeBadge">กำลังโหลดลิงก์...</span>
+                <span aria-hidden="true" class="route-status-dot"></span>
+            </div>
+            <h1>บันทึกไข่ / อาหาร / ส่งบิล</h1>
+            <p class="liff-subtitle" id="batchName">ลิงก์นี้ใช้สำหรับบันทึกข้อมูลเข้าฟาร์มโดยตรง</p>
+        </header>
+        <form class="liff-form-card" id="liffWorkerForm">
+            <section class="liff-section liff-section--date" style="display:none;">
+                <div class="section-title-row">
+                    <div>
+                        <h2>วันที่บันทึก</h2>
+                        <p>ใช้เป็นวันที่ของไข่และบิล ส่วนอาหารจะบันทึกเป็นของเมื่อวานอัตโนมัติ</p>
+                    </div>
+                </div>
+                <input id="logDate" readonly="" required="" type="date" />
+            </section>
+            <section class="liff-section">
+                <div class="section-title-row">
+                    <div>
+                        <h2>จำนวนไข่วันนี้</h2>
+                        <p>กรอกเท่าที่มีข้อมูล ถ้าไม่มีให้เว้นว่างได้</p>
+                    </div>
+                    <span class="mini-badge">Daily</span>
+                </div>
+                <div class="egg-grid">
+                    <input id="qty_all" inputmode="numeric" min="0" placeholder="ไข่รวม" step="1" type="number" />
+                    <input id="qty_cracked" inputmode="numeric" min="0" placeholder="ไข่บุบ" step="1" type="number" />
+                    <input id="qty_big" inputmode="numeric" min="0" placeholder="ไข่ใหญ่/แฝด" step="1" type="number" />
+                    <input id="qty_small" inputmode="numeric" min="0" placeholder="ไข่เล็ก" step="1" type="number" />
+                    <input id="qty_broken" inputmode="numeric" min="0" placeholder="ไข่แตก" step="1" type="number" />
+                    <input id="qty_remain" inputmode="numeric" min="0" placeholder="ไข่คงเหลือ/เศษ" step="1"
+                        type="number" />
+                </div>
+            </section>
+            <section class="liff-section liff-section--feed">
+                <div class="section-title-row">
+                    <div>
+                        <h2>การกินอาหารของเมื่อวาน</h2>
+                        <p>กรอกจำนวนที่เท และจำนวนที่เหลือ ถ้าไม่มีให้เว้นว่างได้</p>
+                    </div>
+                    <span class="mini-badge">Feed</span>
+                </div>
+                <div class="feed-grid">
+                    <input id="feed_out_qty" inputmode="decimal" min="0" placeholder="จำนวนที่เท (ลูก)" step="0.01"
+                        type="number" />
+                    <input id="feed_leftover_qty" inputmode="decimal" min="0" placeholder="เหลือ (ลูก)" step="0.01"
+                        type="number" />
+                </div>
+                <input id="feed_remark" placeholder="เช่น เหลือติดอ่างเล็กน้อย หรือ เหลือครึ่งถังสี หรือ อื่นๆ"
+                    type="text" />
+            </section>
+            <section class="liff-section liff-section--prebill">
+                <div class="section-title-row">
+                    <div>
+                        <h2>ส่งขาย</h2>
+                        <p>กรอกรายการขาย</p>
+                    </div>
+                    <span class="mini-badge warning">PreBill</span>
+                </div>
+                <textarea id="rawMessage" placeholder="เช่น
+23.9=6ตั้ง
+23.8=1ตั้ง
+ศ.23.6=3แผง
+บุบ=99ฟอง" rows="5"></textarea>
+            </section>
+            <div class="submit-card">
+                <button id="submitBtn" type="submit">บันทึกข้อมูล</button>
+                <p class="status-text" id="statusText"></p>
+            </div>
+        </form>
+    </main>
+    <script defer src="js/dist/liff-worker.bundle.js?v=20260606-174915"></script>
 
-    <form id="liffWorkerForm" class="liff-form-card">
-      <section class="liff-section liff-section--date" style="display:none;">
-        <div class="section-title-row">
-          <div>
-            <h2>วันที่บันทึก</h2>
-            <p>ใช้เป็นวันที่ของไข่และบิล ส่วนอาหารจะบันทึกเป็นของเมื่อวานอัตโนมัติ</p>
-          </div>
-        </div>
-        <input id="logDate" type="date" required readonly />
-      </section>
-
-      <section class="liff-section">
-        <div class="section-title-row">
-          <div>
-            <h2>จำนวนไข่วันนี้</h2>
-            <p>กรอกเท่าที่มีข้อมูล ถ้าไม่มีให้เว้นว่างได้</p>
-          </div>
-          <span class="mini-badge">Daily</span>
-        </div>
-
-        <div class="egg-grid">
-          <input id="qty_all" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่รวม" />
-          <input id="qty_cracked" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่บุบ" />
-          <input id="qty_big" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่ใหญ่/แฝด" />
-          <input id="qty_small" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่เล็ก" />
-          <input id="qty_broken" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่แตก" />
-          <input id="qty_remain" type="number" min="0" step="1" inputmode="numeric" placeholder="ไข่คงเหลือ/เศษ" />
-        </div>
-      </section>
-
-      <section class="liff-section liff-section--feed">
-        <div class="section-title-row">
-          <div>
-            <h2>การกินอาหารของเมื่อวาน</h2>
-            <p>กรอกจำนวนที่เท และจำนวนที่เหลือ ถ้าไม่มีให้เว้นว่างได้</p>
-          </div>
-          <span class="mini-badge">Feed</span>
-        </div>
-
-        <div class="feed-grid">
-          <input id="feed_out_qty" type="number" min="0" step="0.01" inputmode="decimal" placeholder="จำนวนที่เท (ลูก)" />
-          <input id="feed_leftover_qty" type="number" min="0" step="0.01" inputmode="decimal" placeholder="เหลือ (ลูก)" />
-        </div>
-        <input id="feed_remark" type="text" placeholder="เช่น เหลือติดอ่างเล็กน้อย หรือ เหลือครึ่งถังสี หรือ อื่นๆ" />
-      </section>
-
-      <section class="liff-section liff-section--prebill">
-        <div class="section-title-row">
-          <div>
-            <h2>ส่งขาย</h2>
-            <p>กรอกรายการขาย</p>
-          </div>
-          <span class="mini-badge warning">PreBill</span>
-        </div>
-        <textarea id="rawMessage" rows="5" placeholder="เช่น&#10;23.9=6ตั้ง&#10;23.8=1ตั้ง&#10;ศ.23.6=3แผง&#10;บุบ=99ฟอง"></textarea>
-      </section>
-
-      <div class="submit-card">
-        <button id="submitBtn" type="submit">บันทึกข้อมูล</button>
-        <p id="statusText" class="status-text"></p>
-      </div>
-    </form>
-  </main>
-  <script src="dist/js/liff-worker.bundle.js?v=20260528051222" defer></script>
 </body>
+
 </html>

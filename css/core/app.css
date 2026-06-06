@@ -1,0 +1,21 @@
+/* Ducky Management Pro core bundle.
+   Strategy after CSS reset:
+   - app.css owns core/base/components only.
+   - cursor-theme.css remains the stable visual baseline that already looked good.
+   - tailwind-v43-theme.css is a light token/guard layer, not a layout-forcing theme.
+   - shared-border.css contains only explicit/shared repeated patterns and must not
+     flatten complex form cards or every card-panel globally.
+   Page-specific CSS still loads after app.css and may adjust local details. */
+@import url("base.css");
+@import url("components.css");
+@import url("forms.css");
+@import url("sheets.css");
+@import url("nav.css");
+@import url("fab.css");
+@import url("calendar.css");
+@import url("bill-preview.css");
+@import url("cursor-theme.css");
+@import url("tailwind-v43-theme.css");
+@import url("shared-border.css");
+@import url("supabase-refactor.css");
+@import url("ducky-ui.css");

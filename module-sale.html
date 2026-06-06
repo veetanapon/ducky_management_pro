@@ -1,189 +1,189 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <title>Sale Manage | Ducky Management Pro</title>
-  <link rel="stylesheet" href="dist/css/module-sale.bundle.css?v=20260528051226" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+        name="viewport" />
+    <title>Sale Manage | Ducky Management Pro</title>
+    <link rel="stylesheet" href="css/dist/module-sale.bundle.css?v=20260606-174915">
+
 </head>
-<body data-page="module_calendar" data-module="sale_manage">
-  <header class="app-header container">
-    <div class="header-leading">
-      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
-      <div>
-        <h1 id="moduleTitle">ขายออก / บิล</h1>
-        <p class="muted" id="moduleSubtitle">กำลังโหลดข้อมูล...</p>
-      </div>
+
+<body data-module="sale_manage" data-page="module_calendar">
+    <header class="app-header container">
+        <div class="header-leading">
+            <button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
+            <div>
+                <h1 id="moduleTitle">ขายออก / บิล</h1>
+                <p class="muted" id="moduleSubtitle">กำลังโหลดข้อมูล...</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="backBtn" type="button">←</button>
+            <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+        </div>
+    </header>
+    <main class="container page-body module-page-layout">
+        <section class="card-panel module-page-intro" style="display:none">
+            <div class="section-card-head">
+                <h3>ภาพรวมขายออก / บิล</h3>
+                <span class="badge-inline muted-badge" id="modulePermissionBadge">กำลังโหลด</span>
+            </div>
+            <p class="muted" id="moduleHint">กำลังโหลดข้อมูลสรุป...</p>
+        </section>
+        <section class="module-summary-grid" id="moduleSummaryCards"></section>
+        <section class="card-panel sale-prebill-panel hidden" id="salePreBillPanel" aria-live="polite"></section>
+        <section class="card-panel module-calendar-panel">
+            <div class="section-card-head">
+                <h3 id="calendarTitle">ปฏิทินการบันทึก</h3>
+                <div class="module-calendar-nav">
+                    <button class="secondary-btn calendar-nav-btn" id="calendarPrevBtn" type="button">‹</button>
+                    <span class="badge-inline muted-badge" id="calendarMonthLabel">-</span>
+                    <button class="secondary-btn calendar-nav-btn" id="calendarNextBtn" type="button">›</button>
+                </div>
+            </div>
+            <div class="module-calendar-legend">
+                <span><i class="legend-swatch legend-swatch--filled"></i> มีบันทึก</span>
+                <span><i class="legend-swatch legend-swatch--empty"></i> ยังไม่บันทึก</span>
+            </div>
+            <div class="module-calendar-weekdays">
+                <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+            </div>
+            <div class="module-calendar-grid" id="moduleCalendarGrid"></div>
+        </section>
+        <section class="card-panel sale-range-summary-panel" id="saleRangeSummaryPanel">
+            <div class="section-card-head">
+                <h3>รวมบิล</h3>
+                <span class="badge-inline muted-badge" id="saleRangeSummaryBadge">ยังไม่ค้นหา</span>
+            </div>
+            <p class="muted">สรุปยอดเรียกเก็บตามช่วงวันที่ เพื่อใช้ทำสลิปสรุปยอดรายวัน</p>
+            <div class="sale-range-search-grid sale-range-search-grid--with-buyer">
+                <div class="sale-range-field">
+                    <label class="field-label" for="saleRangeStartDate">วันที่เริ่ม</label>
+                    <input id="saleRangeStartDate" type="date" />
+                </div>
+                <div class="sale-range-field">
+                    <label class="field-label" for="saleRangeEndDate">วันที่สิ้นสุด</label>
+                    <input id="saleRangeEndDate" type="date" />
+                </div>
+                <div class="sale-range-field sale-range-field--buyer">
+                    <label class="field-label" for="saleRangeBuyerSearch">ค้นหาผู้ซื้อ</label>
+                    <input id="saleRangeBuyerSearch" placeholder="พิมพ์บางส่วนของชื่อ" type="search" />
+                </div>
+                <div class="sale-range-field sale-range-field--action">
+                    <label class="field-label"> </label>
+                    <button id="saleRangeSearchBtn" type="button">ค้นหา</button>
+                </div>
+            </div>
+            <div class="sale-range-summary-list" id="saleRangeSummaryList">
+                <div class="empty-state">เลือกช่วงวันที่แล้วกดค้นหาเพื่อดูสรุปยอด</div>
+            </div>
+            <div class="sale-range-summary-footer hidden" id="saleRangeSummaryFooter">
+                <div>
+                    <span class="muted">ยอดรวมสุทธิ</span>
+                    <strong id="saleRangeGrandTotal">0.00 ฿</strong>
+                </div>
+                <button class="secondary-btn" id="saleRangePreviewBtn" type="button">Preview สรุปยอด</button>
+            </div>
+        </section>
+    </main>
+    <div id="moduleFabRoot"></div>
+    <div class="sheet hidden" id="saleBillPickerSheet">
+        <div class="sheet-backdrop" id="saleBillPickerBackdrop"></div>
+        <div class="sheet-panel">
+            <div class="sheet-header">
+                <span>เลือกบิลที่ต้องการแก้ไข</span>
+                <button id="saleBillPickerCloseBtn" type="button">×</button>
+            </div>
+            <div class="sheet-body form-stack">
+                <div class="inline-note" id="saleBillPickerHint">พบหลายบิลในวันที่เลือก กรุณาเลือกบิลที่ต้องการแก้ไข
+                </div>
+                <div class="sale-bill-picker-list" id="saleBillPickerList">
+                    <div class="empty-state">ยังไม่มีบิลให้เลือก</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="header-actions">
-      <button class="icon-btn" id="backBtn" type="button">←</button>
-      <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+    <div class="sheet hidden" id="saleBillSheet">
+        <div class="sheet-backdrop" id="saleBillBackdrop"></div>
+        <div class="sheet-panel">
+            <div class="sheet-header">
+                <span>ขายออก / ออกบิลเงินสด</span>
+                <button id="saleBillCloseBtn" type="button">×</button>
+            </div>
+            <form class="sheet-body form-stack" id="saleBillForm">
+                <div class="hidden" id="saleTypeWrap">
+                    <label class="field-label">ประเภทการขาย</label>
+                    <div class="sale-type-toggle">
+                        <button class="is-active" data-sale-type="egg" id="saleTypeEggBtn" type="button">ขายไข่</button>
+                        <button data-sale-type="duck" id="saleTypeDuckBtn" type="button">ขายเป็ด</button>
+                    </div>
+                </div>
+                <label class="field-label">วันที่ขาย</label>
+                <input id="saleBillDate" required="" type="date" />
+                <label class="field-label">ชื่อผู้ซื้อ (ไม่แสดงในบิล)</label>
+                <input id="saleBuyerName" placeholder="ชื่อผู้ซื้อ (optional)" type="text" />
+                <label class="field-label">หมายเหตุท้ายบิล</label>
+                <textarea id="saleBillRemark" placeholder="หมายเหตุเพิ่มเติม (optional)" rows="2"></textarea>
+                <div class="inline-note" id="saleBillStockNote"></div>
+                <div class="inline-note hidden" id="salePriceSetNote"></div>
+                <h3 style="margin:0">รายการขาย</h3>
+                <div class="sale-items-list" id="saleItemsList"></div>
+            </form>
+            <div class="sheet-footer sheet-footer--sale">
+                <div class="sale-bill-footer-reject-row">
+                    <button class="secondary-btn danger-btn hidden" hidden="" id="saleRejectPreBillBtn"
+                        type="button">Reject PreBill</button>
+                </div>
+                <div class="sale-bill-footer-row">
+                    <button class="text-btn" id="addSaleItemBtn" type="button">+ เพิ่มรายการ</button>
+                    <button class="secondary-btn" form="saleBillForm" id="salePreviewBtn" type="submit">Preview
+                        บิล</button>
+                </div>
+            </div>
+        </div>
     </div>
-  </header>
-
-  <main class="container page-body module-page-layout">
-    <section class="card-panel module-page-intro">
-      <div class="section-card-head">
-        <h3>ภาพรวมขายออก / บิล</h3>
-        <span class="badge-inline muted-badge" id="modulePermissionBadge">กำลังโหลด</span>
-      </div>
-      <p class="muted" id="moduleHint">กำลังโหลดข้อมูลสรุป...</p>
-    </section>
-
-    <section id="moduleSummaryCards" class="module-summary-grid"></section>
-
-    <section class="card-panel module-calendar-panel">
-      <div class="section-card-head">
-        <h3 id="calendarTitle">ปฏิทินการบันทึก</h3>
-        <div class="module-calendar-nav">
-          <button type="button" class="secondary-btn calendar-nav-btn" id="calendarPrevBtn">‹</button>
-          <span class="badge-inline muted-badge" id="calendarMonthLabel">-</span>
-          <button type="button" class="secondary-btn calendar-nav-btn" id="calendarNextBtn">›</button>
+    <div class="sheet hidden" id="billPreviewSheet">
+        <div class="sheet-backdrop" id="billPreviewBackdrop"></div>
+        <div class="sheet-panel bill-preview-panel">
+            <div class="sheet-header">
+                <span>Preview บิลเงินสด</span>
+                <button id="billPreviewCloseBtn" type="button">×</button>
+            </div>
+            <div class="sheet-body form-stack bill-preview-body">
+                <img alt="bill preview" class="bill-preview-image hidden" id="billPreviewImage" />
+                <div class="muted" id="billPreviewMeta"></div>
+            </div>
+            <div class="sheet-footer sheet-footer--triple bill-preview-footer-actions">
+                <button class="secondary-btn bill-preview-save-btn" id="billDownloadBtn"
+                    type="button">เซฟเป็นรูป</button>
+                <button class="secondary-btn bill-preview-edit-btn" id="billBackToEditBtn"
+                    type="button">กลับไปแก้</button>
+                <button class="bill-preview-confirm-btn" id="billConfirmBtn" type="button">ยืนยันบิล</button>
+            </div>
         </div>
-      </div>
-      <div class="module-calendar-legend">
-        <span><i class="legend-swatch legend-swatch--filled"></i> มีบันทึก</span>
-        <span><i class="legend-swatch legend-swatch--empty"></i> ยังไม่บันทึก</span>
-      </div>
-      <div class="module-calendar-weekdays">
-        <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
-      </div>
-      <div id="moduleCalendarGrid" class="module-calendar-grid"></div>
-    </section>
-
-    <section class="card-panel sale-range-summary-panel" id="saleRangeSummaryPanel">
-      <div class="section-card-head">
-        <h3>รวมบิล</h3>
-        <span class="badge-inline muted-badge" id="saleRangeSummaryBadge">ยังไม่ค้นหา</span>
-      </div>
-      <p class="muted">สรุปยอดเรียกเก็บตามช่วงวันที่ เพื่อใช้ทำสลิปสรุปยอดรายวัน</p>
-      <div class="sale-range-search-grid sale-range-search-grid--with-buyer">
-        <div class="sale-range-field">
-          <label class="field-label" for="saleRangeStartDate">วันที่เริ่ม</label>
-          <input id="saleRangeStartDate" type="date" />
-        </div>
-        <div class="sale-range-field">
-          <label class="field-label" for="saleRangeEndDate">วันที่สิ้นสุด</label>
-          <input id="saleRangeEndDate" type="date" />
-        </div>
-        <div class="sale-range-field sale-range-field--buyer">
-          <label class="field-label" for="saleRangeBuyerSearch">ค้นหาผู้ซื้อ</label>
-          <input id="saleRangeBuyerSearch" type="search" placeholder="พิมพ์บางส่วนของชื่อ" />
-        </div>
-        <div class="sale-range-field sale-range-field--action">
-          <label class="field-label">&nbsp;</label>
-          <button type="button" id="saleRangeSearchBtn">ค้นหา</button>
-        </div>
-      </div>
-      <div id="saleRangeSummaryList" class="sale-range-summary-list">
-        <div class="empty-state">เลือกช่วงวันที่แล้วกดค้นหาเพื่อดูสรุปยอด</div>
-      </div>
-      <div id="saleRangeSummaryFooter" class="sale-range-summary-footer hidden">
-        <div>
-          <span class="muted">ยอดรวมสุทธิ</span>
-          <strong id="saleRangeGrandTotal">0.00 ฿</strong>
-        </div>
-        <button type="button" class="secondary-btn" id="saleRangePreviewBtn">Preview สรุปยอด</button>
-      </div>
-    </section>
-
-  </main>
-
-  <div id="moduleFabRoot"></div>
-
-
-  <div id="saleBillPickerSheet" class="sheet hidden">
-    <div class="sheet-backdrop" id="saleBillPickerBackdrop"></div>
-    <div class="sheet-panel">
-      <div class="sheet-header">
-        <span>เลือกบิลที่ต้องการแก้ไข</span>
-        <button id="saleBillPickerCloseBtn" type="button">&times;</button>
-      </div>
-      <div class="sheet-body form-stack">
-        <div class="inline-note" id="saleBillPickerHint">พบหลายบิลในวันที่เลือก กรุณาเลือกบิลที่ต้องการแก้ไข</div>
-        <div id="saleBillPickerList" class="sale-bill-picker-list">
-          <div class="empty-state">ยังไม่มีบิลให้เลือก</div>
-        </div>
-      </div>
     </div>
-  </div>
-
-
-  <div id="saleBillSheet" class="sheet hidden">
-    <div class="sheet-backdrop" id="saleBillBackdrop"></div>
-    <div class="sheet-panel">
-      <div class="sheet-header">
-        <span>ขายออก / ออกบิลเงินสด</span>
-        <button id="saleBillCloseBtn" type="button">&times;</button>
-      </div>
-      <form id="saleBillForm" class="sheet-body form-stack">
-        <div id="saleTypeWrap" class="hidden">
-          <label class="field-label">ประเภทการขาย</label>
-          <div class="sale-type-toggle">
-            <button type="button" class="is-active" id="saleTypeEggBtn" data-sale-type="egg">ขายไข่</button>
-            <button type="button" id="saleTypeDuckBtn" data-sale-type="duck">ขายเป็ด</button>
-          </div>
+    <div class="sheet hidden" id="saleRangePreviewSheet">
+        <div class="sheet-backdrop" id="saleRangePreviewBackdrop"></div>
+        <div class="sheet-panel bill-preview-panel">
+            <div class="sheet-header">
+                <span>Preview สรุปยอดบิล</span>
+                <button id="saleRangePreviewCloseBtn" type="button">×</button>
+            </div>
+            <div class="sheet-body form-stack bill-preview-body">
+                <img alt="sale range summary preview" class="bill-preview-image hidden" id="saleRangePreviewImage" />
+                <div class="muted" id="saleRangePreviewMeta"></div>
+            </div>
+            <div class="sheet-footer sheet-footer--dual">
+                <button class="secondary-btn" id="saleRangeBackBtn" type="button">กลับไปเลือกบิล</button>
+                <button id="saleRangeDownloadBtn" type="button">เซฟเป็นรูป</button>
+            </div>
         </div>
-        <label class="field-label">วันที่ขาย</label>
-        <input id="saleBillDate" type="date" required />
-        <label class="field-label">ชื่อผู้ซื้อ (ไม่แสดงในบิล)</label>
-        <input id="saleBuyerName" type="text" placeholder="ชื่อผู้ซื้อ (optional)" />
-        <label class="field-label">หมายเหตุท้ายบิล</label>
-        <textarea id="saleBillRemark" rows="2" placeholder="หมายเหตุเพิ่มเติม (optional)"></textarea>
-        <div class="inline-note" id="saleBillStockNote"></div>
-        <div class="inline-note hidden" id="salePriceSetNote"></div>
-        <h3 style="margin:0">รายการขาย</h3>
-        <div id="saleItemsList" class="sale-items-list"></div>
-      </form>
-      <div class="sheet-footer sheet-footer--sale">
-        <div class="sale-bill-footer-reject-row">
-          <button class="secondary-btn danger-btn hidden" id="saleRejectPreBillBtn" type="button" hidden>Reject PreBill</button>
-        </div>
-        <div class="sale-bill-footer-row">
-          <button class="text-btn" id="addSaleItemBtn" type="button">+ เพิ่มรายการ</button>
-          <button class="secondary-btn" id="salePreviewBtn" form="saleBillForm" type="submit">Preview บิล</button>
-        </div>
-      </div>
     </div>
-  </div>
+    <script defer src="js/dist/module-sale.bundle.js?v=20260606-174915"></script>
 
-  <div id="billPreviewSheet" class="sheet hidden">
-    <div class="sheet-backdrop" id="billPreviewBackdrop"></div>
-    <div class="sheet-panel bill-preview-panel">
-      <div class="sheet-header">
-        <span>Preview บิลเงินสด</span>
-        <button id="billPreviewCloseBtn" type="button">&times;</button>
-      </div>
-      <div class="sheet-body form-stack bill-preview-body">
-        <img id="billPreviewImage" class="bill-preview-image hidden" alt="bill preview" />
-        <div id="billPreviewMeta" class="muted"></div>
-      </div>
-      <div class="sheet-footer sheet-footer--triple">
-        <button class="secondary-btn" id="billDownloadBtn" type="button">เซฟเป็นรูป</button>
-        <button class="secondary-btn" id="billBackToEditBtn" type="button">กลับไปแก้</button>
-        <button id="billConfirmBtn" type="button">ยืนยันบิล</button>
-      </div>
-    </div>
-  </div>
-
-
-  <div id="saleRangePreviewSheet" class="sheet hidden">
-    <div class="sheet-backdrop" id="saleRangePreviewBackdrop"></div>
-    <div class="sheet-panel bill-preview-panel">
-      <div class="sheet-header">
-        <span>Preview สรุปยอดบิล</span>
-        <button id="saleRangePreviewCloseBtn" type="button">&times;</button>
-      </div>
-      <div class="sheet-body form-stack bill-preview-body">
-        <img id="saleRangePreviewImage" class="bill-preview-image hidden" alt="sale range summary preview" />
-        <div id="saleRangePreviewMeta" class="muted"></div>
-      </div>
-      <div class="sheet-footer sheet-footer--dual">
-        <button class="secondary-btn" id="saleRangeBackBtn" type="button">กลับไปเลือกบิล</button>
-        <button id="saleRangeDownloadBtn" type="button">เซฟเป็นรูป</button>
-      </div>
-    </div>
-  </div>
-  <script src="dist/js/module-sale.bundle.js?v=20260528051222" defer></script>
 </body>
+
 </html>

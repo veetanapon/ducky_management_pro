@@ -1,51 +1,55 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <title>Batch Access | Ducky Management Pro</title>
-  <link rel="stylesheet" href="dist/css/batch-access.bundle.css?v=20260528051226" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+        name="viewport" />
+    <title>Batch Access | Ducky Management Pro</title>
+    <link rel="stylesheet" href="css/dist/batch-access.bundle.css?v=20260606-174915">
+
 </head>
+
 <body data-page="batch_access">
-  <header class="app-header container">
-    <div class="header-leading">
-      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
-      <div>
-        <h1 id="accessPageTitle">สิทธิ์การเข้าถึง batch</h1>
-        <p class="muted" id="accessPageSubtitle">กำลังโหลดข้อมูล...</p>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="icon-btn" id="backBtn" type="button">←</button>
-      <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
-    </div>
-  </header>
+    <header class="app-header container">
+        <div class="header-leading">
+            <button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
+            <div>
+                <h1 id="accessPageTitle">สิทธิ์การเข้าถึง batch</h1>
+                <p class="muted" id="accessPageSubtitle">กำลังโหลดข้อมูล...</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="backBtn" type="button">←</button>
+            <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+        </div>
+    </header>
+    <main class="container page-body module-page-layout">
+        <section class="card-panel">
+            <div class="section-card-head">
+                <h3>จัดการสิทธิ์ของ batch นี้</h3>
+                <span class="badge-inline muted-badge" id="accessRoleBadge">กำลังโหลด</span>
+            </div>
+            <p class="muted" id="accessDescription">กำลังโหลดสิทธิ์ของ batch นี้...</p>
+            <div class="module-summary-grid" id="accessOwnerSummary"></div>
+        </section>
+        <section class="card-panel" id="accessAdminFormCard"></section>
+        <section class="card-panel">
+            <div class="section-card-head">
+                <h3>รายชื่อผู้มีสิทธิ์</h3>
+                <span class="badge-inline muted-badge" id="accessCountBadge">ยังไม่โหลด</span>
+            </div>
+            <div class="access-action-row access-action-row--single compact-top">
+                <button class="secondary-btn" id="accessLoadMembersBtn" type="button">แสดงรายชื่อผู้มีสิทธิ์</button>
+            </div>
+            <div class="access-member-list is-idle" id="accessMemberList">
+                <div class="empty-state">ยังไม่ได้ดึงข้อมูล</div>
+            </div>
+        </section>
+    </main>
+    <script defer src="js/dist/batch-access.bundle.js?v=20260606-174915"></script>
 
-  <main class="container page-body module-page-layout">
-    <section class="card-panel">
-      <div class="section-card-head">
-        <h3>จัดการสิทธิ์ของ batch นี้</h3>
-        <span class="badge-inline muted-badge" id="accessRoleBadge">กำลังโหลด</span>
-      </div>
-      <p class="muted" id="accessDescription">กำลังโหลดสิทธิ์ของ batch นี้...</p>
-      <div id="accessOwnerSummary" class="module-summary-grid"></div>
-    </section>
-
-    <section class="card-panel" id="accessAdminFormCard"></section>
-
-    <section class="card-panel">
-      <div class="section-card-head">
-        <h3>รายชื่อผู้มีสิทธิ์</h3>
-        <span class="badge-inline muted-badge" id="accessCountBadge">ยังไม่โหลด</span>
-      </div>
-      <div class="access-action-row access-action-row--single compact-top">
-        <button type="button" class="secondary-btn" id="accessLoadMembersBtn">แสดงรายชื่อผู้มีสิทธิ์</button>
-      </div>
-      <div id="accessMemberList" class="access-member-list is-idle">
-        <div class="empty-state">ยังไม่ได้ดึงข้อมูล</div>
-      </div>
-    </section>
-  </main>
-  <script src="dist/js/batch-access.bundle.js?v=20260528051222" defer></script>
 </body>
+
 </html>

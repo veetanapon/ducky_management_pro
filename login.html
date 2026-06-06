@@ -1,36 +1,39 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    name="viewport" />
   <title>Login | Ducky Management Pro</title>
-  <link rel="stylesheet" href="dist/css/login.bundle.css?v=20260528051226" />
+  <link rel="stylesheet" href="css/dist/login.bundle.css?v=20260606-174915">
 </head>
+
 <body class="dm-login-page">
   <main class="dm-login-shell">
-    <section class="dm-login-card" aria-labelledby="loginTitle">
+    <section aria-labelledby="loginTitle" class="dm-login-card">
       <header class="dm-login-header">
-        <span id="loginTitle" class="dm-login-title">เข้าสู่ระบบ</span>
+        <span class="dm-login-title" id="loginTitle">เข้าสู่ระบบ</span>
       </header>
-
-      <form id="loginForm" class="dm-login-form">
+      <form class="dm-login-form" id="loginForm">
         <p class="dm-login-note">กรอกอีเมลเพื่อเข้าใช้งาน</p>
-        <input class="dm-login-input" type="email" id="email" placeholder="your@email.com" autocomplete="email" required />
-        <input class="dm-login-input dm-hidden" type="text" id="deviceName" placeholder="ชื่ออุปกรณ์ (ไม่บังคับ)" autocomplete="off" />
+        <input autocomplete="email" class="dm-login-input" id="email" placeholder="your@email.com" required=""
+          type="email" />
+        <input autocomplete="off" class="dm-login-input dm-hidden" id="deviceName" placeholder="ชื่ออุปกรณ์ (ไม่บังคับ)"
+          type="text" />
         <button class="dm-login-submit" id="submitLogin" type="submit">เข้าสู่ระบบ</button>
-        <p id="status" class="dm-login-status"></p>
+        <p class="dm-login-status" id="status"></p>
       </form>
     </section>
   </main>
-
-
-
-
-<script>
+  <script>
     window.addEventListener('DOMContentLoaded', () => {
       AppAuth.bootstrapLoginPage();
     });
   </script>
-  <script src="dist/js/login.bundle.js?v=20260528051222" defer></script>
+  <script defer src="js/dist/login.bundle.js?v=20260606-174915"></script>
+
 </body>
+
 </html>

@@ -1,0 +1,86 @@
+/* DuckyUI shared helpers: toast/loading. Safe to import globally; UI appears only when js/core/ducky-ui.js is loaded. */
+.ducky-toast-root {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 3000;
+  display: grid;
+  gap: 8px;
+  width: min(360px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.ducky-toast {
+  pointer-events: auto;
+  transform: translateY(8px);
+  opacity: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft, rgba(15, 23, 42, .12));
+  background: var(--bg-card, #fff);
+  color: var(--text-main, #111827);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, .12);
+  font-size: 12.5px;
+  line-height: 1.45;
+  font-weight: 750;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.ducky-toast.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.ducky-toast--success {
+  border-color: color-mix(in srgb, var(--primary, #0f766e) 36%, var(--border-soft, rgba(15,23,42,.12)));
+  background: color-mix(in srgb, var(--primary, #0f766e) 8%, var(--bg-card, #fff));
+  color: color-mix(in srgb, var(--primary, #0f766e) 84%, #111827);
+}
+
+.ducky-toast--error {
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 38%, var(--border-soft, rgba(15,23,42,.12)));
+  background: color-mix(in srgb, var(--danger, #ef4444) 8%, var(--bg-card, #fff));
+  color: #b91c1c;
+}
+
+.ducky-toast--warning {
+  border-color: color-mix(in srgb, var(--warning, #f59e0b) 42%, var(--border-soft, rgba(15,23,42,.12)));
+  background: color-mix(in srgb, var(--warning, #f59e0b) 10%, var(--bg-card, #fff));
+  color: #92400e;
+}
+
+.ducky-toast--info {
+  border-color: color-mix(in srgb, var(--text-sub, #64748b) 25%, var(--border-soft, rgba(15,23,42,.12)));
+  background: color-mix(in srgb, var(--bg-soft, #f8fafc) 72%, var(--bg-card, #fff));
+}
+
+.ducky-loading {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  color: var(--text-sub, #64748b);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ducky-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--text-sub, #64748b) 20%, transparent);
+  border-top-color: var(--primary, #0f766e);
+  animation: ducky-spin .7s linear infinite;
+}
+
+@keyframes ducky-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 520px) {
+  .ducky-toast-root {
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    width: calc(100vw - 24px);
+  }
+}

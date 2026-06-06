@@ -1,0 +1,104 @@
+/* ===== Bill preview mobile alignment fix ===== */
+#billPreviewSheet .bill-preview-panel,
+#saleRangePreviewSheet .bill-preview-panel {
+  width: min(100dvw, 520px);
+  max-width: min(100dvw, 520px);
+  overflow-x: hidden;
+}
+
+#billPreviewSheet .bill-preview-body,
+#saleRangePreviewSheet .bill-preview-body {
+  align-items: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right));
+}
+
+#billPreviewImage,
+#saleRangePreviewImage,
+.bill-preview-image {
+  display: block;
+  inline-size: min(100%, 360px);
+  width: min(100%, 360px);
+  max-inline-size: 100%;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center center;
+  margin-inline: auto;
+}
+
+#billPreviewMeta,
+#saleRangePreviewMeta {
+  width: 100%;
+  max-width: 360px;
+  margin-inline: auto;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 380px) {
+  #billPreviewImage,
+  #saleRangePreviewImage,
+  .bill-preview-image,
+  #billPreviewMeta,
+  #saleRangePreviewMeta {
+    max-width: calc(100dvw - 32px);
+  }
+}
+
+
+/* Sale module visual alignment */
+body[data-module="sale_manage"] #billPreviewSheet .bill-preview-panel,
+body[data-module="sale_manage"] #saleRangePreviewSheet .bill-preview-panel {
+  border-radius: 10px 10px 0 0 !important;
+}
+
+
+/* ===== Bill preview footer actions =====
+   Shared footer pattern: save full row, edit/confirm on the second row. */
+#billPreviewSheet .bill-preview-footer-actions,
+#billPreviewSheet .sheet-footer--triple {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 0 !important;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom)) !important;
+  border-top: 1px solid var(--border-soft) !important;
+  background: var(--bg-card) !important;
+}
+
+#billPreviewSheet .bill-preview-footer-actions > button,
+#billPreviewSheet .sheet-footer--triple > button {
+  min-height: 46px !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: 1px solid var(--border-soft) !important;
+  margin: 0 !important;
+  width: 100% !important;
+  font-weight: 950 !important;
+}
+
+#billPreviewSheet #billDownloadBtn {
+  grid-column: 1 / -1 !important;
+  border-radius: 8px 8px 0 0 !important;
+  background: color-mix(in srgb, #2563eb 10%, var(--bg-card)) !important;
+  color: #1d4ed8 !important;
+  border-color: color-mix(in srgb, #2563eb 30%, var(--border-soft)) !important;
+}
+
+#billPreviewSheet #billBackToEditBtn {
+  border-top: 0 !important;
+  border-radius: 0 0 0 8px !important;
+  background: color-mix(in srgb, #f59e0b 12%, var(--bg-card)) !important;
+  color: #92400e !important;
+  border-color: color-mix(in srgb, #f59e0b 30%, var(--border-soft)) !important;
+}
+
+#billPreviewSheet #billConfirmBtn {
+  border-top: 0 !important;
+  border-left: 0 !important;
+  border-radius: 0 0 8px 0 !important;
+  background: #111827 !important;
+  color: #fff !important;
+  border-color: #111827 !important;
+}

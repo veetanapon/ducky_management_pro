@@ -1,0 +1,210 @@
+/* ==========================================================================
+   Ducky Management Pro - Shared border primitives
+   --------------------------------------------------------------------------
+   This file is a pattern layer, not a theme reset.
+
+   Keep it narrow:
+   - shared grids/lists that are deliberately made from multiple cells
+   - common summary/menu/action patterns that really use shared borders
+
+   Do not normalize every .card-panel or complex form card here. Complex cards
+   such as sale-item-card, feed-entry-row, pre-feed-card must stay in module CSS.
+   ========================================================================== */
+
+:root {
+  --dm-radius: var(--tw-radius-shared, 8px);
+  --dm-radius-sm: var(--tw-radius-shared-sm, 6px);
+  --dm-cell-pad-y: 10px;
+  --dm-cell-pad-x: 12px;
+  --dm-border: var(--border-soft, #e4e4e7);
+  --dm-surface: var(--bg-card, #ffffff);
+  --dm-soft: var(--bg-soft, #f8fafc);
+  --dm-text: var(--text-main, #111827);
+  --dm-muted: var(--text-sub, #6b7280);
+  --dm-green: var(--primary, #0f766e);
+  --dm-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+}
+
+/* Explicit utilities for new/future markup. */
+.dm-shared-grid,
+.dm-shared-list,
+.dm-action-grid,
+.dm-segmented {
+  border: 1px solid var(--dm-border);
+  border-radius: var(--dm-radius);
+  background: var(--dm-surface);
+  overflow: hidden;
+  box-shadow: var(--dm-shadow);
+}
+
+.dm-shared-grid { display: grid; gap: 0; }
+.dm-shared-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dm-shared-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dm-shared-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dm-shared-cell,
+.dm-action-cell,
+.dm-segmented > button {
+  min-width: 0;
+  padding: var(--dm-cell-pad-y) var(--dm-cell-pad-x);
+  border: 0;
+  border-right: 1px solid var(--dm-border);
+  border-bottom: 1px solid var(--dm-border);
+  background: transparent;
+  box-shadow: none;
+}
+.dm-shared-grid > :nth-child(1),
+.dm-shared-grid > :nth-child(2),
+.dm-shared-grid > :nth-child(3),
+.dm-shared-grid > :nth-child(4) { min-width: 0; }
+.dm-shared-list { display: grid; gap: 0; }
+.dm-shared-list > * {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid var(--dm-border) !important;
+  background: var(--dm-surface) !important;
+}
+.dm-shared-list > *:last-child { border-bottom: 0 !important; }
+.dm-segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}
+.dm-segmented > button {
+  min-height: 40px;
+  border-bottom: 0;
+  font-weight: 800;
+  color: var(--dm-muted);
+}
+.dm-segmented > button:last-child { border-right: 0; }
+.dm-segmented > button.is-active,
+.dm-segmented > button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--dm-green) 8%, var(--dm-surface));
+  color: color-mix(in srgb, var(--dm-green) 86%, var(--dm-text));
+}
+
+/* Common summary grids. This is intentionally limited to the summary grid
+   pattern and does not touch generic card-panel/section-card. */
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .summary-grid-3.feed-order-summary-grid,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .summary-grid-2.feed-order-summary-grid {
+  display: grid;
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--dm-border);
+  border-radius: var(--dm-radius);
+  background: var(--dm-surface);
+  box-shadow: var(--dm-shadow);
+}
+
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--2,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .summary-grid-2.feed-order-summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--3,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid:not(.module-summary-grid--2):not(.module-summary-grid--single),
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .summary-grid-3.feed-order-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--single {
+  grid-template-columns: 1fr;
+}
+
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-card,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .feed-order-summary-card {
+  min-width: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-right: 1px solid var(--dm-border) !important;
+  border-bottom: 1px solid var(--dm-border) !important;
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid > :nth-child(3n),
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .summary-grid-3.feed-order-summary-grid > :nth-child(3n) { border-right: 0 !important; }
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--2 > :nth-child(2n),
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .summary-grid-2.feed-order-summary-grid > :nth-child(2n) { border-right: 0 !important; }
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid > :nth-last-child(-n + 3),
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .summary-grid-3.feed-order-summary-grid > :nth-last-child(-n + 3) { border-bottom: 0 !important; }
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--2 > :nth-last-child(-n + 2),
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .summary-grid-2.feed-order-summary-grid > :nth-last-child(-n + 2) { border-bottom: 0 !important; }
+
+/* Batch dashboard hero/menu shared-border. */
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .hero-meta-grid,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-card-grid--menu {
+  display: grid;
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--dm-border);
+  border-radius: var(--dm-radius);
+  background: var(--dm-surface);
+  box-shadow: var(--dm-shadow);
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .hero-meta-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-card-grid--menu {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .hero-meta,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-card-grid--menu > .module-card {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-right: 1px solid var(--dm-border) !important;
+  border-bottom: 1px solid var(--dm-border) !important;
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .hero-meta-grid > :nth-child(2n),
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-card-grid--menu > :nth-child(2n) { border-right: 0 !important; }
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .hero-meta-grid > :nth-last-child(-n + 2),
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-card-grid--menu > :nth-last-child(-n + 2) { border-bottom: 0 !important; }
+
+/* Segmented controls that are already segmented in markup. */
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .feed-order-segmented,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sale-type-toggle {
+  display: grid;
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--dm-border);
+  border-radius: var(--dm-radius);
+  background: var(--dm-surface);
+  box-shadow: var(--dm-shadow);
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .feed-order-segmented button,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sale-type-toggle button {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-right: 1px solid var(--dm-border) !important;
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .feed-order-segmented button:last-child,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sale-type-toggle button:last-child { border-right: 0 !important; }
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .feed-order-segmented button.is-active,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sale-type-toggle button.is-active {
+  background: color-mix(in srgb, var(--dm-green) 8%, var(--dm-surface)) !important;
+  color: color-mix(in srgb, var(--dm-green) 86%, var(--dm-text)) !important;
+}
+
+/* Sheet footer can share border safely; sheet internals remain page-specific. */
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer--dual,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer--triple,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer-row {
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--dm-border);
+  border-radius: var(--dm-radius);
+  background: var(--dm-surface);
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer--dual > button,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer--triple > button,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer-row > button {
+  border-radius: 0 !important;
+  border: 0 !important;
+  border-right: 1px solid var(--dm-border) !important;
+  box-shadow: none !important;
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer--dual > button:last-child,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer--triple > button:last-child,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer-row > button:last-child { border-right: 0 !important; }

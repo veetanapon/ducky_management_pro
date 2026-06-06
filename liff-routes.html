@@ -1,75 +1,81 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <title>จัดการลิงก์ LIFF | Ducky Management Pro</title>
-  <link rel="stylesheet" href="dist/css/liff-routes.bundle.css?v=20260528051226" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+        name="viewport" />
+    <title>จัดการลิงก์ LIFF | Ducky Management Pro</title>
+    <link rel="stylesheet" href="css/dist/liff-routes.bundle.css?v=20260606-174915">
+
 </head>
+
 <body data-page="liff_routes">
-  <header class="app-header container">
-    <div class="header-leading">
-      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
-      <div>
-        <h1>จัดการลิงก์ LIFF</h1>
-        <p class="muted" id="liffRoutesSubtitle">กำลังโหลดข้อมูล...</p>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="icon-btn" id="backBtn" type="button">←</button>
-      <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
-    </div>
-  </header>
-
-  <main class="container page-body module-page-layout">
-    <section class="card-panel module-page-intro">
-      <div class="section-card-head">
-        <h3>ลิงก์สำหรับลูกน้องกรอกข้อมูล</h3>
-        <span class="badge-inline muted-badge" id="liffRoutesPermissionBadge">กำลังโหลด</span>
-      </div>
-      <p class="muted" id="liffRoutesHint">ใช้ route_key ผูกลิงก์ LIFF เข้ากับ batch นี้ เพื่อไม่ให้ลูกน้องเลือก batch เอง</p>
-    </section>
-
-    <section class="card-panel" id="liffRouteEditorCard">
-      <div class="section-card-head">
-        <h3 id="liffRouteEditorTitle">สร้างลิงก์ใหม่</h3>
-        <button type="button" class="secondary-btn small-btn" id="newLiffRouteBtn">เริ่มใหม่</button>
-      </div>
-      <form id="liffRouteForm" class="form-stack">
-        <input type="hidden" id="liffRouteId" />
-        <label class="field-label">ชื่อ/คำอธิบายลิงก์</label>
-        <input type="text" id="liffRouteName" placeholder="เช่น โรงเรือนเป็ด 1 / กลุ่มลูกน้องเช้า" required />
-        <label class="field-label">route_key</label>
-        <div class="grid-2">
-          <input type="text" id="liffRouteKey" placeholder="rt_xxxxxxxxxxxxxxxx" required />
-          <button type="button" class="secondary-btn" id="generateRouteKeyBtn">สุ่ม key</button>
+    <header class="app-header container">
+        <div class="header-leading">
+            <button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
+            <div>
+                <h1>จัดการลิงก์ LIFF</h1>
+                <p class="muted" id="liffRoutesSubtitle">กำลังโหลดข้อมูล...</p>
+            </div>
         </div>
-        <label class="field-label">LINE group/user ID สำหรับแจ้งเตือน</label>
-        <input type="text" id="liffLineToId" placeholder="เช่น Cxxxxxxxxxxxxxxxx หรือ Uxxxxxxxxxxxxxxxx" />
-        <div class="inline-note">ใส่ groupId ของกลุ่ม LINE ที่ต้องการให้ bot ส่ง badge บันทึกสำเร็จ วันละ 1 ครั้ง</div>
+        <div class="header-actions">
+            <button class="icon-btn" id="backBtn" type="button">←</button>
+            <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
+        </div>
+    </header>
+    <main class="container page-body module-page-layout">
+        <section class="card-panel module-page-intro" style="display:none">
+            <div class="section-card-head">
+                <h3>ลิงก์สำหรับลูกน้องกรอกข้อมูล</h3>
+                <span class="badge-inline muted-badge" id="liffRoutesPermissionBadge">กำลังโหลด</span>
+            </div>
+            <p class="muted" id="liffRoutesHint">ใช้ route_key ผูกลิงก์ LIFF เข้ากับ batch นี้ เพื่อไม่ให้ลูกน้องเลือก
+                batch เอง</p>
+        </section>
+        <section class="card-panel" id="liffRouteEditorCard">
+            <div class="section-card-head">
+                <h3 id="liffRouteEditorTitle">สร้างลิงก์ใหม่</h3>
+                <button class="secondary-btn small-btn" id="newLiffRouteBtn" type="button">เริ่มใหม่</button>
+            </div>
+            <form class="form-stack" id="liffRouteForm">
+                <input id="liffRouteId" type="hidden" />
+                <label class="field-label">ชื่อ/คำอธิบายลิงก์</label>
+                <input id="liffRouteName" placeholder="เช่น โรงเรือนเป็ด 1 / กลุ่มลูกน้องเช้า" required=""
+                    type="text" />
+                <label class="field-label">route_key</label>
+                <div class="grid-2">
+                    <input id="liffRouteKey" placeholder="rt_xxxxxxxxxxxxxxxx" required="" type="text" />
+                    <button class="secondary-btn" id="generateRouteKeyBtn" type="button">สุ่ม key</button>
+                </div>
+                <label class="field-label">LINE group/user ID สำหรับแจ้งเตือน</label>
+                <input id="liffLineToId" placeholder="เช่น Cxxxxxxxxxxxxxxxx หรือ Uxxxxxxxxxxxxxxxx" type="text" />
+                <div class="inline-note">ใส่ groupId ของกลุ่ม LINE ที่ต้องการให้ bot ส่ง badge บันทึกสำเร็จ วันละ 1
+                    ครั้ง</div>
+                <label class="field-label">หมายเหตุ</label>
+                <textarea id="liffRouteRemark" placeholder="optional" rows="2"></textarea>
+                <label class="liff-route-toggle-row field-label">
+                    <input checked="" id="liffRouteActive" type="checkbox" />
+                    <span>เปิดใช้งานลิงก์นี้</span>
+                </label>
+                <div class="inline-note">ระบบจะส่ง LINE เมื่อบันทึกสำเร็จแบบอัตโนมัติวันละ 1 ครั้งต่อ route ถ้ามีการใส่
+                    LINE group/user ID ส่วน error จะส่งเมลหา admin ของระบบเท่านั้น</div>
+                <button id="saveLiffRouteBtn" type="submit">บันทึกลิงก์</button>
+            </form>
+        </section>
+        <section class="card-panel">
+            <div class="section-card-head">
+                <h3>ลิงก์ที่ผูกกับ batch นี้</h3>
+                <span class="badge-inline muted-badge" id="liffRouteCountBadge">0 รายการ</span>
+            </div>
+            <div class="price-set-list" id="liffRouteList">
+                <div class="empty-state">กำลังโหลด...</div>
+            </div>
+        </section>
+    </main>
+    <script defer src="js/dist/liff-routes.bundle.js?v=20260606-174915"></script>
 
-        <label class="field-label">หมายเหตุ</label>
-        <textarea id="liffRouteRemark" rows="2" placeholder="optional"></textarea>
-
-        <label class="liff-route-toggle-row field-label">
-          <input type="checkbox" id="liffRouteActive" checked />
-          <span>เปิดใช้งานลิงก์นี้</span>
-        </label>
-        <div class="inline-note">ระบบจะส่ง LINE เมื่อบันทึกสำเร็จแบบอัตโนมัติวันละ 1 ครั้งต่อ route ถ้ามีการใส่ LINE group/user ID ส่วน error จะส่งเมลหา admin ของระบบเท่านั้น</div>
-        <button type="submit" id="saveLiffRouteBtn">บันทึกลิงก์</button>
-      </form>
-    </section>
-
-    <section class="card-panel">
-      <div class="section-card-head">
-        <h3>ลิงก์ที่ผูกกับ batch นี้</h3>
-        <span class="badge-inline muted-badge" id="liffRouteCountBadge">0 รายการ</span>
-      </div>
-      <div id="liffRouteList" class="price-set-list">
-        <div class="empty-state">กำลังโหลด...</div>
-      </div>
-    </section>
-  </main>
-  <script src="dist/js/liff-routes.bundle.js?v=20260528051222" defer></script>
 </body>
+
 </html>

@@ -1,0 +1,140 @@
+/* ==========================================================================
+   Ducky Management Pro - Tailwind v4.3 theme bridge
+   --------------------------------------------------------------------------
+   This file is intentionally conservative.
+
+   It is NOT a second page layout system and it must not force every card,
+   sheet, button, grid, or list into a new shape. The stable page look comes
+   from base/components + cursor-theme + page module CSS.
+
+   Use this file only for:
+   - global design tokens
+   - small Supabase-style color/radius variables
+   - mobile control/date input guards
+   - FAB circular guard
+   - harmless focus/selection defaults
+
+   Do not put shared-border layout primitives here. Those belong in
+   css/core/shared-border.css.
+
+   Excluded by design:
+   - report-view.html
+   - liff-worker.html
+   - login.html
+   ========================================================================== */
+
+:root {
+  --tw-bg: #f7f7f8;
+  --tw-surface: #ffffff;
+  --tw-card: #ffffff;
+  --tw-muted: #f3f4f6;
+  --tw-muted-2: #eef2f7;
+  --tw-border: #e4e4e7;
+  --tw-border-soft: #eeeeef;
+  --tw-text: #111113;
+  --tw-sub: #71717a;
+  --tw-primary: #111113;
+  --tw-primary-contrast: #ffffff;
+  --tw-accent: #3ecf8e;
+  --tw-accent-strong: #0f9f72;
+  --tw-accent-soft: #eafbf4;
+  --tw-danger: #ef4444;
+  --tw-danger-soft: #fef2f2;
+  --tw-warning: #f59e0b;
+  --tw-warning-soft: #fffbeb;
+  --tw-success: #10b981;
+  --tw-success-soft: #ecfdf5;
+  --tw-blue: #2563eb;
+  --tw-blue-soft: #eff6ff;
+  --tw-ring: rgba(62, 207, 142, .22);
+
+  /* Keep old page proportions. These are tokens, not forced global layout. */
+  --tw-radius-card: var(--radius-lg, 22px);
+  --tw-radius-control: var(--radius-sm, 12px);
+  --tw-radius-shared: 8px;
+  --tw-radius-shared-sm: 6px;
+  --tw-shadow-card: var(--shadow-sm, 0 1px 2px rgba(15, 23, 42, .04));
+}
+
+.theme-dark {
+  --tw-bg: #09090b;
+  --tw-surface: #111113;
+  --tw-card: #111113;
+  --tw-muted: #18181b;
+  --tw-muted-2: #1f2937;
+  --tw-border: #27272a;
+  --tw-border-soft: #222226;
+  --tw-text: #f4f4f5;
+  --tw-sub: #a1a1aa;
+  --tw-primary: #f4f4f5;
+  --tw-primary-contrast: #09090b;
+  --tw-ring: rgba(62, 207, 142, .28);
+}
+
+/* Token aliases consumed by shared-border.css and newer modules. */
+:root {
+  --dm-bg: var(--bg-app, var(--tw-bg));
+  --dm-surface: var(--bg-card, var(--tw-card));
+  --dm-soft: var(--bg-soft, var(--tw-muted));
+  --dm-border: var(--border-soft, var(--tw-border));
+  --dm-border-soft: color-mix(in srgb, var(--dm-border) 74%, transparent);
+  --dm-text: var(--text-main, var(--tw-text));
+  --dm-muted: var(--text-sub, var(--tw-sub));
+  --dm-green: var(--primary, var(--tw-accent-strong));
+  --dm-green-soft: color-mix(in srgb, var(--dm-green) 9%, var(--dm-surface));
+  --dm-red: var(--danger, var(--tw-danger));
+  --dm-amber: var(--warning, var(--tw-warning));
+  --dm-blue: var(--tw-blue);
+  --dm-radius: var(--tw-radius-shared);
+  --dm-radius-sm: var(--tw-radius-shared-sm);
+  --dm-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+}
+
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page),
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) button,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) input,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) select,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) textarea {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Thai", "Noto Sans", Arial, sans-serif;
+}
+
+/* Focus guard: consistent, but does not reshape controls. */
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) input:focus,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) select:focus,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--primary, #111113) 34%, var(--border-soft, #e4e4e7));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #111113) 10%, transparent);
+}
+
+/* Date input mobile guard only. This fixes iOS/Android height collapse without
+   changing layout or card style. */
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) input[type="date"] {
+  min-height: 44px;
+  height: 44px;
+  max-height: 44px;
+  line-height: 44px;
+  font-size: 16px;
+  padding-block: 0;
+}
+
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) input[type="date"]::-webkit-date-and-time-value {
+  min-height: 44px;
+  line-height: 44px;
+  text-align: inherit;
+}
+
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) input[type="date"]::-webkit-calendar-picker-indicator {
+  min-width: 20px;
+  min-height: 20px;
+}
+
+/* Main FAB must stay circular even if page/module button styles change. */
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .fab,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-fab-main,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .fab-radial__main.fab,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .feed-order-fab {
+  border-radius: 9999px !important;
+  aspect-ratio: 1 / 1 !important;
+  overflow: hidden !important;
+}

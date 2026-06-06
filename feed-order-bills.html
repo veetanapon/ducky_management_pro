@@ -1,75 +1,69 @@
 <!DOCTYPE html>
+
 <html lang="th">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>บิลอาหารกลาง | Ducky Management Pro</title>
-  <link rel="stylesheet" href="dist/css/feed-order-bills.bundle.css?v=20260528051226" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+        name="viewport" />
+    <title>บิลอาหารกลาง | Ducky Management Pro</title>
+    <link rel="stylesheet" href="css/dist/feed-order-bills.bundle.css?v=20260606-174915">
+
 </head>
 
 <body data-page="feed_order_bills">
-  <header class="app-header container feed-order-header">
-    <button class="icon-btn hamburger-btn" id="menuBtn" data-nav-toggle type="button" aria-label="เปิดเมนู">☰</button>
-
-    <div class="app-title-block">
-      <h1>บิลอาหารกลาง</h1>
-      <p id="feedOrderSubtitle">กำลังโหลดข้อมูล...</p>
-    </div>
-
-    <button class="icon-btn" id="backBtn" type="button" aria-label="ย้อนกลับ">←</button>
-    <button class="icon-btn" id="logoutBtn" type="button" aria-label="ออกจากระบบ" title="ออกจากระบบ">⎋</button>
-  </header>
-
-  <main class="container page-body feed-order-page">
-    <section class="card-panel feed-order-hero">
-      <div class="feed-order-hero__top">
-        <div class="feed-order-hero-copy">
-          <h2>จัดการบิลการสั่งอาหารกลาง</h2>
+    <header class="app-header container feed-order-header">
+        <button aria-label="เปิดเมนู" class="icon-btn hamburger-btn" data-nav-toggle="" id="menuBtn"
+            type="button">☰</button>
+        <div class="app-title-block">
+            <h1>บิลอาหารกลาง</h1>
+            <p id="feedOrderSubtitle">กำลังโหลดข้อมูล...</p>
         </div>
-        <span class="feed-order-badge">Central Feed</span>
-      </div>
-
-      <div class="feed-order-hero__actions">
-        <button type="button" class="btn feed-order-primary-action" id="openLotBtn">
-          <span class="btn-plus">+</span>
-          <span>เพิ่มล็อตอาหาร</span>
+        <button aria-label="ย้อนกลับ" class="icon-btn" id="backBtn" type="button">←</button>
+        <button aria-label="ออกจากระบบ" class="icon-btn" id="logoutBtn" title="ออกจากระบบ" type="button">⎋</button>
+    </header>
+    <main class="container page-body feed-order-page">
+        <section class="card-panel feed-order-hero">
+            <div class="feed-order-hero__top">
+                <div class="feed-order-hero-copy">
+                    <h2>จัดการบิลการสั่งอาหารกลาง</h2>
+                </div>
+                <span class="feed-order-badge">Central Feed</span>
+            </div>
+            <div class="feed-order-hero__actions" aria-label="เครื่องมือบิลอาหารกลาง">
+                <button class="btn feed-order-primary-action" id="openLotBtn" type="button">
+                    <span class="btn-plus">+</span>
+                    <span>เพิ่มล็อตอาหาร</span>
+                </button>
+                <button class="btn feed-order-refresh-action" id="reloadBtn" type="button">
+                    <i aria-hidden="true" class="refresh-icon">↻</i>
+                    <span>โหลดใหม่</span>
+                </button>
+            </div>
+        </section>
+        <section aria-label="สรุปบิลอาหารกลาง" class="summary-grid-3 feed-order-summary-grid" id="feedOrderSummary">
+        </section>
+        <button class="btn feed-order-bulk-pay-action" id="openBulkPaymentBtn" type="button">
+            <span>จ่ายยอดรวม</span>
         </button>
-        <button type="button" class="btn feed-order-refresh-action" id="reloadBtn">
-          <i class="refresh-icon" aria-hidden="true">↻</i>
-          <span>โหลดใหม่</span>
-        </button>
-      </div>
-    </section>
+        <section class="card-panel feed-order-list-section">
+            <div class="feed-order-list-head">
+                <h2>รายการบิลอาหาร</h2>
+                <span class="feed-order-filter-hint" id="feedOrderFilterHint">0 รายการ</span>
+            </div>
+            <div aria-label="ตัวกรองสถานะบิล" class="feed-order-segmented" role="tablist">
+                <button class="is-active" data-feed-order-filter="pending" type="button">ยังค้างจ่าย</button>
+                <button data-feed-order-filter="all" type="button">ทั้งหมด</button>
+                <button data-feed-order-filter="cleared" type="button">เคลียร์แล้ว</button>
+            </div>
+            <div class="feed-order-list" id="feedOrderList">
+                <div class="feed-order-empty">กำลังโหลด...</div>
+            </div>
+        </section>
+    </main>
+    <button aria-label="เพิ่มล็อตอาหาร" class="feed-order-fab" id="feedOrderFab" type="button">+</button>
+    <script defer src="js/dist/feed-order-bills.bundle.js?v=20260606-174915"></script>
 
-    <section id="feedOrderSummary" class="summary-grid-3 feed-order-summary-grid" aria-label="สรุปบิลอาหารกลาง">
-    </section>
-
-    <button type="button" class="btn feed-order-bulk-pay-action" id="openBulkPaymentBtn">
-      <span>จ่ายยอดรวม</span>
-    </button>
-
-    <section class="card-panel feed-order-list-section">
-      <div class="feed-order-list-head">
-        <h2>รายการบิลอาหาร</h2>
-        <span id="feedOrderFilterHint" class="feed-order-filter-hint">0 รายการ</span>
-      </div>
-
-      <div class="feed-order-segmented" role="tablist" aria-label="ตัวกรองสถานะบิล">
-        <button type="button" data-feed-order-filter="pending" class="is-active">ยังค้างจ่าย</button>
-        <button type="button" data-feed-order-filter="all">ทั้งหมด</button>
-        <button type="button" data-feed-order-filter="cleared">เคลียร์แล้ว</button>
-      </div>
-
-      <div class="feed-order-list" id="feedOrderList">
-        <div class="feed-order-empty">กำลังโหลด...</div>
-      </div>
-    </section>
-  </main>
-
-  <button id="feedOrderFab" class="feed-order-fab" type="button" aria-label="เพิ่มล็อตอาหาร">+</button>
-  <script src="dist/js/feed-order-bills.bundle.js?v=20260528051222" defer></script>
 </body>
 
 </html>

@@ -1,15 +1,20 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    name="viewport" />
   <title>Batch Dashboard | Ducky Management Pro</title>
-  <link rel="stylesheet" href="dist/css/batch.bundle.css?v=20260528051226" />
+  <link rel="stylesheet" href="css/dist/batch.bundle.css?v=20260606-174915">
+
 </head>
+
 <body data-page="batch_dashboard">
   <header class="app-header container">
     <div class="header-leading">
-      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="open menu">☰</button>
+      <button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
       <div>
         <h1 id="batchTitle">Batch Dashboard</h1>
         <p class="muted" id="batchSubtitle">กำลังโหลดข้อมูล...</p>
@@ -20,10 +25,9 @@
       <button class="icon-btn" id="logoutBtn" type="button">⎋</button>
     </div>
   </header>
-
   <main class="container page-body batch-dashboard-layout">
     <section class="detail-hero card-panel batch-dashboard-hero">
-      <img id="batchHeroImage" class="hero-image" alt="batch image" />
+      <img alt="batch image" class="hero-image" id="batchHeroImage" />
       <div class="hero-meta hero-meta-grid">
         <div><strong>ชนิด:</strong> <span id="batchSpecie"></span></div>
         <div><strong>สถานะ:</strong> <span id="batchStatus"></span></div>
@@ -32,9 +36,8 @@
         <div><strong>คงเหลือ:</strong> <span id="batchHeroQty"></span></div>
         <div><strong>ราคาอ้างอิง:</strong> <span id="batchHeroPrice"></span></div>
       </div>
-      <p id="batchRemark" class="muted"></p>
+      <p class="muted" id="batchRemark"></p>
     </section>
-
     <!-- <section class="card-panel module-intro-card">
       <div class="section-card-head">
         <h3>ภาพรวมโมดูล</h3>
@@ -42,9 +45,10 @@
       </div>
       <p class="muted">เลือกเมนูเพื่อเข้าไปจัดการ batch นี้ได้ทันที</p>
     </section> -->
-
-    <section id="moduleCards" class="module-card-grid module-card-grid--menu"></section>
+    <section class="module-card-grid module-card-grid--menu" id="moduleCards"></section>
   </main>
-  <script src="dist/js/batch.bundle.js?v=20260528051222" defer></script>
+  <script defer src="js/dist/batch.bundle.js?v=20260606-174915"></script>
+
 </body>
+
 </html>
