@@ -7,11 +7,11 @@
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
         name="viewport" />
     <title>คลังยา / วิตามิน | Ducky Management Pro</title>
-    <link rel="stylesheet" href="css/dist/module-medicine.bundle.css?v=20260606-174915">
+    <link rel="stylesheet" href="css/dist/module-medicine.bundle.css?v=20260813-095043">
 
 </head>
 
-<body data-page="medicine_manage">
+<body data-page="medicine_manage" class="dm-supabase-theme">
     <header class="app-header container">
         <div class="header-leading">
             <button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
@@ -37,6 +37,16 @@
             </div>
         </section>
         <section class="module-summary-grid module-summary-grid--3" id="medicineSummaryCards"></section>
+        <section class="card-panel medicine-low-stock-panel hidden" id="medicineLowStockPanel">
+            <div class="section-card-head">
+                <div>
+                    <h3>รายการใกล้หมด</h3>
+                    <p class="muted">แสดงรายการที่คงเหลือไม่เกิน 500 กรัม</p>
+                </div>
+                <button class="small-btn" id="medicineLowStockCloseBtn" type="button">ซ่อน</button>
+            </div>
+            <div class="medicine-low-stock-list" id="medicineLowStockList"></div>
+        </section>
         <section class="card-panel medicine-toolbar-card">
             <input id="medicineSearch" placeholder="ค้นหาชื่อยา วิตามิน หรือพรีมิกซ์..." type="search" />
             <div class="medicine-filter-row" id="medicineFilterRow">
@@ -52,7 +62,7 @@
                 <h3>รายการในคลัง</h3>
                 <span class="badge-inline muted-badge" id="medicineCountBadge">0 รายการ</span>
             </div>
-            <div class="medicine-list" id="medicineList">
+            <div class="medicine-list dm-shared-list" id="medicineList" aria-live="polite">
                 <div class="empty-state">กำลังโหลด...</div>
             </div>
         </section>
@@ -130,7 +140,7 @@
             </div>
         </div>
     </div>
-    <script defer src="js/dist/module-medicine.bundle.js?v=20260606-174915"></script>
+    <script defer src="js/dist/module-medicine.bundle.js?v=20260813-095043"></script>
 
 </body>
 

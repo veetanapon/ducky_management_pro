@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ducky-20260606-174915';
+const CACHE_NAME = 'ducky-20260813-095048';
 
 /* Ducky Management Pro service worker
    Strategy:
@@ -6,7 +6,7 @@ const CACHE_NAME = 'ducky-20260606-174915';
    - images/assets/fonts: cache-first for fast repeat loads
    - GAS/API requests are never cached
 */
-const SW_VERSION = 'ducky-v4-sw-batch-event-series-feed-claim-20260606-01';
+const SW_VERSION = 'ducky-v26-dynamic-line-bot-20260611-01';
 const STATIC_CACHE = `${SW_VERSION}:static`;
 const RUNTIME_CACHE = `${SW_VERSION}:runtime`;
 const SAME_ORIGIN = self.location.origin;

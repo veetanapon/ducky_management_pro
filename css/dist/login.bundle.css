@@ -199,3 +199,131 @@ body.dm-login-page {
 .dm-login-submit {
   background: var(--dm-primary);
 }
+
+
+/* v23 Login UI consistency
+   Login remains isolated from app.css, but visually follows the current minimal/no-shadow shell. */
+:root {
+  --dm-bg-app: #f7f7f7;
+  --dm-bg-card: #ffffff;
+  --dm-bg-soft: #fbfbfb;
+  --dm-border-soft: #e7e7e7;
+  --dm-text-main: #111111;
+  --dm-text-sub: #6b7280;
+  --dm-primary: #111111;
+  --dm-primary-dark: #000000;
+  --dm-green: #3ecf8e;
+  --dm-shadow-sm: none;
+  --dm-login-radius: 8px;
+  --dm-login-radius-sm: 6px;
+}
+
+body.dm-login-page {
+  place-items: center;
+  padding: max(10px, env(safe-area-inset-top)) 10px max(12px, env(safe-area-inset-bottom));
+  background:
+    linear-gradient(rgba(17, 17, 17, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 17, 17, .025) 1px, transparent 1px),
+    var(--dm-bg-app);
+  background-size: 24px 24px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.dm-login-shell {
+  max-width: 420px;
+  align-items: center !important;
+  justify-items: center;
+}
+
+body.dm-login-page .dm-login-shell {
+  align-self: center;
+}
+
+.dm-login-card {
+  border-radius: var(--dm-login-radius) !important;
+  box-shadow: none !important;
+  max-height: none;
+  border-color: var(--dm-border-soft);
+  background: color-mix(in srgb, var(--dm-bg-card) 97%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.dm-login-header {
+  padding: 14px 14px 10px;
+}
+
+.dm-login-title {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -.025em;
+}
+
+.dm-login-form {
+  padding: 12px 14px 14px;
+  gap: 8px;
+}
+
+.dm-login-note {
+  font-size: 13px;
+}
+
+.dm-login-input,
+.dm-login-submit {
+  min-height: 44px;
+  border-radius: var(--dm-login-radius-sm) !important;
+  box-shadow: none !important;
+}
+
+.dm-login-input {
+  background: var(--dm-bg-card);
+  border-color: var(--dm-border-soft);
+  padding: 10px 12px;
+}
+
+.dm-login-input:focus {
+  border-color: color-mix(in srgb, var(--dm-green) 52%, var(--dm-border-soft));
+  box-shadow: none !important;
+}
+
+.dm-login-submit {
+  background: var(--dm-primary) !important;
+  border: 1px solid var(--dm-primary);
+  padding: 10px 12px;
+}
+
+.dm-login-status {
+  min-height: 18px;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 420px) {
+  body.dm-login-page {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .dm-login-shell {
+    max-width: 100%;
+  }
+
+  .dm-login-card {
+    width: 100%;
+  }
+}
+
+@media (max-height: 520px) {
+  body.dm-login-page {
+    place-items: center;
+  }
+
+  .dm-login-header {
+    padding: 12px 12px 8px;
+  }
+
+  .dm-login-form {
+    padding: 10px 12px 12px;
+    gap: 7px;
+  }
+}

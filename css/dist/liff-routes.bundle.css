@@ -29,7 +29,7 @@
   --danger: #ef4444;
   --warning: #f59e0b;
   --info: #3b82f6;
-  --shadow-sm: 0 8px 24px rgba(15, 23, 42, .08);
+  --shadow-sm: none;
 }
 
 .theme-dark {
@@ -39,7 +39,7 @@
   --border-soft: #334155;
   --text-main: #e5e7eb;
   --text-sub: #94a3b8;
-  --shadow-sm: 0 8px 24px rgba(2, 6, 23, .32);
+  --shadow-sm: none;
 }
 
 * {
@@ -2708,7 +2708,7 @@ textarea:focus,
 }
 
 .module-summary-card {
-  min-height: 82px;
+  /* min-height: 82px; */
   align-content: space-between;
 }
 
@@ -3096,7 +3096,7 @@ body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .
   --dm-text: var(--text-main, #111827);
   --dm-muted: var(--text-sub, #6b7280);
   --dm-green: var(--primary, #0f766e);
-  --dm-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+  --dm-shadow: none;
 }
 
 /* Explicit utilities for new/future markup. */
@@ -3176,9 +3176,12 @@ body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--3,
-body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid:not(.module-summary-grid--2):not(.module-summary-grid--single),
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid:not(.module-summary-grid--2):not(.module-summary-grid--4):not(.module-summary-grid--single),
 body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .summary-grid-3.feed-order-summary-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--single {
   grid-template-columns: 1fr;
@@ -3229,8 +3232,9 @@ body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .
   border-right: 1px solid var(--dm-border) !important;
   border-bottom: 1px solid var(--dm-border) !important;
 }
-body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .hero-meta-grid > :nth-child(2n),
-body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-card-grid--menu > :nth-child(2n) { border-right: 0 !important; }
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .hero-meta-grid > :nth-child(2n)/*,
+body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-card-grid--menu > :nth-child(2n)  */
+{ border-right: 0 !important; }
 body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .hero-meta-grid > :nth-last-child(-n + 2),
 body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-card-grid--menu > :nth-last-child(-n + 2) { border-bottom: 0 !important; }
 
@@ -3282,6 +3286,19 @@ body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .
 body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer--dual > button:last-child,
 body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer--triple > button:last-child,
 body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .sheet-footer-row > button:last-child { border-right: 0 !important; }
+
+
+@media (max-width: 640px) {
+  body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--4 > :nth-child(2n) {
+    border-right: 0 !important;
+  }
+  body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .module-summary-grid--4 > :nth-last-child(-n + 2) {
+    border-bottom: 0 !important;
+  }
+}
 
 
 /* ===== import css/core/supabase-refactor.css ===== */
@@ -3425,6 +3442,287 @@ body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .
 }
 
 
+/* ===== import css/core/ui-consistency.css ===== */
+/* Ducky UI consistency guard v9
+   Small, low-risk fixes for mobile overflow and shared card rhythm. */
+body.dm-supabase-theme {
+  overflow-x: hidden;
+}
+body.dm-supabase-theme *,
+body.dm-supabase-theme *::before,
+body.dm-supabase-theme *::after {
+  box-sizing: border-box;
+}
+body.dm-supabase-theme .page-body,
+body.dm-supabase-theme .card-panel,
+body.dm-supabase-theme .section-card,
+body.dm-supabase-theme .dm-shared-grid,
+body.dm-supabase-theme .dm-shared-list {
+  min-width: 0;
+}
+body.dm-supabase-theme .card-panel,
+body.dm-supabase-theme .section-card {
+  border-radius: var(--dm-radius, 8px);
+  box-shadow: var(--dm-shadow, 0 1px 2px rgba(15,23,42,.04));
+}
+body.dm-supabase-theme .section-card-head,
+body.dm-supabase-theme .header-leading {
+  min-width: 0;
+}
+body.dm-supabase-theme .section-card-head h3,
+body.dm-supabase-theme .header-leading h1,
+body.dm-supabase-theme .header-leading .muted {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+body.dm-supabase-theme .badge-inline {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 640px) {
+  body.dm-supabase-theme .card-panel,
+  body.dm-supabase-theme .section-card {
+    border-radius: 8px;
+  }
+}
+
+
+/* v10: stable active nav + compact admin rhythm */
+.side-nav__item.active,
+.side-nav__item[aria-current="page"] {
+  font-weight: 900;
+}
+body.dm-supabase-theme .side-nav__item.active,
+body.dm-supabase-theme .side-nav__item[aria-current="page"] {
+  background: color-mix(in srgb, var(--dm-green, var(--primary)) 12%, var(--dm-surface, var(--bg-card)));
+  box-shadow: inset 3px 0 0 var(--dm-green, var(--primary));
+}
+body.dm-supabase-theme input,
+body.dm-supabase-theme select,
+body.dm-supabase-theme textarea {
+  min-width: 0;
+}
+
+
+/* v10.1 requested fixes: no shadow + full-width mobile header */
+body.dm-supabase-theme {
+  --dm-shadow: none;
+  --shadow-sm: none;
+}
+
+body.dm-supabase-theme .card-panel,
+body.dm-supabase-theme .section-card,
+body.dm-supabase-theme .module-summary-grid,
+body.dm-supabase-theme .dm-shared-grid,
+body.dm-supabase-theme .dm-shared-list,
+body.dm-supabase-theme .price-set-list,
+body.dm-supabase-theme .permission-card-grid,
+body.dm-supabase-theme .access-member-list,
+body.dm-supabase-theme .access-action-row,
+body.dm-supabase-theme .side-nav__item,
+body.dm-supabase-theme .icon-btn,
+body.dm-supabase-theme .fab {
+  box-shadow: none !important;
+}
+
+body.dm-supabase-theme .app-header.container {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-radius: 0 !important;
+}
+
+@media (max-width: 640px) {
+  body.dm-supabase-theme .app-header.container {
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
+  }
+}
+
+
+/* v11 global no-shadow + full-width app shell guard */
+body:not(.dm-login-page) {
+  overflow-x: hidden;
+}
+
+body:not(.dm-login-page) .app-header.container {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-radius: 0 !important;
+}
+
+body:not(.dm-login-page) .card-panel,
+body:not(.dm-login-page) .section-card,
+body:not(.dm-login-page) .module-summary-grid,
+body:not(.dm-login-page) .module-summary-card,
+body:not(.dm-login-page) .dm-shared-grid,
+body:not(.dm-login-page) .dm-shared-list,
+body:not(.dm-login-page) .dm-action-grid,
+body:not(.dm-login-page) .dm-segmented,
+body:not(.dm-login-page) .icon-btn,
+body:not(.dm-login-page) .fab,
+body:not(.dm-login-page) .module-fab-action,
+body:not(.dm-login-page) .side-nav,
+body:not(.dm-login-page) .side-nav__item,
+body:not(.dm-login-page) .sheet-panel,
+body:not(.dm-login-page) .price-set-card,
+body:not(.dm-login-page) .feed-order-card,
+body:not(.dm-login-page) .event-card,
+body:not(.dm-login-page) .medicine-card {
+  box-shadow: none !important;
+}
+
+body:not(.dm-login-page) .container,
+body:not(.dm-login-page) .page-body,
+body:not(.dm-login-page) .card-panel,
+body:not(.dm-login-page) .section-card,
+body:not(.dm-login-page) .section-card-head,
+body:not(.dm-login-page) .header-leading {
+  min-width: 0;
+}
+
+body:not(.dm-login-page) .header-leading h1,
+body:not(.dm-login-page) .header-leading .muted,
+body:not(.dm-login-page) .section-card-head h3,
+body:not(.dm-login-page) .section-card-head .muted {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  body:not(.dm-login-page) .app-header.container {
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
+  }
+}
+
+
+/* v12 extra no-shadow coverage for timeline/cards */
+body:not(.dm-login-page) .event-timeline-bubble,
+body:not(.dm-login-page) .event-card,
+body:not(.dm-login-page) .event-summary-card,
+body:not(.dm-login-page) .event-edit-link,
+body:not(.dm-login-page) .event-cost-pill,
+body:not(.dm-login-page) .event-type-pill {
+  box-shadow: none !important;
+}
+
+
+/* v13 extra no-shadow coverage for batch dashboard */
+body:not(.dm-login-page) .batch-dashboard-hero,
+body:not(.dm-login-page) .module-menu-card,
+body:not(.dm-login-page) .module-card-permission-icon,
+body:not(.dm-login-page) .hero-image,
+body:not(.dm-login-page) .hero-meta {
+  box-shadow: none !important;
+}
+
+
+/* v14 extra no-shadow coverage for batch manage calendar */
+body:not(.dm-login-page) .module-calendar-panel,
+body:not(.dm-login-page) .module-day,
+body:not(.dm-login-page) .module-entry-row,
+body:not(.dm-login-page) .movement-day-entry-row,
+body:not(.dm-login-page) .movement-day-entry-list {
+  box-shadow: none !important;
+}
+
+
+/* v15 extra no-shadow coverage for module calendar pages */
+body:not(.dm-login-page) .module-calendar-panel,
+body:not(.dm-login-page) .module-day,
+body:not(.dm-login-page) .module-entry-row,
+body:not(.dm-login-page) .feed-entry-row,
+body:not(.dm-login-page) .sale-item-card,
+body:not(.dm-login-page) .sale-range-summary-panel,
+body:not(.dm-login-page) .sale-prebill-panel {
+  box-shadow: none !important;
+}
+
+
+/* v15.1 user module-calendar CSS sync */
+body[data-page="module_calendar"] .module-calendar-nav,
+body[data-page="module_calendar"] .module-calendar-weekdays,
+body[data-page="module_calendar"] .module-calendar-grid,
+body[data-page="module_calendar"] .module-day {
+  box-shadow: none !important;
+}
+
+
+/* v16 extra no-shadow coverage for index batch list */
+body:not(.dm-login-page) .index-filter-panel,
+body:not(.dm-login-page) .index-status-toggle,
+body:not(.dm-login-page) .swipe-wrap,
+body:not(.dm-login-page) .batch-card,
+body:not(.dm-login-page) .batch-thumb,
+body:not(.dm-login-page) .batch-status-pill {
+  box-shadow: none !important;
+}
+
+
+/* v16.1 no-shadow coverage for index notice/swipe actions */
+body:not(.dm-login-page) .batch-notice-pill,
+body:not(.dm-login-page) .swipe-actions,
+body:not(.dm-login-page) .swipe-btn {
+  box-shadow: none !important;
+}
+
+
+/* v17 extra no-shadow coverage for report page */
+body:not(.dm-login-page) .report-hero,
+body:not(.dm-login-page) .report-toolbar,
+body:not(.dm-login-page) .report-panel,
+body:not(.dm-login-page) .report-summary-card,
+body:not(.dm-login-page) .report-tab,
+body:not(.dm-login-page) .report-month-page-btn,
+body:not(.dm-login-page) .report-chart-card,
+body:not(.dm-login-page) .report-chart-wrap,
+body:not(.dm-login-page) .report-fullscreen-toolbar,
+body:not(.dm-login-page) .report-full-table-wrap {
+  box-shadow: none !important;
+}
+
+
+/* v19 extra no-shadow coverage for batch access */
+body:not(.dm-login-page) .access-member-card,
+body:not(.dm-login-page) .access-module-row,
+body:not(.dm-login-page) .permission-card,
+body:not(.dm-login-page) .access-action-row,
+body:not(.dm-login-page) #accessOwnerSummary {
+  box-shadow: none !important;
+}
+
+
+/* v20 extra no-shadow coverage for LIFF routes */
+body:not(.dm-login-page) .liff-route-toggle-row,
+body:not(.dm-login-page) .liff-route-url-input,
+body:not(.dm-login-page) .inline-note,
+body:not(.dm-login-page) .price-set-card {
+  box-shadow: none !important;
+}
+
+
+/* v21 extra no-shadow coverage for sale manage */
+body:not(.dm-login-page) .sale-bill-picker-card,
+body:not(.dm-login-page) .sale-range-bill-card,
+body:not(.dm-login-page) .sale-prebill-panel,
+body:not(.dm-login-page) .sale-prebill-row,
+body:not(.dm-login-page) .bill-preview-panel,
+body:not(.dm-login-page) .bill-preview-image,
+body:not(.dm-login-page) #saleBillSheet .sheet-panel,
+body:not(.dm-login-page) #saleBillSheet .line-total-badge {
+  box-shadow: none !important;
+}
+
+
 /* ===== import css/core/ducky-ui.css ===== */
 /* DuckyUI shared helpers: toast/loading. Safe to import globally; UI appears only when js/core/ducky-ui.js is loaded. */
 .ducky-toast-root {
@@ -3513,6 +3811,211 @@ body:not([data-page="report_view"]):not(.worker-liff-page):not(.dm-login-page) .
   }
 }
 
+
+
+/* ===== import css/core/section-loading.css ===== */
+[data-section-state] {
+  position: relative;
+}
+
+[data-section-state='loading'],
+[data-section-state='syncing'],
+[data-section-state='refreshing'],
+[data-section-state='saving'] {
+  min-height: 24px;
+}
+
+[data-section-state='loading']::after,
+[data-section-state='syncing']::after,
+[data-section-state='refreshing']::after,
+[data-section-state='saving']::after,
+[data-section-state='cached']::after,
+[data-section-state='stale']::after,
+[data-section-state='fresh']::after {
+  content: attr(data-section-status);
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  max-width: min(220px, calc(100% - 16px));
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, rgba(15, 23, 42, .12));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
+  color: var(--muted-text, #64748b);
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+  pointer-events: none;
+}
+
+[data-section-state='loading']::before,
+[data-section-state='syncing']::before,
+[data-section-state='refreshing']::before,
+[data-section-state='saving']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+  background-size: 220% 100%;
+  animation: ducky-section-shimmer 1.1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+[data-section-state='cached']::after {
+  background: rgba(248, 250, 252, .94);
+}
+
+[data-section-state='stale']::after {
+  border-color: rgba(245, 158, 11, .35);
+  background: rgba(255, 251, 235, .94);
+  color: #92400e;
+}
+
+[data-section-state='fresh']::after {
+  border-color: rgba(16, 185, 129, .28);
+  background: rgba(236, 253, 245, .94);
+  color: #047857;
+}
+
+@keyframes ducky-section-shimmer {
+  0% { background-position: 220% 0; opacity: .2; }
+  50% { opacity: .55; }
+  100% { background-position: -220% 0; opacity: .2; }
+}
+
+@media (max-width: 640px) {
+  [data-section-state='loading']::after,
+  [data-section-state='syncing']::after,
+  [data-section-state='refreshing']::after,
+  [data-section-state='saving']::after,
+  [data-section-state='cached']::after,
+  [data-section-state='stale']::after,
+  [data-section-state='fresh']::after {
+    top: 6px;
+    right: 6px;
+    font-size: 10px;
+    max-width: calc(100% - 12px);
+  }
+}
+
+
+
+/* ===== css/core/supabase-theme.css ===== */
+/* Ducky Supabase-inspired visual system
+   Phase 1: apply page-by-page with class .dm-supabase-theme to avoid global breakage. */
+:root {
+  --dm-bg: #f7f7f7;
+  --dm-surface: #ffffff;
+  --dm-surface-2: #fbfbfb;
+  --dm-border: #d9d9d9;
+  --dm-border-soft: #e7e7e7;
+  --dm-text: #111111;
+  --dm-muted: #6b7280;
+  --dm-faint: #8a8f98;
+  --dm-green: #3ecf8e;
+  --dm-green-strong: #00a66a;
+  --dm-red: #dc2626;
+  --dm-amber: #d97706;
+  --dm-blue: #2563eb;
+  --dm-radius: 8px;
+  --dm-radius-sm: 6px;
+  --dm-shadow: none;
+  --dm-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.dm-supabase-theme {
+  background:
+    linear-gradient(rgba(17, 17, 17, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 17, 17, .025) 1px, transparent 1px),
+    var(--dm-bg);
+  background-size: 24px 24px;
+  color: var(--dm-text);
+  font-family: var(--dm-font);
+}
+
+.dm-supabase-theme .container {
+  max-width: 1100px;
+}
+
+.dm-supabase-theme .app-header {
+  background: rgba(247, 247, 247, .88);
+  border: 1px solid var(--dm-border-soft);
+  border-radius: var(--dm-radius);
+  box-shadow: none;
+  backdrop-filter: blur(14px);
+}
+
+.dm-supabase-theme .app-header h1,
+.dm-supabase-theme h1,
+.dm-supabase-theme h2,
+.dm-supabase-theme h3 {
+  color: var(--dm-text);
+  letter-spacing: -.025em;
+}
+
+.dm-supabase-theme .muted,
+.dm-supabase-theme small {
+  color: var(--dm-muted);
+}
+
+.dm-supabase-theme .card-panel,
+.dm-supabase-theme .section-card,
+.dm-supabase-theme .sheet,
+.dm-supabase-theme .modal-card {
+  background: var(--dm-surface);
+  border: 1px solid var(--dm-border);
+  border-radius: var(--dm-radius);
+  box-shadow: var(--dm-shadow);
+}
+
+/* .dm-supabase-theme .section-card-head {
+  border-bottom: 1px solid var(--dm-border-soft);
+  padding-bottom: 12px;
+} */
+
+.dm-supabase-theme .icon-btn,
+.dm-supabase-theme button,
+.dm-supabase-theme .btn,
+.dm-supabase-theme .chip,
+.dm-supabase-theme .badge-inline {
+  border-radius: var(--dm-radius-sm);
+}
+
+.dm-supabase-theme button,
+.dm-supabase-theme .btn {
+  border: 1px solid var(--dm-border);
+  background: var(--dm-surface);
+  color: var(--dm-text);
+  box-shadow: none;
+}
+
+.dm-supabase-theme button:hover,
+.dm-supabase-theme .btn:hover {
+  background: #f3f4f6;
+  border-color: #c6c6c6;
+  transform: none;
+}
+
+.dm-supabase-theme input,
+.dm-supabase-theme select,
+.dm-supabase-theme textarea {
+  border-radius: var(--dm-radius-sm);
+  border-color: var(--dm-border);
+  background: var(--dm-surface);
+}
+
+.dm-supabase-theme .badge-inline {
+  border: 1px solid var(--dm-border-soft);
+  background: #f3f4f6;
+  color: #4b5563;
+  font-weight: 700;
+}
 
 
 /* ===== css/modules/liff-routes.css ===== */
@@ -3841,4 +4344,259 @@ body[data-page="liff_routes"] .price-set-card__meta span {
   background: var(--bg-card);
   border: 1px solid var(--border-soft);
   color: var(--text-sub);
+}
+
+
+/* v20 LIFF Routes UI consistency */
+body[data-page="liff_routes"].dm-supabase-theme {
+  background:
+    linear-gradient(rgba(17, 17, 17, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 17, 17, .025) 1px, transparent 1px),
+    var(--dm-bg, #f7f7f7);
+  background-size: 24px 24px;
+}
+
+body[data-page="liff_routes"].dm-supabase-theme .container {
+  width: min(calc(100vw - 28px), 1040px);
+  max-width: 1040px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body[data-page="liff_routes"] .page-body {
+  gap: 10px !important;
+  padding-top: 10px !important;
+  padding-bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+}
+
+body[data-page="liff_routes"] .card-panel {
+  border-radius: var(--dm-radius, 8px) !important;
+  border-color: var(--dm-border-soft, var(--border-soft)) !important;
+  background: var(--dm-surface, var(--bg-card)) !important;
+  box-shadow: none !important;
+  min-width: 0;
+  overflow: hidden;
+}
+
+body[data-page="liff_routes"] .module-page-intro,
+body[data-page="liff_routes"] #liffRouteEditorCard,
+body[data-page="liff_routes"] main > section.card-panel:last-child {
+  padding: 12px !important;
+}
+
+body[data-page="liff_routes"] .section-card-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+body[data-page="liff_routes"] .section-card-head h3 {
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+}
+
+body[data-page="liff_routes"] .section-card-head > .badge-inline,
+body[data-page="liff_routes"] .section-card-head > button {
+  justify-self: end;
+}
+
+body[data-page="liff_routes"] #liffRouteForm {
+  gap: 8px !important;
+  margin-top: 10px !important;
+}
+
+body[data-page="liff_routes"] #liffRouteForm input[type="text"],
+body[data-page="liff_routes"] #liffRouteForm textarea,
+body[data-page="liff_routes"] .liff-route-url-input,
+body[data-page="liff_routes"] .inline-note,
+body[data-page="liff_routes"] .liff-route-toggle-row,
+body[data-page="liff_routes"] #generateRouteKeyBtn,
+body[data-page="liff_routes"] #newLiffRouteBtn,
+body[data-page="liff_routes"] #saveLiffRouteBtn,
+body[data-page="liff_routes"] .access-action-row .secondary-btn {
+  border-radius: var(--dm-radius, 8px) !important;
+  box-shadow: none !important;
+}
+
+body[data-page="liff_routes"] #liffRouteForm input[type="text"],
+body[data-page="liff_routes"] #liffRouteForm textarea,
+body[data-page="liff_routes"] .liff-route-url-input {
+  min-height: 44px;
+  border-color: var(--dm-border-soft, var(--border-soft)) !important;
+  background: var(--dm-surface, var(--bg-card)) !important;
+  padding: 10px 12px;
+}
+
+body[data-page="liff_routes"] #liffRouteForm input[type="text"]:focus,
+body[data-page="liff_routes"] #liffRouteForm textarea:focus,
+body[data-page="liff_routes"] .liff-route-url-input:focus {
+  box-shadow: none !important;
+  border-color: color-mix(in srgb, var(--dm-green, var(--primary)) 52%, var(--dm-border-soft, var(--border-soft))) !important;
+}
+
+body[data-page="liff_routes"] #liffRouteForm .grid-2 {
+  grid-template-columns: minmax(0, 1fr) 104px !important;
+  gap: 6px !important;
+}
+
+body[data-page="liff_routes"] .inline-note {
+  margin-top: 0 !important;
+  background: var(--dm-surface-2, var(--bg-soft)) !important;
+  border-color: var(--dm-border-soft, var(--border-soft)) !important;
+}
+
+body[data-page="liff_routes"] .liff-route-toggle-row,
+body[data-page="liff_routes"] #liffRouteForm .field-label:has(input[type="checkbox"]) {
+  width: 100% !important;
+  border-color: var(--dm-border-soft, var(--border-soft)) !important;
+  background: var(--dm-surface-2, var(--bg-soft)) !important;
+}
+
+body[data-page="liff_routes"] .price-set-list {
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--dm-border-soft, var(--border-soft));
+  border-radius: var(--dm-radius, 8px);
+  background: var(--dm-surface, var(--bg-card));
+  box-shadow: none !important;
+}
+
+body[data-page="liff_routes"] .price-set-list > .empty-state {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+body[data-page="liff_routes"] .price-set-card {
+  border: 0 !important;
+  border-bottom: 1px solid var(--dm-border-soft, var(--border-soft)) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 12px !important;
+  gap: 10px !important;
+}
+
+body[data-page="liff_routes"] .price-set-card:last-child {
+  border-bottom: 0 !important;
+}
+
+body[data-page="liff_routes"] .price-set-card__head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+body[data-page="liff_routes"] .price-set-card__head .badge-inline {
+  justify-self: end;
+}
+
+body[data-page="liff_routes"] .price-set-card__meta {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--dm-border-soft, var(--border-soft));
+  border-radius: var(--dm-radius, 8px);
+  background: var(--dm-surface-2, var(--bg-soft));
+}
+
+body[data-page="liff_routes"] .price-set-card__meta span {
+  border: 0 !important;
+  border-right: 1px solid var(--dm-border-soft, var(--border-soft)) !important;
+  border-bottom: 1px solid var(--dm-border-soft, var(--border-soft)) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  min-width: 0;
+  padding: 8px 10px;
+}
+
+body[data-page="liff_routes"] .price-set-card__meta span:nth-child(2n) {
+  border-right: 0 !important;
+}
+
+body[data-page="liff_routes"] .price-set-card__meta span:nth-last-child(-n + 2) {
+  border-bottom: 0 !important;
+}
+
+body[data-page="liff_routes"] .access-action-row {
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--dm-border-soft, var(--border-soft));
+  border-radius: var(--dm-radius, 8px);
+  background: var(--dm-surface, var(--bg-card));
+  box-shadow: none !important;
+}
+
+body[data-page="liff_routes"] .access-action-row > * {
+  border: 0 !important;
+  border-right: 1px solid var(--dm-border-soft, var(--border-soft)) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  min-width: 0;
+}
+
+body[data-page="liff_routes"] .access-action-row > *:last-child {
+  border-right: 0 !important;
+}
+
+body[data-page="liff_routes"] .price-set-card.is-disabled {
+  opacity: .68;
+  filter: grayscale(.12);
+}
+
+/* @media (max-width: 640px) {
+  body[data-page="liff_routes"].dm-supabase-theme .container {
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body[data-page="liff_routes"] .section-card-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  body[data-page="liff_routes"] .price-set-card__meta {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="liff_routes"] .price-set-card__meta span {
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--dm-border-soft, var(--border-soft)) !important;
+  }
+
+  body[data-page="liff_routes"] .price-set-card__meta span:last-child {
+    border-bottom: 0 !important;
+  }
+} */
+
+@media (max-width: 390px) {
+  body[data-page="liff_routes"] #liffRouteForm .grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  body[data-page="liff_routes"] .price-set-card__head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body[data-page="liff_routes"] .price-set-card__head .badge-inline {
+    justify-self: start;
+  }
+
+  body[data-page="liff_routes"] .access-action-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  body[data-page="liff_routes"] .access-action-row > * {
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--dm-border-soft, var(--border-soft)) !important;
+  }
+
+  body[data-page="liff_routes"] .access-action-row > *:last-child {
+    border-bottom: 0 !important;
+  }
 }

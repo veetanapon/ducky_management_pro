@@ -7,11 +7,11 @@
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
         name="viewport" />
     <title>จัดการลิงก์ LIFF | Ducky Management Pro</title>
-    <link rel="stylesheet" href="css/dist/liff-routes.bundle.css?v=20260606-174915">
+    <link rel="stylesheet" href="css/dist/liff-routes.bundle.css?v=20260813-095043">
 
 </head>
 
-<body data-page="liff_routes">
+<body data-page="liff_routes" class="dm-supabase-theme">
     <header class="app-header container">
         <div class="header-leading">
             <button aria-label="open menu" class="icon-btn hamburger-btn" data-nav-toggle="" type="button">☰</button>
@@ -53,6 +53,11 @@
                 <input id="liffLineToId" placeholder="เช่น Cxxxxxxxxxxxxxxxx หรือ Uxxxxxxxxxxxxxxxx" type="text" />
                 <div class="inline-note">ใส่ groupId ของกลุ่ม LINE ที่ต้องการให้ bot ส่ง badge บันทึกสำเร็จ วันละ 1
                     ครั้ง</div>
+                <label class="field-label">LINE Bot ที่ใช้ส่งข้อความ</label>
+                <select id="liffBotKey">
+                    <option value="main">Main bot</option>
+                </select>
+                <div class="inline-note">token เก็บใน Script Properties เช่น LINE_BOT_MAIN_TOKEN หรือ LINE_BOT_BACKUP_01_TOKEN</div>
                 <label class="field-label">หมายเหตุ</label>
                 <textarea id="liffRouteRemark" placeholder="optional" rows="2"></textarea>
                 <label class="liff-route-toggle-row field-label">
@@ -74,7 +79,7 @@
             </div>
         </section>
     </main>
-    <script defer src="js/dist/liff-routes.bundle.js?v=20260606-174915"></script>
+    <script defer src="js/dist/liff-routes.bundle.js?v=20260813-095043"></script>
 
 </body>
 

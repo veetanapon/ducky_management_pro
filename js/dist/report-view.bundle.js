@@ -1,6 +1,6 @@
 /* ===== js/config.js ===== */
 window.AppConfig = {
-  APP_VERSION: 'supabase-full-v4-20260604',
+  APP_VERSION: 'supabase-full-v26-dynamic-line-bot-20260611',
   GAS_URL: 'https://script.google.com/macros/s/AKfycbxFPkZtTumRGd6mIlf-vT1sHO1HgcjXiqnVECAcsEk3lqxBRg6YWyiynxZzotuHjdJ7/exec',
   CACHE_KEYS: {
     BATCHES: 'ducky:batches',
@@ -17,48 +17,277 @@ window.AppConfig = {
 };
 
 
+/* ===== js/core/cache.js ===== */
+window.AppCache = (() => {
+  function read(key, fallback = null) {
+    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch (error) { console.warn('Cache read failed', key, error); return fallback; }
+  }
+  function write(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch (error) { console.warn('Cache write failed', key, error); return false; }
+  }
+  function remove(key) { try { localStorage.removeItem(key); } catch (_) {} }
+  function removeByPrefix(prefix) {
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix)) keys.push(k);
+      }
+      keys.forEach((k) => localStorage.removeItem(k));
+      return keys.length;
+    } catch (error) { console.warn('Cache removeByPrefix failed', prefix, error); return 0; }
+  }
+  function readEnvelopeDetailed(key, ttlMs = 0, fallback = null, options = {}) {
+    const data = read(key, null);
+    if (!data || typeof data !== 'object' || !data.__cached_at) {
+      return { value: fallback, hasValue: false, isStale: false, ageMs: null, cachedAt: null };
+    }
+    const cachedAt = Number(data.__cached_at || 0);
+    const ageMs = Date.now() - cachedAt;
+    const isStale = ttlMs > 0 && ageMs > ttlMs;
+    if (isStale && !options.allowStale) {
+      return { value: fallback, hasValue: false, isStale, ageMs, cachedAt };
+    }
+    return { value: data.value, hasValue: true, isStale, ageMs, cachedAt };
+  }
+  function readEnvelope(key, ttlMs = 0, fallback = null, options = {}) {
+    const detailed = readEnvelopeDetailed(key, ttlMs, fallback, options);
+    return options.withMeta ? detailed : detailed.value;
+  }
+  function pruneApiCache(maxItems = 160) {
+    try {
+      const items = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith('ducky:api:')) continue;
+        const raw = localStorage.getItem(k);
+        let cachedAt = 0;
+        try { cachedAt = Number(JSON.parse(raw || '{}').__cached_at || 0); } catch (_) {}
+        items.push({ key: k, cachedAt });
+      }
+      if (items.length <= maxItems) return 0;
+      items.sort((a, b) => a.cachedAt - b.cachedAt);
+      const removeCount = items.length - maxItems;
+      items.slice(0, removeCount).forEach((item) => localStorage.removeItem(item.key));
+      return removeCount;
+    } catch (error) {
+      console.warn('Cache prune failed', error);
+      return 0;
+    }
+  }
+
+  function writeEnvelope(key, value) {
+    const ok = write(key, { __cached_at: Date.now(), value });
+    if (ok && String(key || '').startsWith('ducky:api:')) pruneApiCache();
+    return ok;
+  }
+
+  function ensureVersion() {
+    try {
+      const current = String(window.AppConfig?.APP_VERSION || '');
+      if (!current) return;
+      const key = 'ducky:frontend:version';
+      const previous = localStorage.getItem(key);
+      if (previous !== current) {
+        removeByPrefix('ducky:api:');
+        removeByPrefix('ducky:module:');
+        removeByPrefix('ducky:report:');
+        removeByPrefix('ducky:batch-dashboard:');
+        removeByPrefix('ducky:permission:');
+        removeByPrefix('ducky:feed-order:');
+        localStorage.setItem(key, current);
+      }
+    } catch (error) {
+      console.warn('Cache version reset failed', error);
+    }
+  }
+
+  function loadBatchCache() {
+    const batches = read(AppConfig.CACHE_KEYS.BATCHES, []);
+    const meta = read(AppConfig.CACHE_KEYS.BATCHES_META, null);
+    return { batches, meta };
+  }
+  function saveBatchCache(batches, meta) {
+    write(AppConfig.CACHE_KEYS.BATCHES, batches || []);
+    write(AppConfig.CACHE_KEYS.BATCHES_META, meta || {});
+  }
+  function clearBatchCache() {
+    remove(AppConfig.CACHE_KEYS.BATCHES);
+    remove(AppConfig.CACHE_KEYS.BATCHES_META);
+  }
+  function invalidateByPayload(payload = {}) {
+    const batchId = payload.batch_id || payload.batchId || payload.bid || '';
+    const action = String(payload.action || '');
+    if (batchId) {
+      removeByPrefix(`ducky:batch-dashboard:${batchId}`);
+      removeByPrefix(`ducky:module:feed_manage:${batchId}:`);
+      removeByPrefix(`ducky:module:egg_daily:${batchId}:`);
+      removeByPrefix(`ducky:module:sale_manage:${batchId}:`);
+      removeByPrefix(`ducky:batch-manage:${batchId}`);
+      removeByPrefix(`ducky:report:${batchId}`);
+      removeByPrefix(`ducky:liff-routes:${batchId}`);
+      removeByPrefix(`ducky:farm-events:${batchId}`);
+      removeByPrefix(`ducky:medicine:${batchId}`);
+      removeByPrefix('ducky:api:');
+    }
+    if (/FeedOrder|feedOrder|feed_order/i.test(action)) {
+      removeByPrefix('ducky:feed-order:');
+      removeByPrefix('ducky:api:');
+    }
+    if (/price|Permission|Access|batch|Batch|Liff|Report|FeedOrder/i.test(action)) {
+      removeByPrefix('ducky:admin:');
+      removeByPrefix('ducky:price-admin:');
+      removeByPrefix('ducky:api:');
+    }
+  }
+  ensureVersion();
+  return { read, write, remove, removeByPrefix, readEnvelope, readEnvelopeDetailed, writeEnvelope, pruneApiCache, loadBatchCache, saveBatchCache, clearBatchCache, invalidateByPayload, ensureVersion };
+})();
+
+
 /* ===== js/core/api.js ===== */
 window.AppApi = (() => {
   const DEFAULT_TIMEOUT_MS = 30000;
   const WRITE_TIMEOUT_MS = 90000;
   const inflight = new Map();
   const writeInflight = new Map();
+  const refreshInflight = new Map();
+
   const READ_ACTIONS = new Set([
-    'getMyMenuPermissions','getProgramMenuPermissionAdminOptions','getUserMenuPermissionList','ensureProgramMenuPermissionsReady','getAllBatches','getBatchFullDetail','getBatchDashboardSummary','getBatchManagePageData','getModuleCalendarData',
-    'getSaleBillsForDate','getSaleBillRecord','getSaleBillRangeSummary','getEggDailyRecord','getFeedLogRecord',
-    'getBatchAccessList','getBatchAccessSummary','getPermissionAdminOptions','getItemPriceAdminData','getPriceSetDetail',
-    'getEffectiveEggPriceSet','getPreBillRecord','getReportPageData','getLiffBatchRoutePageData','getBatchEventsPageData',
-    'getReportPublicViewData','getFeedOrderBillPageData','getFeedOrderBillsPageData','getFeedOrderPageData'
+    'warmup','ping','health','getWarmupStatus','getDuckyDiagnosticsDashboard','runDuckyDiagnosticsSmokeTest','runDuckyProductionHardeningAudit','runDuckyDataIntegrityCheck','getDuckyV14OptimizationStatus','clearDuckyRuntimeCaches',
+    'getMyMenuPermissions','getProgramMenuPermissionAdminOptions','getUserMenuPermissionList','ensureProgramMenuPermissionsReady',
+    'getAllBatches','getBatchFullDetail','getBatchDashboardSummary','getBatchManagePageData','getBatchMovementLogs','getBatchMovementRecord',
+    'getModuleCalendarData','getSaleBillsForDate','getSaleBillRecord','getSaleBillRangeSummary','getSaleBillEditBundle','getPreBillEditBundle',
+    'getEggDailyRecord','getFeedLogRecord','getBatchAccessList','getBatchAccessSummary','getPermissionAdminOptions',
+    'getItemPriceAdminData','getPriceSetDetail','getEffectiveEggPriceSet','getPreBillRecord','getReportPageData','getReportPublicViewData',
+    'getLiffBatchRoutePageData','getBatchEventsPageData','getFeedOrderBillPageData','getFeedOrderBillsPageData','getFeedOrderPageData',
+    'getSupabaseHybridFullStatus','validateSupabaseHybridTypedMirror'
   ]);
+
   const WRITE_ACTIONS = new Set([
-    'upsertUserMenuPermission','revokeUserMenuPermission','migrateExistingUsersToFullMenuPermissions','add_batch','edit_batch','delete_batch','saveBatchMovement','saveBatchSaleBill','deleteBatchSaleBill','saveFeedLog',
+    'upsertUserMenuPermission','revokeUserMenuPermission','migrateExistingUsersToFullMenuPermissions',
+    'add_batch','edit_batch','delete_batch','saveBatchMovement','saveBatchSaleBill','deleteBatchSaleBill','saveFeedLog',
     'saveEggDailyLog','approvePreBill','rejectPreBill','upsertBatchModulePermission','revokeBatchUserPermissions',
-    'saveLiffBatchRoute','deactivateLiffBatchRoute','savePriceSet','savePriceSetBinding','removePriceSetBinding','deletePriceSet',
-    'rebuildReportForBatch','createLiffPreBill','saveFeedConsumptionLog','approvePreFeedConsumption','rejectPreFeedConsumption','saveBatchEvent','saveMedicalInventoryLog','deleteBatchEvent','createReportViewLink','saveFeedOrderLot','saveFeedOrderBill','createFeedOrderBill','allocateFeedOrderToBatch','allocateFeedOrderBillToBatch','saveFeedOrderAllocation','saveFeedOrderPayment','recordFeedOrderPayment','createFeedOrderPayment','saveFeedOrderBulkPayment','recordFeedOrderBulkPayment','applyFeedOrderBulkPayment','saveFeedOrderClaim','recordFeedOrderClaim','createFeedOrderClaim','setFeedOrderLotVisibility','updateFeedOrderLotVisibility','hideFeedOrderLot'
+    'saveLiffBatchRoute','deactivateLiffBatchRoute','generateLiffRouteKey','savePriceSet','savePriceSetBinding','removePriceSetBinding','deletePriceSet',
+    'rebuildReportForBatch','createLiffPreBill','saveFeedConsumptionLog','approvePreFeedConsumption','rejectPreFeedConsumption',
+    'saveBatchEvent','saveMedicalInventoryLog','deleteBatchEvent','createReportViewLink','exportReportExcel',
+    'saveFeedOrderLot','saveFeedOrderBill','createFeedOrderBill','allocateFeedOrderToBatch','allocateFeedOrderBillToBatch',
+    'saveFeedOrderAllocation','saveFeedOrderPayment','recordFeedOrderPayment','createFeedOrderPayment','saveFeedOrderBulkPayment',
+    'recordFeedOrderBulkPayment','applyFeedOrderBulkPayment','saveFeedOrderClaim','recordFeedOrderClaim','createFeedOrderClaim',
+    'setFeedOrderLotVisibility','updateFeedOrderLotVisibility','hideFeedOrderLot',
+    'syncAllSupabaseTablesExceptUsersSessions','syncFeedOrderSheetsToSupabase','syncReportSheetsToSupabase','setDuckyDataSourceMode'
   ]);
+
   const CACHE_TTL = {
+    getDuckyDiagnosticsDashboard: 30 * 1000,
+    runDuckyDiagnosticsSmokeTest: 0,
+    runDuckyProductionHardeningAudit: 30 * 1000,
+    runDuckyDataIntegrityCheck: 0,
+    getDuckyV14OptimizationStatus: 60 * 1000,
+    clearDuckyRuntimeCaches: 0,
     getMyMenuPermissions: 5 * 60 * 1000,
     getProgramMenuPermissionAdminOptions: 5 * 60 * 1000,
     getUserMenuPermissionList: 60 * 1000,
+    ensureProgramMenuPermissionsReady: 5 * 60 * 1000,
     getAllBatches: 5 * 60 * 1000,
-    getBatchDashboardSummary: 60 * 1000,
-    getBatchManagePageData: 60 * 1000,
-    getModuleCalendarData: 60 * 1000,
-    getEffectiveEggPriceSet: 12 * 60 * 60 * 1000,
+    getBatchFullDetail: 2 * 60 * 1000,
+    getBatchDashboardSummary: 2 * 60 * 1000,
+    getBatchManagePageData: 2 * 60 * 1000,
+    getBatchMovementLogs: 2 * 60 * 1000,
+    getBatchMovementRecord: 30 * 1000,
+    getModuleCalendarData: 2 * 60 * 1000,
+    getSaleBillsForDate: 60 * 1000,
+    getSaleBillRecord: 30 * 1000,
+    getSaleBillRangeSummary: 60 * 1000,
+    getSaleBillEditBundle: 30 * 1000,
+    getPreBillEditBundle: 30 * 1000,
+    getEggDailyRecord: 30 * 1000,
+    getFeedLogRecord: 30 * 1000,
+    getBatchAccessList: 60 * 1000,
+    getBatchAccessSummary: 60 * 1000,
     getPermissionAdminOptions: 5 * 60 * 1000,
     getItemPriceAdminData: 5 * 60 * 1000,
+    getPriceSetDetail: 2 * 60 * 1000,
+    getEffectiveEggPriceSet: 12 * 60 * 60 * 1000,
+    getPreBillRecord: 30 * 1000,
     getReportPageData: 2 * 60 * 1000,
+    getReportPublicViewData: 60 * 1000,
     getLiffBatchRoutePageData: 2 * 60 * 1000,
-    getBatchEventsPageData: 60 * 1000,
-    getFeedOrderBillPageData: 2 * 60 * 1000
+    getBatchEventsPageData: 2 * 60 * 1000,
+    getFeedOrderBillPageData: 2 * 60 * 1000,
+    getFeedOrderBillsPageData: 2 * 60 * 1000,
+    getFeedOrderPageData: 2 * 60 * 1000,
+    getSupabaseHybridFullStatus: 30 * 1000,
+    validateSupabaseHybridTypedMirror: 0
   };
 
+  const CACHE_MAX_STALE = {
+    getAllBatches: 24 * 60 * 60 * 1000,
+    getBatchFullDetail: 6 * 60 * 60 * 1000,
+    getBatchDashboardSummary: 6 * 60 * 60 * 1000,
+    getBatchManagePageData: 12 * 60 * 60 * 1000,
+    getBatchMovementLogs: 12 * 60 * 60 * 1000,
+    getModuleCalendarData: 12 * 60 * 60 * 1000,
+    getReportPageData: 24 * 60 * 60 * 1000,
+    getReportPublicViewData: 6 * 60 * 60 * 1000,
+    getLiffBatchRoutePageData: 12 * 60 * 60 * 1000,
+    getBatchEventsPageData: 12 * 60 * 60 * 1000,
+    getFeedOrderBillPageData: 24 * 60 * 60 * 1000,
+    getFeedOrderBillsPageData: 24 * 60 * 60 * 1000,
+    getFeedOrderPageData: 24 * 60 * 60 * 1000,
+    getItemPriceAdminData: 12 * 60 * 60 * 1000,
+    getPriceSetDetail: 12 * 60 * 60 * 1000,
+    getEffectiveEggPriceSet: 7 * 24 * 60 * 60 * 1000,
+    getPermissionAdminOptions: 12 * 60 * 60 * 1000,
+    getProgramMenuPermissionAdminOptions: 12 * 60 * 60 * 1000,
+    getMyMenuPermissions: 12 * 60 * 60 * 1000,
+    getUserMenuPermissionList: 60 * 60 * 1000,
+    getBatchAccessList: 6 * 60 * 60 * 1000,
+    getBatchAccessSummary: 6 * 60 * 60 * 1000,
+    getSaleBillRangeSummary: 6 * 60 * 60 * 1000,
+    getSaleBillsForDate: 6 * 60 * 60 * 1000
+  };
+
+  const NETWORK_ONLY_READ_ACTIONS = new Set([
+    'warmup','ping','health','getWarmupStatus','getDuckyDiagnosticsDashboard','runDuckyDiagnosticsSmokeTest','runDuckyProductionHardeningAudit','runDuckyDataIntegrityCheck','getDuckyV14OptimizationStatus','clearDuckyRuntimeCaches','validateSupabaseHybridTypedMirror'
+  ]);
+
   function stableKey(payload) {
-    return Object.keys(payload || {}).sort().map((k) => `${k}:${JSON.stringify(payload[k])}`).join('|');
+    const ignored = new Set(['session_token', 'debug_timing', 'client_ts', '_nonce', '_ts']);
+    return Object.keys(payload || {})
+      .filter((k) => !ignored.has(k))
+      .sort()
+      .map((k) => `${k}:${JSON.stringify(payload[k])}`)
+      .join('|');
+  }
+
+  function cacheUserScope() {
+    try {
+      return String(window.AppAuth?.getSession?.('user_id') || window.AppAuth?.getSession?.('display_name') || 'guest');
+    } catch (_) {
+      return 'guest';
+    }
+  }
+
+  function b64(text) {
+    try { return btoa(unescape(encodeURIComponent(text))); }
+    catch (_) { return btoa(String(text || '').slice(0, 512)); }
   }
 
   function cacheKey(body) {
-    return `ducky:api:${String(body.action || '')}:${btoa(unescape(encodeURIComponent(stableKey(body)))).slice(0, 160)}`;
+    const action = String(body.action || '');
+    const scope = cacheUserScope();
+    return `ducky:api:${scope}:${action}:${b64(stableKey(body)).slice(0, 180)}`;
+  }
+
+  function dispatchCacheUpdate(action, payload, response, meta = {}) {
+    try {
+      window.dispatchEvent(new CustomEvent('ducky:api-cache-update', {
+        detail: { action, payload, response, meta }
+      }));
+    } catch (_) {}
   }
 
   function isSessionExpiredResponse(json) {
@@ -77,7 +306,6 @@ window.AppApi = (() => {
       text.includes('UNAUTHORIZED')
     );
   }
-
 
   function withDefaultTimeout(options = {}, isWrite = false) {
     if (options && Object.prototype.hasOwnProperty.call(options, 'timeoutMs')) return options;
@@ -131,7 +359,59 @@ window.AppApi = (() => {
       AppAuth.redirectLogin('session_expired');
       return null;
     }
-    return post(payload, { ...options, __retriedAfterSessionRefresh: true });
+    return post(payload, { ...options, __retriedAfterSessionRefresh: true, cache: false });
+  }
+
+  function shouldUseAutoCache(action, options = {}) {
+    if (!READ_ACTIONS.has(action)) return false;
+    if (NETWORK_ONLY_READ_ACTIONS.has(action)) return false;
+    if (options.cache === false || options.cacheMode === 'network-only') return false;
+    const ttl = options.ttlMs ?? CACHE_TTL[action] ?? 0;
+    return ttl > 0 && !!window.AppCache?.readEnvelopeDetailed;
+  }
+
+  function cachedClone(value, meta) {
+    if (!value || typeof value !== 'object') return value;
+    if (Array.isArray(value)) return value.slice();
+    return {
+      ...value,
+      __from_cache: true,
+      __cache_age_ms: meta.ageMs,
+      __cache_stale: !!meta.isStale
+    };
+  }
+
+  async function networkPost(body, payload, options, isWrite) {
+    const json = await fetchWithRetry(body, withDefaultTimeout(options, isWrite));
+    if (isSessionExpiredResponse(json)) {
+      return await handleExpiredSession(payload, options);
+    }
+    return json;
+  }
+
+  function cacheFreshResponse(key, action, payload, json) {
+    if (json?.status === 'ok' && window.AppCache?.writeEnvelope) {
+      AppCache.writeEnvelope(key, json);
+      dispatchCacheUpdate(action, payload, json, { source: 'network' });
+    }
+  }
+
+  function refreshReadInBackground(key, action, payload, body, options = {}) {
+    if (refreshInflight.has(key)) return refreshInflight.get(key);
+    const task = (async () => {
+      try {
+        const fresh = await networkPost(body, payload, { ...options, cache: false, cacheMode: 'network-only' }, false);
+        cacheFreshResponse(key, action, payload, fresh);
+        return fresh;
+      } catch (error) {
+        console.warn('Background API refresh failed:', action, error?.message || error);
+        return null;
+      } finally {
+        setTimeout(() => refreshInflight.delete(key), 250);
+      }
+    })();
+    refreshInflight.set(key, task);
+    return task;
   }
 
   async function post(payload = {}, options = {}) {
@@ -143,16 +423,32 @@ window.AppApi = (() => {
     const isRead = READ_ACTIONS.has(action);
     const isWrite = WRITE_ACTIONS.has(action);
     const key = stableKey(body);
+    const requestOptions = withDefaultTimeout(options, isWrite);
+
+    if (isRead && shouldUseAutoCache(action, requestOptions)) {
+      const ttl = requestOptions.ttlMs ?? CACHE_TTL[action] ?? 0;
+      const maxStale = requestOptions.maxStaleMs ?? CACHE_MAX_STALE[action] ?? 0;
+      const ck = cacheKey(body);
+      const cached = AppCache.readEnvelopeDetailed(ck, ttl, null, { allowStale: maxStale > 0, withMeta: true });
+      const usableStale = cached.hasValue && (!cached.isStale || (maxStale > 0 && cached.ageMs <= maxStale));
+      if (usableStale) {
+        if (requestOptions.background !== false) {
+          refreshReadInBackground(ck, action, payload, body, requestOptions);
+        }
+        return cachedClone(cached.value, cached);
+      }
+    }
+
     if (isRead && inflight.has(key)) return inflight.get(key);
     if (isWrite && writeInflight.has(key)) return writeInflight.get(key);
 
     const task = (async () => {
       try {
-        const json = await fetchWithRetry(body, withDefaultTimeout(options, isWrite));
-        if (isSessionExpiredResponse(json)) {
-          return await handleExpiredSession(payload, options);
-        }
+        const json = await networkPost(body, payload, requestOptions, isWrite);
         if (isWrite && json?.status === 'ok' && window.AppCache) AppCache.invalidateByPayload(payload);
+        if (isRead && shouldUseAutoCache(action, requestOptions)) {
+          cacheFreshResponse(cacheKey(body), action, payload, json);
+        }
         return json;
       } catch (error) {
         console.error('API error:', error);
@@ -170,52 +466,190 @@ window.AppApi = (() => {
 
   async function postPublic(payload = {}, options = {}) {
     const action = String(payload.action || '');
+    const isRead = READ_ACTIONS.has(action);
     const isWrite = WRITE_ACTIONS.has(action);
-    const key = stableKey(payload || {});
+    const body = { ...payload };
+    const requestOptions = withDefaultTimeout(options, isWrite);
+    const key = stableKey(body || {});
+
+    if (isRead && shouldUseAutoCache(action, requestOptions)) {
+      const ttl = requestOptions.ttlMs ?? CACHE_TTL[action] ?? 0;
+      const maxStale = requestOptions.maxStaleMs ?? CACHE_MAX_STALE[action] ?? 0;
+      const ck = cacheKey(body);
+      const cached = AppCache.readEnvelopeDetailed(ck, ttl, null, { allowStale: maxStale > 0, withMeta: true });
+      const usableStale = cached.hasValue && (!cached.isStale || (maxStale > 0 && cached.ageMs <= maxStale));
+      if (usableStale) {
+        if (requestOptions.background !== false) refreshReadInBackground(ck, action, payload, body, requestOptions);
+        return cachedClone(cached.value, cached);
+      }
+    }
+
     if (isWrite && writeInflight.has(key)) return writeInflight.get(key);
+    if (isRead && inflight.has(key)) return inflight.get(key);
 
     const task = (async () => {
       try {
-        return await fetchWithRetry(payload, withDefaultTimeout(options, isWrite));
+        const json = await fetchWithRetry(body, requestOptions);
+        if (isRead && shouldUseAutoCache(action, requestOptions)) cacheFreshResponse(cacheKey(body), action, payload, json);
+        return json;
       } catch (error) {
         console.error('API public error:', error);
         return { status: 'error', message: error?.name === 'AbortError' ? 'request_timeout' : (error?.message || 'network_error') };
       } finally {
+        if (isRead) inflight.delete(key);
         if (isWrite) setTimeout(() => writeInflight.delete(key), 3000);
       }
     })();
 
+    if (isRead) inflight.set(key, task);
     if (isWrite) writeInflight.set(key, task);
     return task;
   }
 
-  async function postCached(payload = {}, { ttlMs, background = false, onUpdate } = {}) {
-    const ok = await AppAuth.ensureAuth();
+  let lastWarmupAt = 0;
+  function warmup({ force = false, touchSupabase = false } = {}) {
+    const now = Date.now();
+    if (!force && now - lastWarmupAt < 60 * 1000) return Promise.resolve({ status: 'skipped', reason: 'recent_warmup' });
+    lastWarmupAt = now;
+    const payload = {
+      action: 'warmup',
+      page: document.body?.dataset?.page || '',
+      client_ts: new Date().toISOString(),
+      touch_supabase: touchSupabase ? 1 : 0
+    };
+    return fetchJson(payload, { timeoutMs: 12000 }).catch((error) => {
+      console.warn('Warmup failed', error?.message || error);
+      return { status: 'error', message: error?.message || 'warmup_failed' };
+    });
+  }
+
+  async function postCached(payload = {}, { ttlMs, maxStaleMs, background = true, onUpdate } = {}) {
+    const action = String(payload.action || '');
+    const requestOptions = {
+      ttlMs: ttlMs ?? CACHE_TTL[action] ?? 0,
+      maxStaleMs: maxStaleMs ?? CACHE_MAX_STALE[action] ?? 0,
+      background
+    };
+
+    const ok = payload.__public ? true : await AppAuth.ensureAuth();
     if (!ok) return null;
 
-    const body = { session_token: AppAuth.getSession(), ...payload };
-    const action = String(payload.action || '');
-    const ttl = ttlMs ?? CACHE_TTL[action] ?? 0;
+    const body = payload.__public ? { ...payload } : { session_token: AppAuth.getSession(), ...payload };
+    delete body.__public;
     const key = cacheKey(body);
-    const cached = ttl > 0 && window.AppCache ? AppCache.readEnvelope(key, ttl, null) : null;
+    const cached = requestOptions.ttlMs > 0 && window.AppCache
+      ? AppCache.readEnvelopeDetailed(key, requestOptions.ttlMs, null, { allowStale: requestOptions.maxStaleMs > 0, withMeta: true })
+      : { hasValue: false };
 
-    if (cached && background) {
-      post(payload).then((fresh) => {
-        if (fresh?.status === 'ok') {
-          AppCache.writeEnvelope(key, fresh);
-          if (typeof onUpdate === 'function') onUpdate(fresh);
-        }
-      });
-      return cached;
+    const usableStale = cached.hasValue && (!cached.isStale || (requestOptions.maxStaleMs > 0 && cached.ageMs <= requestOptions.maxStaleMs));
+    if (usableStale) {
+      if (background) {
+        refreshReadInBackground(key, action, payload, body, requestOptions).then((fresh) => {
+          if (fresh?.status === 'ok' && typeof onUpdate === 'function') onUpdate(fresh);
+        });
+      }
+      return cachedClone(cached.value, cached);
     }
 
-    if (cached) return cached;
-    const fresh = await post(payload);
-    if (fresh?.status === 'ok' && ttl > 0 && window.AppCache) AppCache.writeEnvelope(key, fresh);
+    const fresh = payload.__public ? await postPublic(payload, { ...requestOptions, cache: false }) : await post(payload, { ...requestOptions, cache: false });
+    if (fresh?.status === 'ok' && requestOptions.ttlMs > 0 && window.AppCache) AppCache.writeEnvelope(key, fresh);
     return fresh;
   }
 
-  return { post, postPublic, postCached, READ_ACTIONS, WRITE_ACTIONS, isSessionExpiredResponse };
+  function subscribe(action, handler) {
+    const listener = (event) => {
+      if (!event?.detail) return;
+      if (String(event.detail.action || '') !== String(action || '')) return;
+      handler(event.detail.response, event.detail);
+    };
+    window.addEventListener('ducky:api-cache-update', listener);
+    return () => window.removeEventListener('ducky:api-cache-update', listener);
+  }
+
+  return {
+    post,
+    postPublic,
+    postCached,
+    warmup,
+    subscribe,
+    READ_ACTIONS,
+    WRITE_ACTIONS,
+    isSessionExpiredResponse
+  };
+})();
+
+
+/* ===== js/core/section-loader.js ===== */
+window.AppSectionLoader = (() => {
+  const BUSY_STATES = new Set(['loading', 'syncing', 'saving', 'refreshing']);
+
+  function getTarget(target) {
+    if (!target) return null;
+    if (typeof target === 'string') return document.getElementById(target) || document.querySelector(target);
+    return target;
+  }
+
+  function mark(target, state = 'idle', label = '') {
+    const el = getTarget(target);
+    if (!el) return null;
+    const next = String(state || 'idle');
+    el.dataset.sectionState = next;
+    el.setAttribute('aria-busy', BUSY_STATES.has(next) ? 'true' : 'false');
+    if (label) el.dataset.sectionStatus = label;
+    else delete el.dataset.sectionStatus;
+    return el;
+  }
+
+  function clear(target) {
+    const el = getTarget(target);
+    if (!el) return null;
+    delete el.dataset.sectionState;
+    delete el.dataset.sectionStatus;
+    el.removeAttribute('aria-busy');
+    return el;
+  }
+
+  function setText(id, text) {
+    const el = getTarget(id);
+    if (el) el.textContent = text == null ? '' : String(text);
+  }
+
+  function withBusy(target, label, task) {
+    mark(target, 'loading', label || 'กำลังโหลด...');
+    return Promise.resolve()
+      .then(task)
+      .finally(() => mark(target, 'idle'));
+  }
+
+  function subscribe(action, handler, options = {}) {
+    if (!window.AppApi?.subscribe) return () => {};
+    const filter = typeof options.filter === 'function' ? options.filter : null;
+    return AppApi.subscribe(action, (response, detail) => {
+      if (filter && !filter(response, detail)) return;
+      handler(response, detail);
+    });
+  }
+
+  function subscribeMany(actions = [], handler, options = {}) {
+    const off = actions.map((action) => subscribe(action, handler, options)).filter(Boolean);
+    return () => off.forEach((fn) => { try { fn(); } catch (_) {} });
+  }
+
+  function applyCachedBadge(target, response) {
+    const el = getTarget(target);
+    if (!el || !response || typeof response !== 'object') return;
+    if (response.__from_cache) {
+      const ageSec = Math.max(1, Math.round(Number(response.__cache_age_ms || 0) / 1000));
+      mark(el, response.__cache_stale ? 'stale' : 'cached', response.__cache_stale ? `ข้อมูล cache ${ageSec} วิ กำลังอัปเดต` : `ข้อมูลจาก cache ${ageSec} วิ`);
+    } else {
+      mark(el, 'fresh', 'อัปเดตแล้ว');
+      setTimeout(() => {
+        if (el.dataset.sectionState === 'fresh') clear(el);
+      }, 1800);
+    }
+  }
+
+  return { mark, clear, setText, withBusy, subscribe, subscribeMany, applyCachedBadge };
 })();
 
 
@@ -248,6 +682,7 @@ window.ReportViewPage = (() => {
     highlightAfter: readStoredNumber('rvHighlightAfter', 5)
   };
 
+  let publicViewUnsubscribe = null;
   const chartCache = new WeakMap();
   const chartTitles = {
     main: 'ภาพรวมไข่ × อาหาร × เหตุการณ์',
@@ -302,7 +737,21 @@ window.ReportViewPage = (() => {
       renderError('ลิงก์รายงานไม่ถูกต้อง');
       return;
     }
+    bindBackgroundUpdates();
     await load();
+  }
+
+  function bindBackgroundUpdates() {
+    if (publicViewUnsubscribe || !window.AppSectionLoader?.subscribe) return;
+    publicViewUnsubscribe = AppSectionLoader.subscribe('getReportPublicViewData', (response, detail) => {
+      if (!response || response.status !== 'ok') return;
+      if (String(detail?.payload?.view_key || '') !== String(state.key || '')) return;
+      hydrate(response);
+      renderMonthSelect();
+      render();
+      AppSectionLoader.applyCachedBadge('rvSummary', response);
+      AppSectionLoader.applyCachedBadge('[data-chart-card="main"]', response);
+    });
   }
 
   function bind() {
@@ -388,13 +837,28 @@ window.ReportViewPage = (() => {
 
   async function load({ force = false } = {}) {
     setText('rvSubtitle', force ? 'กำลังโหลดข้อมูลใหม่...' : 'กำลังโหลดข้อมูล...');
-    const response = await AppApi.postPublic({ action: 'getReportPublicViewData', view_key: state.key, force: force ? 1 : 0 });
+    AppSectionLoader?.mark?.('rvSummary', force ? 'refreshing' : 'loading', force ? 'กำลังโหลดใหม่...' : 'กำลังโหลดสรุป...');
+    AppSectionLoader?.mark?.('[data-chart-card="main"]', force ? 'refreshing' : 'loading', force ? 'กำลังโหลดใหม่...' : 'กำลังโหลดกราฟ...');
+    const response = await AppApi.postPublic(
+      { action: 'getReportPublicViewData', view_key: state.key, force: force ? 1 : 0 },
+      { ttlMs: 60 * 1000, maxStaleMs: 6 * 60 * 60 * 1000, background: !force }
+    );
     if (!response || response.status !== 'ok') {
       setText('rvSubtitle', response?.message || 'โหลดรายงานไม่สำเร็จ');
       renderError(response?.message || 'โหลดรายงานไม่สำเร็จ');
+      AppSectionLoader?.mark?.('rvSummary', 'stale', 'โหลดไม่สำเร็จ');
+      AppSectionLoader?.mark?.('[data-chart-card="main"]', 'stale', 'โหลดไม่สำเร็จ');
       return;
     }
 
+    hydrate(response);
+    renderMonthSelect();
+    render();
+    AppSectionLoader?.applyCachedBadge?.('rvSummary', response);
+    AppSectionLoader?.applyCachedBadge?.('[data-chart-card="main"]', response);
+  }
+
+  function hydrate(response = {}) {
     state.batch = response.batch || null;
     state.rows = Array.isArray(response.rows) ? response.rows : [];
     state.chart = response.chart || { egg: [], feed: [], duck: [] };
@@ -404,9 +868,6 @@ window.ReportViewPage = (() => {
     state.months = Array.isArray(response.months) && response.months.length ? response.months : deriveMonths(state.rows);
     state.generatedAt = response.generated_at || response.updated_at || response.last_update || latestUpdatedAt(response);
     state.daily = buildDailyRows();
-
-    renderMonthSelect();
-    render();
   }
 
   function renderError(message) {

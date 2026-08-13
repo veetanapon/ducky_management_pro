@@ -1041,80 +1041,144 @@ window.AppFormat = (() => {
 })();
 
 
-/* ===== js/core/image.js ===== */
-window.AppImage = (() => {
-  function fileToBase64(file) { return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); }); }
-  function resizeDataUrl(dataUrl, maxW = 1200, maxH = 900, quality = 0.82) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        const ratio = Math.min(maxW / width, maxH / height, 1);
-        width = Math.round(width * ratio); height = Math.round(height * ratio);
-        const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.src = dataUrl;
-    });
+/* ===== js/core/ducky-ui.js ===== */
+window.DuckyUI = (() => {
+  function ensureToastRoot() {
+    let root = document.getElementById('duckyToastRoot');
+    if (!root) {
+      root = document.createElement('div');
+      root.id = 'duckyToastRoot';
+      root.className = 'ducky-toast-root';
+      document.body.appendChild(root);
+    }
+    return root;
   }
-  return { fileToBase64, resizeDataUrl };
+  function toast(message, type = 'info', timeout = 3500) {
+    const root = ensureToastRoot();
+    const item = document.createElement('div');
+    item.className = `ducky-toast ducky-toast--${type}`;
+    item.textContent = message || '';
+    root.appendChild(item);
+    requestAnimationFrame(() => item.classList.add('is-visible'));
+    setTimeout(() => {
+      item.classList.remove('is-visible');
+      setTimeout(() => item.remove(), 220);
+    }, timeout);
+  }
+  function showLoading(target, message = 'กำลังโหลด...') {
+    const el = typeof target === 'string' ? document.querySelector(target) : target;
+    if (!el) return;
+    el.dataset.previousHtml = el.innerHTML;
+    el.innerHTML = `<div class="ducky-loading"><span class="ducky-spinner"></span><span>${message}</span></div>`;
+  }
+  function hideLoading(target) {
+    const el = typeof target === 'string' ? document.querySelector(target) : target;
+    if (!el) return;
+    if (el.dataset.previousHtml != null) {
+      el.innerHTML = el.dataset.previousHtml;
+      delete el.dataset.previousHtml;
+    }
+  }
+  function formatError(res, fallback = 'เกิดข้อผิดพลาด') {
+    if (!res) return fallback;
+    return res.message || res.error || res.code || fallback;
+  }
+  async function call(action, payload = {}, options = {}) {
+    const title = options.title || action;
+    if (options.loadingEl) showLoading(options.loadingEl, options.loadingText || 'กำลังโหลด...');
+    try {
+      const res = await AppApi.post({ action, ...payload }, options.apiOptions || {});
+      if (!res || res.status !== 'ok') {
+        const msg = formatError(res, `${title} ไม่สำเร็จ`);
+        toast(msg, 'error', 5200);
+        return res || { status: 'error', message: msg };
+      }
+      if (options.successMessage) toast(options.successMessage, 'success');
+      return res;
+    } catch (err) {
+      const msg = err?.message || `${title} ไม่สำเร็จ`;
+      toast(msg, 'error', 5200);
+      return { status: 'error', message: msg };
+    } finally {
+      if (options.loadingEl) hideLoading(options.loadingEl);
+    }
+  }
+  return { toast, showLoading, hideLoading, formatError, call };
 })();
 
 
-/* ===== js/services/batch.service.js ===== */
-window.BatchApi = {
-  list: (lastUpdate) => AppApi.postCached({ action: 'getAllBatches', lastUpdate }, { background: true, maxStaleMs: 24 * 60 * 60 * 1000 }),
-  dashboard: (batchId) => AppApi.postCached({ action: 'getBatchDashboardSummary', batch_id: batchId }, { background: true, maxStaleMs: 6 * 60 * 60 * 1000 }),
-  detail: (batchId) => AppApi.postCached({ action: 'getBatchFullDetail', batch_id: batchId }, { background: true, maxStaleMs: 6 * 60 * 60 * 1000 }),
-  save: (payload) => AppApi.post(payload),
-  movement: (payload) => AppApi.post({ action: 'saveBatchMovement', ...payload })
-};
+/* ===== js/core/section-loader.js ===== */
+window.AppSectionLoader = (() => {
+  const BUSY_STATES = new Set(['loading', 'syncing', 'saving', 'refreshing']);
 
+  function getTarget(target) {
+    if (!target) return null;
+    if (typeof target === 'string') return document.getElementById(target) || document.querySelector(target);
+    return target;
+  }
 
-/* ===== js/services/feed.service.js ===== */
-window.FeedApi = {
-  pageData: (batchId, month) => AppApi.postCached({ action: 'getModuleCalendarData', batch_id: batchId, module_type: 'feed_manage', month }, { background: true, maxStaleMs: 12 * 60 * 60 * 1000 }),
-  saveLog: (payload) => AppApi.post({ action: 'saveFeedLog', ...payload }),
-  record: (payload) => AppApi.postCached({ action: 'getFeedLogRecord', ...payload }, { background: true, maxStaleMs: 6 * 60 * 60 * 1000 })
-};
+  function mark(target, state = 'idle', label = '') {
+    const el = getTarget(target);
+    if (!el) return null;
+    const next = String(state || 'idle');
+    el.dataset.sectionState = next;
+    el.setAttribute('aria-busy', BUSY_STATES.has(next) ? 'true' : 'false');
+    if (label) el.dataset.sectionStatus = label;
+    else delete el.dataset.sectionStatus;
+    return el;
+  }
 
+  function clear(target) {
+    const el = getTarget(target);
+    if (!el) return null;
+    delete el.dataset.sectionState;
+    delete el.dataset.sectionStatus;
+    el.removeAttribute('aria-busy');
+    return el;
+  }
 
-/* ===== js/services/egg.service.js ===== */
-window.EggApi = {
-  pageData: (batchId, month) => AppApi.postCached({ action: 'getModuleCalendarData', batch_id: batchId, module_type: 'egg_daily', month }, { background: true, maxStaleMs: 12 * 60 * 60 * 1000 }),
-  saveLog: (payload) => AppApi.post({ action: 'saveEggDailyLog', ...payload }),
-  record: (payload) => AppApi.postCached({ action: 'getEggDailyRecord', ...payload }, { background: true, maxStaleMs: 6 * 60 * 60 * 1000 })
-};
+  function setText(id, text) {
+    const el = getTarget(id);
+    if (el) el.textContent = text == null ? '' : String(text);
+  }
 
+  function withBusy(target, label, task) {
+    mark(target, 'loading', label || 'กำลังโหลด...');
+    return Promise.resolve()
+      .then(task)
+      .finally(() => mark(target, 'idle'));
+  }
 
-/* ===== js/services/sale.service.js ===== */
-window.SaleApi = {
-  pageData: (batchId, month) => AppApi.postCached({ action: 'getModuleCalendarData', batch_id: batchId, module_type: 'sale_manage', month }, { background: true, maxStaleMs: 12 * 60 * 60 * 1000 }),
-  saveBill: (payload) => AppApi.post({ action: 'saveBatchSaleBill', ...payload }),
-  billRecord: (payload) => AppApi.postCached({ action: 'getSaleBillRecord', ...payload }, { background: true, maxStaleMs: 6 * 60 * 60 * 1000 }),
-  billsForDate: (payload) => AppApi.postCached({ action: 'getSaleBillsForDate', ...payload }, { background: true, maxStaleMs: 6 * 60 * 60 * 1000 }),
-  rangeSummary: (payload) => AppApi.postCached({ action: 'getSaleBillRangeSummary', ...payload }, { background: true, maxStaleMs: 6 * 60 * 60 * 1000 }),
-  billEditBundle: (payload) => AppApi.postCached({ action: 'getSaleBillEditBundle', ...payload }, { timeoutMs: 25000, background: true, maxStaleMs: 6 * 60 * 60 * 1000 }),
-  preBillEditBundle: (payload) => AppApi.postCached({ action: 'getPreBillEditBundle', ...payload }, { timeoutMs: 25000, background: true, maxStaleMs: 6 * 60 * 60 * 1000 }),
-  effectiveEgg: (batchId) => AppApi.postCached({ action: 'getEffectiveEggPriceSet', batch_id: batchId }, { ttlMs: 12 * 60 * 60 * 1000, background: true, maxStaleMs: 7 * 24 * 60 * 60 * 1000 })
-};
+  function subscribe(action, handler, options = {}) {
+    if (!window.AppApi?.subscribe) return () => {};
+    const filter = typeof options.filter === 'function' ? options.filter : null;
+    return AppApi.subscribe(action, (response, detail) => {
+      if (filter && !filter(response, detail)) return;
+      handler(response, detail);
+    });
+  }
 
+  function subscribeMany(actions = [], handler, options = {}) {
+    const off = actions.map((action) => subscribe(action, handler, options)).filter(Boolean);
+    return () => off.forEach((fn) => { try { fn(); } catch (_) {} });
+  }
 
-/* ===== js/services/price.service.js ===== */
-window.PriceApi = {
-  adminData: () => AppApi.postCached({ action: 'getItemPriceAdminData' }, { background: true, maxStaleMs: 12 * 60 * 60 * 1000 }),
-  effectiveEgg: (batchId) => AppApi.postCached({ action: 'getEffectiveEggPriceSet', batch_id: batchId }, { ttlMs: 12 * 60 * 60 * 1000, background: true, maxStaleMs: 7 * 24 * 60 * 60 * 1000 }),
-  saveSet: (payload) => AppApi.post({ action: 'savePriceSet', ...payload })
-};
+  function applyCachedBadge(target, response) {
+    const el = getTarget(target);
+    if (!el || !response || typeof response !== 'object') return;
+    if (response.__from_cache) {
+      const ageSec = Math.max(1, Math.round(Number(response.__cache_age_ms || 0) / 1000));
+      mark(el, response.__cache_stale ? 'stale' : 'cached', response.__cache_stale ? `ข้อมูล cache ${ageSec} วิ กำลังอัปเดต` : `ข้อมูลจาก cache ${ageSec} วิ`);
+    } else {
+      mark(el, 'fresh', 'อัปเดตแล้ว');
+      setTimeout(() => {
+        if (el.dataset.sectionState === 'fresh') clear(el);
+      }, 1800);
+    }
+  }
 
-
-/* ===== js/services/permission.service.js ===== */
-window.PermissionApi = {
-  adminOptions: () => AppApi.postCached({ action: 'getPermissionAdminOptions' }, { ttlMs: 5 * 60 * 1000, background: true, maxStaleMs: 12 * 60 * 60 * 1000 }),
-  accessList: (batchId) => AppApi.postCached({ action: 'getBatchAccessList', batch_id: batchId }, { background: true, maxStaleMs: 6 * 60 * 60 * 1000 }),
-  accessSummary: (batchId) => AppApi.postCached({ action: 'getBatchAccessSummary', batch_id: batchId }, { background: true, maxStaleMs: 6 * 60 * 60 * 1000 })
-};
+  return { mark, clear, setText, withBusy, subscribe, subscribeMany, applyCachedBadge };
+})();
 
 
 /* ===== js/services/menu-permission.service.js ===== */
@@ -1309,324 +1373,6 @@ window.MenuPermissionApi = (() => {
     migrateExistingUsers,
     ensureSheetReady
   };
-})();
-
-
-/* ===== js/services/report.service.js ===== */
-window.ReportApi = {
-  pageData: (batchId) => AppApi.postCached(
-    { action: 'getReportPageData', batch_id: batchId },
-    { ttlMs: 2 * 60 * 1000, maxStaleMs: 24 * 60 * 60 * 1000, background: true, timeoutMs: 10000 }
-  ),
-  rebuild: (batchId) => AppApi.post({ action: 'rebuildReportForBatch', batch_id: batchId }, { timeoutMs: 30000 }),
-  exportExcel: (batchId, month) => AppApi.post({ action: 'exportReportExcel', batch_id: batchId, month }, { timeoutMs: 30000 }),
-  publicView: (key) => AppApi.postPublic({ action: 'getReportPublicViewData', view_key: key }, { timeoutMs: 10000, ttlMs: 60 * 1000, maxStaleMs: 6 * 60 * 60 * 1000, background: true })
-};
-
-
-/* ===== js/services/liff.service.js ===== */
-window.LiffRouteApi = {
-  pageData: (batchId) => AppApi.postCached({ action: 'getLiffBatchRoutePageData', batch_id: batchId }, { ttlMs: 2 * 60 * 1000, background: true, maxStaleMs: 12 * 60 * 60 * 1000 }),
-  save: (payload) => AppApi.post({ action: 'saveLiffBatchRoute', ...payload }),
-  generateKey: (batchId) => AppApi.post({ action: 'generateLiffRouteKey', batch_id: batchId })
-};
-
-
-/* ===== js/services/event.service.js ===== */
-window.EventApi = {
-  pageData: (batchId) => AppApi.postCached({ action: 'getBatchEventsPageData', batch_id: batchId }, { ttlMs: 2 * 60 * 1000, background: true, maxStaleMs: 12 * 60 * 60 * 1000 }),
-  saveFeedConsumption: (payload) => AppApi.post({ action: 'saveFeedConsumptionLog', ...payload }),
-  saveEvent: (payload) => AppApi.post({ action: 'saveBatchEvent', ...payload }),
-  saveMedicalInventory: (payload) => AppApi.post({ action: 'saveMedicalInventoryLog', ...payload }),
-  deleteEvent: (payload) => AppApi.post({ action: 'deleteBatchEvent', ...payload })
-};
-
-
-/* ===== js/components/bottom-sheet.js ===== */
-window.BottomSheet = (() => {
-  function open(id) { const sheet = document.getElementById(id); if (!sheet) return; sheet.classList.remove('hidden'); requestAnimationFrame(() => sheet.classList.add('show')); }
-  function close(id) { const sheet = document.getElementById(id); if (!sheet) return; sheet.classList.remove('show'); setTimeout(() => sheet.classList.add('hidden'), 220); }
-  return { open, close };
-})();
-
-
-/* ===== js/components/calendar-grid.js ===== */
-window.CalendarGrid = (() => {
-  function monthKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; }
-  function daysInMonth(key) { const [y,m] = String(key).split('-').map(Number); return new Date(y, m, 0).getDate(); }
-  return { monthKey, daysInMonth };
-})();
-
-
-/* ===== js/components/summary-cards.js ===== */
-window.SummaryCards = (() => {
-  function render(container, cards = []) {
-    if (!container) return;
-    container.innerHTML = cards.map((card) => `<div class="module-summary-card"><span class="module-summary-label">${AppFormat?.escapeHtml?.(card.label) ?? card.label}</span><strong class="module-summary-value">${AppFormat?.escapeHtml?.(card.value) ?? card.value}</strong><span class="muted">${AppFormat?.escapeHtml?.(card.note || '') ?? ''}</span></div>`).join('');
-  }
-  return { render };
-})();
-
-
-/* ===== js/components/skeleton.js ===== */
-window.Skeleton = (() => {
-  function cards(count = 3) { return Array.from({ length: count }, () => '<div class="skeleton-wrap"><div class="skeleton-card"><div class="skeleton skeleton-thumb"></div><div style="flex:1"><div class="skeleton skeleton-line long"></div><div class="skeleton skeleton-line short"></div></div></div></div>').join(''); }
-  return { cards };
-})();
-
-
-/* ===== js/components/fab.js ===== */
-window.AppFab = (() => {
-  function close(root) { root?.classList?.remove('open'); }
-  function toggle(root) { root?.classList?.toggle('open'); }
-  return { close, toggle };
-})();
-
-
-/* ===== js/components/bill-preview.js ===== */
-window.BillPreview = (() => {
-  function loadCanvasImage(src) {
-    return new Promise((resolve) => {
-      if (!src) return resolve(null);
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = src;
-    });
-  }
-
-  function drawCenteredText(ctx, text, centerX, y) {
-    const safeText = String(text || '');
-    const previousAlign = ctx.textAlign;
-    const previousDirection = ('direction' in ctx) ? ctx.direction : null;
-
-    // Use an explicit LTR + left-aligned draw position for centered Thai text.
-    // Some mobile WebViews misplace canvas text when using textAlign='center',
-    // especially after drawing right-aligned amount columns.
-    if ('direction' in ctx) ctx.direction = 'ltr';
-    ctx.textAlign = 'left';
-
-    const metrics = ctx.measureText(safeText);
-    const left = Number(metrics.actualBoundingBoxLeft || 0);
-    const right = Number(metrics.actualBoundingBoxRight || metrics.width || 0);
-    const visualWidth = Math.abs(left) + Math.abs(right);
-    const x = Math.round(centerX - visualWidth / 2 - left);
-    ctx.fillText(safeText, x, Math.round(y));
-
-    ctx.textAlign = previousAlign;
-    if (previousDirection != null) ctx.direction = previousDirection;
-  }
-
-  function fitCenteredText(ctx, text, centerX, y, maxWidth, weight = 'bold', startSize = 22, minSize = 13) {
-    const safeText = String(text || '');
-    let size = startSize;
-    while (size > minSize) {
-      ctx.font = `${weight} ${size}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-      if (ctx.measureText(safeText).width <= maxWidth) break;
-      size -= 1;
-    }
-    drawCenteredText(ctx, safeText, centerX, y);
-    return size;
-  }
-
-  function defaultWrapText(ctx, text, x, y, maxWidth, lineHeight) {
-    const source = String(text || '');
-    const paragraphs = source.split(/\r?\n/);
-    let currentY = y;
-    paragraphs.forEach((paragraph, pIndex) => {
-      const words = paragraph.split(/\s+/).filter(Boolean);
-      if (!words.length) {
-        currentY += lineHeight;
-        return;
-      }
-      let line = '';
-      words.forEach((word) => {
-        const testLine = line ? `${line} ${word}` : word;
-        if (ctx.measureText(testLine).width > maxWidth && line) {
-          ctx.fillText(line, x, currentY);
-          line = word;
-          currentY += lineHeight;
-        } else {
-          line = testLine;
-        }
-      });
-      if (line) ctx.fillText(line, x, currentY);
-      if (pIndex < paragraphs.length - 1) currentY += lineHeight;
-    });
-    return currentY;
-  }
-
-  function compactDate(value, helpers = {}) {
-    if (helpers.formatThaiDate) return helpers.formatThaiDate(value);
-    if (!value) return '-';
-    const text = String(value).slice(0, 10);
-    const parts = text.split('-').map(Number);
-    if (parts.length === 3 && parts.every((v) => !Number.isNaN(v))) {
-      const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-      return `${parts[2]} ${months[(parts[1] || 1) - 1]} ${parts[0] + 543}`;
-    }
-    return text;
-  }
-
-  function formatNumber(value, helpers = {}) {
-    if (helpers.formatNumber) return helpers.formatNumber(value);
-    return Number(value || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
-  }
-
-  function formatMoney(value, helpers = {}) {
-    if (helpers.formatMoney) return helpers.formatMoney(value);
-    return Number(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  async function renderBillImage(draft = {}, helpers = {}) {
-    const width = helpers.width || 430;
-    const padding = helpers.padding || 22;
-    const lineGap = 18;
-    const items = Array.isArray(draft.items) ? draft.items : [];
-    const itemBlockHeight = helpers.itemBlockHeight || 52;
-    const hasRemark = !!String(draft.remark || '').trim();
-    const logoSize = helpers.logoSize || 54;
-    const headerHeight = 154;
-    const remarkReserve = hasRemark ? 96 : 24;
-    const thankYouHeight = 34;
-    const bottomPadding = helpers.bottomPadding || 42;
-    const discountRows = Number(draft.discount || 0) > 0 ? 2 : 1;
-    const height = Math.max(
-      320,
-      headerHeight +
-        (items.length * itemBlockHeight) +
-        remarkReserve +
-        thankYouHeight +
-        (discountRows * lineGap) +
-        bottomPadding +
-        34
-    );
-
-    const dpr = Math.min(window.devicePixelRatio || 2, 3);
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    if ('direction' in ctx) ctx.direction = 'ltr';
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#111827';
-    ctx.textBaseline = 'top';
-
-    let y = padding;
-    const logoSrc = draft.logo_url || draft.logoUrl || helpers.logoUrl || 'assets/farm-logo.png';
-    const logo = await loadCanvasImage(logoSrc);
-    if (logo) {
-      ctx.drawImage(logo, Math.round((width - logoSize) / 2), y, logoSize, logoSize);
-      y += logoSize + 8;
-    }
-
-    ctx.fillStyle = '#111827';
-    fitCenteredText(ctx, draft.farm_name || draft.farmName || 'FARM', width / 2, y, width - (padding * 2), 'bold', 22, 13);
-    y += 30;
-    fitCenteredText(ctx, draft.bill_title || draft.title || helpers.title || 'บิลเงินสด', width / 2, y, width - (padding * 2), 'bold', 17, 13);
-    y += 28;
-
-    ctx.textAlign = 'left';
-    ctx.font = '14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillStyle = '#374151';
-    ctx.fillText('วันที่ขาย: ' + compactDate(draft.log_date, helpers), padding, y);
-    y += lineGap;
-    ctx.fillText('เวลาออกบิล: ' + (draft.issue_date || '-'), padding, y);
-    y += lineGap;
-    ctx.fillText('ชุดสัตว์: ' + (draft.batch_name || '-'), padding, y);
-    y += 20;
-
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-    ctx.stroke();
-    y += 12;
-
-    items.forEach((item) => {
-      const itemName = item.display_name || item.item_name || item.name || '-';
-      const unitLabel = item.unit_label || item.unit || '';
-      const qtyText = draft.sale_type === 'egg' && item.total_qty != null
-        ? `${formatNumber(item.qty, helpers)} ${unitLabel} (${formatNumber(item.total_qty, helpers)} ฟอง) x ${formatMoney(item.unit_price, helpers)}`
-        : `${formatNumber(item.qty, helpers)} ${unitLabel} x ${formatMoney(item.unit_price, helpers)}`;
-
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#111827';
-      ctx.font = 'bold 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillText(itemName, padding, y, width - (padding * 2));
-      y += 18;
-
-      ctx.font = '13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillStyle = '#4b5563';
-      ctx.fillText(qtyText, padding, y, width - (padding * 2) - 112);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#111827';
-      ctx.fillText(formatMoney(item.line_total, helpers), width - padding, y, 108);
-      y += itemBlockHeight - 18;
-    });
-
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-    ctx.stroke();
-    y += 12;
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#111827';
-    ctx.font = '14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText('รวมก่อนหักส่วนลด', padding, y);
-    ctx.textAlign = 'right';
-    ctx.fillText(formatMoney(draft.sub_total || draft.subTotal || draft.grand_total, helpers), width - padding, y);
-    y += lineGap;
-
-    if (Number(draft.discount || 0) > 0) {
-      ctx.textAlign = 'left';
-      ctx.fillText('ส่วนลด', padding, y);
-      ctx.textAlign = 'right';
-      ctx.fillText('-' + formatMoney(draft.discount, helpers), width - padding, y);
-      y += lineGap;
-    }
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#111827';
-    ctx.font = 'bold 16px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText('สุทธิ', padding, y);
-    ctx.textAlign = 'right';
-    ctx.font = 'bold 18px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText(formatMoney(draft.grand_total || draft.grandTotal || 0, helpers), width - padding, y);
-    y += 32;
-
-    if (hasRemark) {
-      ctx.textAlign = 'left';
-      ctx.font = '13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillStyle = '#4b5563';
-      const wrap = helpers.wrapText || defaultWrapText;
-      const remarkEndY = wrap(ctx, 'หมายเหตุ: ' + draft.remark, padding, y, width - (padding * 2), 17);
-      y = Number.isFinite(remarkEndY) ? remarkEndY + 18 : y + 48;
-    } else {
-      y += 12;
-    }
-
-    const thankYouY = Math.min(y, height - padding - 22);
-    ctx.textAlign = 'left';
-    ctx.font = 'bold 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillStyle = '#0f766e';
-    drawCenteredText(ctx, helpers.thankYouText || 'ขอบคุณที่อุดหนุน', width / 2, thankYouY);
-    ctx.textAlign = 'left';
-
-    return canvas.toDataURL('image/png');
-  }
-
-  return { renderBillImage, loadCanvasImage, drawCenteredText, fitCenteredText };
 })();
 
 
@@ -2110,281 +1856,399 @@ window.NavDrawer = (() => {
 })();
 
 
-/* ===== js/modules/admin-permissions-page.js ===== */
-
-window.AdminPermissionsPage = (() => {
-  const state = {
-    users: [],
-    batches: [],
-    selectedBatch: null,
-    selectedUser: null,
-    currentPermissions: {},
-    grantedMembers: [],
-    grantedLoaded: false
+/* ===== js/services/ducky-admin.service.js ===== */
+window.DuckyAdminService = (() => {
+  const post = (action, data = {}) => AppApi.post({ action, ...data });
+  return {
+    getMode: () => post('getDuckyDataSourceMode'),
+    setMode: (mode) => post('setDuckyDataSourceMode', { mode }),
+    health: (data = {}) => post('getDuckySystemHealth', data),
+    validate: (data = {}) => post('runDuckyFullValidation', data),
+    reconcile: (data = {}) => post('reconcileDuckySupabaseWithSheets', data),
+    validateReport: (data = {}) => post('validateSupabaseReportFull', data),
+    rebuildReport: (batchId) => post('rebuildSupabaseFullReportForBatch', { batch_id: batchId }),
+    timeline: (data = {}) => post('getBatchActivityTimeline', data),
+    reportDashboard: (data = {}) => post('getSupabaseReportDashboard', data),
+    alerts: (data = {}) => post('getDuckyAlertsForecast', data),
+    publicReport: (viewKey) => AppApi.postPublic({ action: 'getReportPublicViewData', view_key: viewKey }),
+    diagnostics: (data = {}) => post('getDuckyDiagnosticsDashboard', data),
+    diagnosticsSmoke: () => post('runDuckyDiagnosticsSmokeTest'),
+    integrity: (data = {}) => post('runDuckyDataIntegrityCheck', data),
+    hardeningAudit: () => post('runDuckyProductionHardeningAudit'),
+    viewsStatus: () => post('getDuckyV14OptimizationStatus'),
+    warmupStatus: () => post('getWarmupStatus'),
+    clearRuntimeCaches: (scopes = ['global']) => post('clearDuckyRuntimeCaches', { scopes })
   };
-  const CACHE_TTL_MS = 90 * 1000;
+})();
+
+
+/* ===== js/modules/diagnostics-page.js ===== */
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+  let lastResult = null;
+  let isBootstrapped = false;
+  let isBound = false;
+  let isBusy = false;
+
+  function toast(message, tone = 'info') {
+    if (window.DuckyUI?.toast) DuckyUI.toast(message, tone);
+    else console[tone === 'error' ? 'error' : 'log'](message);
+  }
+
+  function tone(value) {
+    const text = String(value || '').toLowerCase();
+    if (['ok', 'success', 'ready'].includes(text)) return 'ok';
+    if (['warning', 'warn', 'partial'].includes(text)) return 'warn';
+    if (['data', 'data_issue', 'data_error'].includes(text)) return 'data';
+    if (['error', 'bad', 'critical', 'failed'].includes(text)) return 'error';
+    return 'neutral';
+  }
+
+  function badge(status, label) {
+    const t = tone(status);
+    const cls = t === 'ok' ? 'status-ok' : (t === 'warn' ? 'status-warn' : (t === 'data' ? 'status-data' : (t === 'error' ? 'status-error' : 'muted-badge')));
+    return `<span class="badge-inline ${cls}">${esc(label || status || '-')}</span>`;
+  }
+
+  function kv(label, value) {
+    return `<div class="diag-kv"><span>${esc(label)}</span><b>${esc(value == null || value === '' ? '-' : value)}</b></div>`;
+  }
+
+  function getCall(data, name) {
+    return (data?.calls || []).find((item) => item.name === name) || null;
+  }
+
+  function safeSetText(id, text) {
+    const el = $(id);
+    if (el) el.textContent = text;
+  }
+
+  function setButtonBusy(button, busyText) {
+    if (!button) return () => {};
+    const oldHtml = button.innerHTML;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    if (busyText) button.innerHTML = busyText;
+    return () => {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+      button.innerHTML = oldHtml;
+    };
+  }
+
+  function setGlobalBusy(next) {
+    isBusy = !!next;
+    ['diagRefreshBtn', 'refreshDiagnosticsBtn', 'diagIntegrityBtn', 'diagSmokeBtn', 'diagClearCacheBtn'].forEach((id) => {
+      const el = $(id);
+      if (el) el.disabled = isBusy;
+    });
+  }
+
+  function setCard(cardId, title, status, html) {
+    const card = $(cardId);
+    if (!card) return;
+    const headBadge = card.querySelector('.diag-card__head .badge-inline');
+    if (headBadge) {
+      const t = tone(status);
+      headBadge.className = `badge-inline ${t === 'ok' ? 'status-ok' : t === 'warn' ? 'status-warn' : t === 'data' ? 'status-data' : t === 'error' ? 'status-error' : 'muted-badge'}`;
+      headBadge.textContent = title || status || '-';
+    }
+    const body = card.querySelector('.diag-card__body');
+    if (body) body.innerHTML = html || '<p class="muted">ไม่มีข้อมูล</p>';
+  }
+
+  function compactJson(value, maxLen = 220) {
+    let text = '';
+    try { text = JSON.stringify(value || {}, null, 2); } catch (_) { text = String(value || ''); }
+    return text.length > maxLen ? `${text.slice(0, maxLen)}…` : text;
+  }
+
+  function buildIssueGroups(issues = [], summaryByCode = null) {
+    if (summaryByCode && typeof summaryByCode === 'object') {
+      return Object.keys(summaryByCode).map((code) => ({ code, ...summaryByCode[code] }));
+    }
+    const map = {};
+    issues.forEach((issue) => {
+      const code = issue.code || issue.message || 'UNKNOWN';
+      if (!map[code]) map[code] = { code, count: 0, severity: issue.severity || 'warning', message: issue.message || '', sample: issue.detail || {} };
+      map[code].count += 1;
+      if (tone(issue.severity) === 'error') map[code].severity = 'error';
+    });
+    return Object.values(map);
+  }
+
+  function renderMode(call) {
+    const res = call?.result || {};
+    const mode = res.mode || res.data_source_mode || '-';
+    setCard('diagModeCard', call?.status || 'ok', call?.status || 'neutral', [
+      kv('Mode', mode),
+      kv('Users', res.users_source || '-'),
+      kv('Sessions', res.sessions_source || '-'),
+      kv('Logs', `action=${res.action_logs_source || '-'}, error=${res.system_error_logs_source || '-'}`),
+      kv('Elapsed', `${call?.elapsed_ms ?? '-'} ms`)
+    ].join(''));
+  }
+
+  function renderWarmup(call) {
+    const res = call?.result || {};
+    setCard('diagWarmupCard', call?.status || 'ok', call?.status || 'neutral', [
+      kv('Triggers', res.trigger_count ?? '-'),
+      kv('Handler', res.handler || '-'),
+      kv('Last warm-up', res.last_warmup_at || '-'),
+      kv('Elapsed', `${call?.elapsed_ms ?? '-'} ms`)
+    ].join(''));
+  }
+
+  function renderViews(call) {
+    const res = call?.result || {};
+    const items = (res.views || []).map((v) => `<li><span title="${esc(v.view || v.key)}">${esc(v.view || v.key)}</span>${badge(v.ok ? 'ok' : 'error', v.ok ? `${v.ms || 0} ms` : 'error')}</li>`).join('');
+    setCard('diagViewsCard', call?.status || 'ok', call?.status || 'neutral', [
+      kv('Enabled', res.enabled === false ? 'false' : 'true'),
+      kv('Installed', `${res.installed_count ?? 0}/${res.total_count ?? 0}`),
+      `<ul class="diag-list">${items || '<li><span>-</span><span>-</span></li>'}</ul>`
+    ].join(''));
+  }
+
+  function renderHardening(call) {
+    const res = call?.result || {};
+    const s = res.summary || {};
+    const missing = res.idempotency?.missing_critical_write_actions || [];
+    setCard('diagHardeningCard', s.severity || call?.status || 'neutral', s.severity || call?.status || 'neutral', [
+      kv('Write actions', s.write_actions ?? '-'),
+      kv('Idempotent', s.idempotent_write_actions ?? '-'),
+      kv('Missing critical', s.missing_critical_idempotency ?? '-'),
+      missing.length ? `<p class="muted">${esc(missing.slice(0, 5).join(', '))}${missing.length > 5 ? ' ...' : ''}</p>` : '<p class="muted">Critical write actions covered</p>'
+    ].join(''));
+  }
+
+  function renderHealth(call) {
+    const res = call?.result || {};
+    const runtime = res.runtime || {};
+    const tables = (res.checked_tables || []).map((t) => `<li><span>${esc(t.table_name || t.table)}</span>${badge(t.ok ? 'ok' : 'error', t.ok ? `${t.count ?? '-'} rows` : 'error')}</li>`).join('');
+    setCard('diagHealthCard', call?.status || 'ok', call?.status || 'neutral', [
+      kv('Supabase', res.supabase_connected ? 'connected' : 'not connected'),
+      kv('Mode', res.mode || '-'),
+      kv('Response', `${res.response_time_ms ?? runtime.response_time_ms ?? call?.elapsed_ms ?? '-'} ms`),
+      `<ul class="diag-list">${tables || '<li><span>-</span><span>-</span></li>'}</ul>`
+    ].join(''));
+  }
+
+  function renderIntegrity(call) {
+    if (!call) return;
+    const res = call?.result || {};
+    const s = res.summary || {};
+    const issues = res.issues || [];
+    const groups = buildIssueGroups(issues, res.issues_by_code).slice(0, 8);
+    const status = Number(s.error_count || 0) > 0 ? 'data' : (Number(s.warning_count || 0) > 0 ? 'warning' : 'ok');
+    const groupHtml = groups.map((g) => `
+      <div class="diag-issue-row">
+        <div class="diag-issue-row__top"><code>${esc(g.code)}</code>${badge(g.severity || status, `${g.count || 1}x`)}</div>
+        ${g.message ? `<p>${esc(g.message)}</p>` : ''}
+        ${g.sample ? `<pre>${esc(compactJson(g.sample))}</pre>` : ''}
+      </div>
+    `).join('');
+    const truncated = res.truncated ? `<p class="muted">แสดง ${esc(res.issue_count_returned)} จาก ${esc(s.issue_count)} issues — ดูทั้งหมดใน Raw result</p>` : '';
+    setCard('diagIntegrityCard', status === 'data' ? 'data issue' : (call?.status || s.severity || 'ok'), status, [
+      `<div class="diag-issue-summary">
+        <div class="diag-mini-stat"><span>Issues</span><b>${esc(s.issue_count ?? 0)}</b></div>
+        <div class="diag-mini-stat"><span>Errors</span><b>${esc(s.error_count ?? 0)}</b></div>
+        <div class="diag-mini-stat"><span>Warnings</span><b>${esc(s.warning_count ?? 0)}</b></div>
+      </div>`,
+      kv('Elapsed', `${call?.elapsed_ms ?? res.elapsed_ms ?? '-'} ms`),
+      truncated,
+      groupHtml ? `<div class="diag-issue-groups">${groupHtml}</div>` : '<p class="muted">ไม่พบปัญหา critical จาก integrity check</p>'
+    ].join(''));
+  }
+
+
+  function renderPerformance(call) {
+    if (!call) return;
+    const res = call?.result || {};
+    const s = res.summary || {};
+    const status = s.severity || call?.status || 'ok';
+    const rows = (res.tests || []).map((t) => {
+      const grade = t.grade || (t.ok ? 'ok' : 'error');
+      const detail = t.result?.source ? t.result.source : (t.result?.note || t.error || '');
+      return `
+        <div class="diag-perf-row">
+          <div>
+            <b title="${esc(t.title || t.name)}">${esc(t.title || t.name)}</b>
+            <div class="muted" title="${esc(detail)}">${esc(detail || t.name)}</div>
+          </div>
+          <span>${esc(t.elapsed_ms ?? '-')} ms</span>
+          <span class="diag-perf-target diag-perf-grade-${esc(grade)}">${esc(grade)}</span>
+        </div>
+      `;
+    }).join('');
+    setCard('diagPerformanceCard', status, status, [
+      `<div class="diag-issue-summary">
+        <div class="diag-mini-stat"><span>OK</span><b>${esc(s.ok_count ?? 0)}</b></div>
+        <div class="diag-mini-stat"><span>Warn/Slow</span><b>${esc(Number(s.warning_count || 0) + Number(s.slow_count || 0))}</b></div>
+        <div class="diag-mini-stat"><span>Error</span><b>${esc(s.error_count ?? 0)}</b></div>
+      </div>`,
+      kv('Batch', res.batch_id || '-'),
+      kv('Elapsed', `${call?.elapsed_ms ?? res.elapsed_ms ?? '-'} ms`),
+      rows ? `<div class="diag-perf-table">${rows}</div>` : '<p class="muted">ยังไม่มี baseline</p>'
+    ].join(''));
+  }
+
+  function render(data) {
+    lastResult = data || null;
+    const sev = data?.summary?.severity || 'neutral';
+    const overall = $('diagOverallBadge');
+    if (overall) {
+      const t = tone(sev);
+      overall.className = `badge-inline ${t === 'ok' ? 'status-ok' : t === 'warn' ? 'status-warn' : t === 'data' ? 'status-data' : t === 'error' ? 'status-error' : 'muted-badge'}`;
+      overall.textContent = sev;
+    }
+    const dataIssues = Number(data?.summary?.data_issue_count || 0);
+    safeSetText('diagHeroTitle', sev === 'ok' ? 'ระบบพร้อมใช้งาน' : (dataIssues > 0 ? 'พบข้อมูลที่ควรตรวจสอบ' : (sev === 'warning' ? 'มี warning ที่ควรตรวจสอบ' : 'พบ error ที่ต้องตรวจสอบ')));
+    safeSetText('diagHeroDesc', `ตรวจ ${data?.summary?.total_count ?? 0} รายการ · ใช้เวลา ${data?.elapsed_ms ?? '-'} ms${dataIssues ? ` · data issues ${dataIssues}` : ''}`);
+    safeSetText('diagLastUpdated', `ล่าสุด ${new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`);
+
+    renderMode(getCall(data, 'mode'));
+    renderWarmup(getCall(data, 'warmup'));
+    renderViews(getCall(data, 'v14_views'));
+    renderHardening(getCall(data, 'hardening'));
+    renderHealth(getCall(data, 'health'));
+    renderPerformance(getCall(data, 'performance'));
+    renderIntegrity(getCall(data, 'integrity'));
+
+    const raw = $('diagRawJson');
+    if (raw) raw.textContent = JSON.stringify(data || {}, null, 2);
+  }
+
+  function renderError(error) {
+    const message = error?.message || String(error || 'โหลด diagnostics ไม่สำเร็จ');
+    const payload = {
+      status: 'error',
+      message,
+      hint: 'ตรวจว่า deploy backend v15.4 แล้ว และ session ยังไม่หมดอายุ',
+      at: new Date().toISOString()
+    };
+    const overall = $('diagOverallBadge');
+    if (overall) {
+      overall.className = 'badge-inline status-error';
+      overall.textContent = 'error';
+    }
+    safeSetText('diagHeroTitle', 'โหลด diagnostics ไม่สำเร็จ');
+    safeSetText('diagHeroDesc', message);
+    safeSetText('diagLastUpdated', `ล่าสุด ${new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`);
+    ['diagModeCard', 'diagWarmupCard', 'diagViewsCard', 'diagHardeningCard', 'diagHealthCard', 'diagPerformanceCard'].forEach((id) => {
+      setCard(id, 'error', 'error', `<p class="muted">${esc(message)}</p>`);
+    });
+    const raw = $('diagRawJson');
+    if (raw) raw.textContent = JSON.stringify(payload, null, 2);
+  }
+
+  async function loadDiagnostics(options = {}) {
+    const payload = {
+      action: 'getDuckyDiagnosticsDashboard',
+      include_integrity: !!options.includeIntegrity,
+      include_health: true,
+      include_hardening: true,
+      include_views: true,
+      include_warmup: true,
+      include_performance: !!options.includePerformance,
+      issue_limit: options.includeIntegrity ? 80 : 20
+    };
+    const res = await AppApi.post(payload, { cache: false, timeoutMs: options.includeIntegrity ? 120000 : 45000 });
+    if (!res || res.status !== 'ok') throw new Error(res?.message || 'โหลด diagnostics ไม่สำเร็จ');
+    render(res);
+    return res;
+  }
+
+  async function runSmoke() {
+    const res = await AppApi.post({ action: 'runDuckyDiagnosticsSmokeTest' }, { cache: false, timeoutMs: 60000 });
+    if (!res || res.status !== 'ok') throw new Error(res?.message || 'Smoke test ไม่สำเร็จ');
+    const raw = $('diagRawJson');
+    if (raw) raw.textContent = JSON.stringify(res, null, 2);
+    toast(res.all_ok ? 'Smoke test ผ่าน' : 'Smoke test พบปัญหา', res.all_ok ? 'success' : 'error');
+  }
+
+  async function clearCaches() {
+    if (!confirm('ล้าง server runtime cache และ client API cache ใช่ไหม?')) return;
+    const res = await AppApi.post({ action: 'clearDuckyRuntimeCaches', scopes: ['global'] }, { cache: false, timeoutMs: 45000 });
+    AppCache?.removeByPrefix?.('ducky:api:');
+    AppCache?.removeByPrefix?.('ducky:module:');
+    AppCache?.removeByPrefix?.('ducky:report:');
+    const raw = $('diagRawJson');
+    if (raw) raw.textContent = JSON.stringify(res, null, 2);
+    toast('ล้าง cache แล้ว', 'success');
+  }
+
+  function bind() {
+    if (isBound) return;
+    isBound = true;
+    const onRefresh = async () => {
+      const restore = setButtonBusy($('diagRefreshBtn'), '<span>↻</span><b>Loading</b>');
+      setGlobalBusy(true);
+      try { await loadDiagnostics(); } catch (err) { renderError(err); toast(err.message, 'error'); }
+      finally { setGlobalBusy(false); restore(); }
+    };
+    $('refreshDiagnosticsBtn')?.addEventListener('click', onRefresh);
+    $('diagRefreshBtn')?.addEventListener('click', onRefresh);
+    $('diagIntegrityBtn')?.addEventListener('click', async () => {
+      const restore = setButtonBusy($('diagIntegrityBtn'), '<span>✓</span><b>Checking</b>');
+      setGlobalBusy(true);
+      try { await loadDiagnostics({ includeIntegrity: true }); }
+      catch (err) { renderError(err); toast(err.message, 'error'); }
+      finally { setGlobalBusy(false); restore(); }
+    });
+    $('diagSmokeBtn')?.addEventListener('click', async () => {
+      const restore = setButtonBusy($('diagSmokeBtn'), '<span>⌁</span><b>Testing</b>');
+      setGlobalBusy(true);
+      try { await runSmoke(); }
+      catch (err) { toast(err.message, 'error'); }
+      finally { setGlobalBusy(false); restore(); }
+    });
+    $('diagPerformanceBtn')?.addEventListener('click', async () => {
+      const restore = setButtonBusy($('diagPerformanceBtn'), '<span>◷</span><b>Measuring</b>');
+      setGlobalBusy(true);
+      try { await loadDiagnostics({ includePerformance: true }); }
+      catch (err) { renderError(err); toast(err.message, 'error'); }
+      finally { setGlobalBusy(false); restore(); }
+    });
+    $('diagClearCacheBtn')?.addEventListener('click', async () => {
+      const restore = setButtonBusy($('diagClearCacheBtn'), '<span>×</span><b>Clearing</b>');
+      setGlobalBusy(true);
+      try { await clearCaches(); }
+      catch (err) { toast(err.message, 'error'); }
+      finally { setGlobalBusy(false); restore(); }
+    });
+    $('diagCopyBtn')?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(lastResult || {}, null, 2));
+        toast('copy JSON แล้ว', 'success');
+      } catch (_) { toast('copy ไม่สำเร็จ', 'error'); }
+    });
+  }
 
   async function bootstrap() {
-    const ok = await AppAuth.ensureAuth();
-    if (!ok) return;
-    bindBaseEvents();
+    if (isBootstrapped) return;
+    isBootstrapped = true;
 
-    const cached = readCache('ducky:admin:options');
-    if (cached) {
-      state.users = cached.users || [];
-      state.batches = cached.batches || [];
-      renderOptionLists();
-    }
-
-    const response = await AppApi.post({ action: 'getPermissionAdminOptions' });
-    if (!response || response.status !== 'ok') {
-      if (!cached) document.getElementById('adminPermissionSubtitle').textContent = response?.message || 'โหลดตัวเลือกไม่สำเร็จ';
-      return;
-    }
-    state.users = response.users || [];
-    state.batches = response.batches || [];
-    writeCache('ducky:admin:options', { users: state.users, batches: state.batches });
-    renderOptionLists();
-
-    if (window.NavDrawer) {
-      NavDrawer.setBatchContext({ isAdmin: true, module_permissions: {}, batch: null });
-    }
-  }
-
-  function bindBaseEvents() {
-    document.getElementById('backBtn')?.addEventListener('click', () => history.back());
-    document.getElementById('logoutBtn')?.addEventListener('click', AppAuth.logout);
-    document.getElementById('adminBatchSearch')?.addEventListener('change', onSelectionChange);
-    document.getElementById('adminUserSearch')?.addEventListener('change', onSelectionChange);
-    document.getElementById('adminPermissionForm')?.addEventListener('submit', onSubmit);
-    document.getElementById('adminLoadGrantedBtn')?.addEventListener('click', loadGrantedMembers);
-  }
-
-  function renderOptionLists() {
-    document.getElementById('adminBatchList').innerHTML = state.batches.map((batch) => `<option value="${escapeHtml(batch.label)}"></option>`).join('');
-    document.getElementById('adminUserList').innerHTML = state.users.map((user) => `<option value="${escapeHtml(user.label)}"></option>`).join('');
-  }
-
-  async function onSelectionChange() {
-    state.selectedBatch = resolveBatch();
-    state.selectedUser = resolveUser();
-    state.grantedLoaded = false;
-    state.grantedMembers = [];
-    document.getElementById('adminGrantedCountBadge').textContent = 'ยังไม่โหลด';
-    document.getElementById('adminGrantedList').innerHTML = '<div class="empty-state">ยังไม่ได้ดึงข้อมูล</div>';
-
-    const matrix = document.getElementById('adminPermissionMatrix');
-    if (!state.selectedBatch || !state.selectedUser) {
-      state.currentPermissions = {};
-      matrix.innerHTML = '<div class="empty-state">เลือก batch และ user ก่อนเพื่อแสดงสิทธิ์รายโมดูล</div>';
-      return;
-    }
-
-    const cache = readCache(memberCacheKey(state.selectedBatch.id));
-    const member = cache?.find((item) => String(item.user_id) === String(state.selectedUser.id));
-    state.currentPermissions = member?.permissions || {};
-    renderPermissionGrid(matrix, getModules(state.selectedBatch.specie), state.currentPermissions);
-
-    if (!member) {
-      const perms = await fetchUserPermissions(state.selectedBatch.id, state.selectedUser.id);
-      state.currentPermissions = perms;
-      renderPermissionGrid(matrix, getModules(state.selectedBatch.specie), perms);
-    }
-  }
-
-  async function fetchUserPermissions(batchId, userId) {
-    const access = await AppApi.post({ action: 'getBatchAccessList', batch_id: batchId });
-    const members = access && access.status === 'ok' ? (access.members || []) : [];
-    if (members.length) writeCache(memberCacheKey(batchId), members);
-    const member = members.find((item) => String(item.user_id) === String(userId));
-    return member?.permissions || {};
-  }
-
-  async function onSubmit(event) {
-    event.preventDefault();
-    const batch = resolveBatch();
-    const user = resolveUser();
-    if (!batch || !user) return alert('กรุณาเลือก batch และ user');
-    const button = document.getElementById('adminPermissionSaveBtn');
-    const original = button.textContent;
-    button.disabled = true;
-    button.textContent = 'กำลังบันทึก...';
-
-    const selects = [...document.querySelectorAll('#adminPermissionMatrix select[data-module-key]')];
-    for (const select of selects) {
-      const response = await AppApi.post({
-        action: 'upsertBatchModulePermission',
-        batch_id: batch.id,
-        target_user_id: user.id,
-        module_key: select.dataset.moduleKey,
-        permission: select.value
-      });
-      if (!response || response.status !== 'ok') {
-        button.disabled = false;
-        button.textContent = original;
-        return alert(response?.message || `บันทึกสิทธิ์ ${select.dataset.moduleKey} ไม่สำเร็จ`);
-      }
-    }
-
-    button.disabled = false;
-    button.textContent = original;
-    localStorage.removeItem(memberCacheKey(batch.id));
-    localStorage.removeItem(`ducky:batch-dashboard:${batch.id}`);
-    alert('บันทึกสิทธิ์เรียบร้อย');
-    if (state.grantedLoaded) await loadGrantedMembers();
-  }
-
-  async function loadGrantedMembers() {
-    const batch = resolveBatch();
-    if (!batch) return alert('กรุณาเลือก batch ก่อน');
-    const badge = document.getElementById('adminGrantedCountBadge');
-    const list = document.getElementById('adminGrantedList');
-    const hint = document.getElementById('adminGrantedHint');
-    badge.textContent = 'กำลังโหลด';
-    list.innerHTML = '<div class="empty-state">กำลังโหลดรายการสิทธิ์...</div>';
-
-    let members = readCache(memberCacheKey(batch.id));
-    if (!members) {
-      const response = await AppApi.post({ action: 'getBatchAccessList', batch_id: batch.id });
-      if (!response || response.status !== 'ok') {
-        badge.textContent = 'ผิดพลาด';
-        list.innerHTML = `<div class="empty-state">${escapeHtml(response?.message || 'โหลดรายการสิทธิ์ไม่สำเร็จ')}</div>`;
-        return;
-      }
-      members = response.members || [];
-      writeCache(memberCacheKey(batch.id), members);
-    }
-
-    state.grantedLoaded = true;
-    state.grantedMembers = members || [];
-    badge.textContent = `${state.grantedMembers.length} คน`;
-    hint.textContent = 'แสดงเฉพาะผู้ที่ถูก grant สิทธิ์ใน batch ที่เลือก';
-    list.innerHTML = renderMemberCards(state.grantedMembers, batch.specie, true, batch.id);
-  }
-
-  function renderPermissionGrid(container, modules, permissions) {
-    container.innerHTML = modules.map((module) => {
-      const current = permissions[module.key] || 'none';
-      return `
-        <div class="permission-card">
-          <div class="permission-card__title">${module.label}</div>
-          <div class="permission-card__key muted">${module.key}</div>
-          <select data-module-key="${module.key}" class="permission-card__select">
-            <option value="none" ${current === 'none' ? 'selected' : ''}>ไม่มีสิทธิ์</option>
-            <option value="view" ${current === 'view' ? 'selected' : ''}>ดูอย่างเดียว</option>
-            <option value="write" ${current === 'write' ? 'selected' : ''}>ดูและแก้ไข</option>
-          </select>
-        </div>`;
-    }).join('');
-  }
-
-  function renderMemberCards(members, specie, canRevoke, batchId) {
-    if (!members.length) return '<div class="empty-state">ยังไม่มีผู้ใช้คนอื่นได้รับสิทธิ์ใน batch นี้</div>';
-    const modules = getModules(specie);
-    return members.map((member) => {
-      const name = member.display_name || member.farm_name || member.email || member.user_id;
-      const subtitle = [member.email || '', member.role ? `role: ${member.role}` : ''].filter(Boolean).join(' • ');
-      return `
-        <div class="access-member-card">
-          <div class="access-member-head">
-            <div>
-              <div class="access-member-name">${escapeHtml(name)}</div>
-              <div class="muted">${escapeHtml(subtitle || member.user_id)}</div>
-            </div>
-            <div class="access-member-badges">
-              ${member.is_admin ? '<span class="badge-inline success">admin</span>' : ''}
-              ${canRevoke ? `<button type="button" class="secondary-btn access-revoke-all-btn" data-target-user-id="${member.user_id}" data-batch-id="${batchId}" data-action="admin-revoke-all">ถอนสิทธิ์ทั้งหมด</button>` : ''}
-            </div>
-          </div>
-          <div class="access-module-grid access-module-grid--3">
-            ${modules.map((module) => {
-              const permission = (member.permissions && member.permissions[module.key]) || 'none';
-              const revokeButton = canRevoke && permission !== 'none'
-                ? `<button type="button" class="access-link-btn" data-target-user-id="${member.user_id}" data-batch-id="${batchId}" data-module-key="${module.key}" data-action="admin-revoke-module">ถอนสิทธิ์โมดูล</button>`
-                : '<span class="muted">-</span>';
-              return `
-                <div class="access-module-card">
-                  <div class="access-module-card__title">${module.label}</div>
-                  <span class="badge-inline ${badgeClass(permission)}">${permissionLabel(permission)}</span>
-                  ${revokeButton}
-                </div>`;
-            }).join('')}
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  document.addEventListener('click', async (event) => {
-    const button = event.target.closest('[data-action]');
-    if (!button) return;
-    const action = button.dataset.action;
-    if (action === 'admin-revoke-all') {
-      if (!confirm('ต้องการถอนสิทธิ์ทั้งหมดของผู้ใช้นี้ใช่ไหม')) return;
-      const response = await AppApi.post({ action: 'revokeBatchUserPermissions', batch_id: button.dataset.batchId, target_user_id: button.dataset.targetUserId });
-      if (!response || response.status !== 'ok') return alert(response?.message || 'ถอนสิทธิ์ไม่สำเร็จ');
-      localStorage.removeItem(memberCacheKey(button.dataset.batchId));
-      localStorage.removeItem(`ducky:batch-dashboard:${button.dataset.batchId}`);
-      await loadGrantedMembers();
-      return;
-    }
-    if (action === 'admin-revoke-module') {
-      if (!confirm('ต้องการถอนสิทธิ์ของโมดูลนี้ใช่ไหม')) return;
-      const response = await AppApi.post({ action: 'revokeBatchUserPermissions', batch_id: button.dataset.batchId, target_user_id: button.dataset.targetUserId, module_key: button.dataset.moduleKey });
-      if (!response || response.status !== 'ok') return alert(response?.message || 'ถอนสิทธิ์โมดูลไม่สำเร็จ');
-      localStorage.removeItem(memberCacheKey(button.dataset.batchId));
-      localStorage.removeItem(`ducky:batch-dashboard:${button.dataset.batchId}`);
-      await loadGrantedMembers();
-    }
-  });
-
-  function resolveBatch() {
-    const value = document.getElementById('adminBatchSearch')?.value || '';
-    return state.batches.find((batch) => batch.label === value) || null;
-  }
-  function resolveUser() {
-    const value = document.getElementById('adminUserSearch')?.value || '';
-    return state.users.find((user) => user.label === value) || null;
-  }
-  function getModules(specie) {
-    return specie === 'fish'
-      ? [
-          { key: 'batch_manage', label: 'จัดการชุดสัตว์' },
-          { key: 'fish_feed_manage', label: 'จัดการอาหาร' },
-          { key: 'fish_sale', label: 'ขายออก / บิล' },
-          { key: 'batch_access', label: 'สิทธิ์การเข้าถึง batch' },
-          { key: 'liff_routes', label: 'จัดการลิงก์ LIFF' },
-          { key: 'farm_events', label: 'กิจกรรม' },
-          { key: 'report', label: 'รายงาน' }
-        ]
-      : [
-          { key: 'batch_manage', label: 'จัดการชุดสัตว์' },
-          { key: 'feed_manage', label: 'จัดการอาหาร' },
-          { key: 'egg_daily', label: 'บันทึกไข่รายวัน' },
-          { key: 'egg_sale', label: 'ขายออก / บิล' },
-          { key: 'batch_access', label: 'สิทธิ์การเข้าถึง batch' },
-          { key: 'liff_routes', label: 'จัดการลิงก์ LIFF' },
-          { key: 'farm_events', label: 'กิจกรรม' },
-          { key: 'report', label: 'รายงาน' }
-        ];
-  }
-  function memberCacheKey(batchId) { return `ducky:access-members:${batchId}`; }
-  function permissionLabel(value) { return value === 'write' ? 'ดูและแก้ไข' : (value === 'view' ? 'ดูอย่างเดียว' : 'ไม่มีสิทธิ์'); }
-  function badgeClass(value) { return value === 'write' ? 'success' : (value === 'view' ? 'muted-badge' : 'danger-soft'); }
-  function escapeHtml(text) { return String(text || '').replace(/[&<>"']/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
-  function readCache(key) {
     try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (Date.now() - Number(parsed.savedAt || 0) > CACHE_TTL_MS) return null;
-      return parsed.data || null;
-    } catch (_) { return null; }
-  }
-  function writeCache(key, data) {
-    try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data })); } catch (_) {}
+      if (window.AppAuth?.ensureAuth) {
+        const ok = await AppAuth.ensureAuth();
+        if (!ok) return;
+      }
+      bind();
+      await loadDiagnostics();
+    } catch (err) {
+      renderError(err);
+      toast(err.message || String(err), 'error');
+    }
   }
 
-  return { bootstrap };
+  window.DiagnosticsPage = { bootstrap, loadDiagnostics, runSmoke, clearCaches };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      if (!isBootstrapped) bootstrap();
+    }, 0);
+  });
 })();
 
 

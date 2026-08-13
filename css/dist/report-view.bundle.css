@@ -11,7 +11,7 @@
   --rv-warn: #f59e0b;
   --rv-danger: #ef4444;
   --rv-info: #3b82f6;
-  --rv-shadow: 0 10px 30px rgba(15, 23, 42, .08);
+  --rv-shadow: none;
 }
 
 * { box-sizing: border-box; }
@@ -595,7 +595,7 @@ button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
   --rv-warn: #d97706;
   --rv-danger: #dc2626;
   --rv-info: #2563eb;
-  --rv-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+  --rv-shadow: none;
 }
 body {
   background:
@@ -1367,4 +1367,385 @@ body {
   .rv-event-list::before { left: 15px; }
   .rv-timeline-date { font-size: 11.5px; }
   .rv-timeline-item { padding: 8px; }
+}
+
+
+/* v11 no-shadow report view guard */
+body[data-page="report_view"] *,
+body[data-page="report_view"] *::before,
+body[data-page="report_view"] *::after {
+  box-shadow: none !important;
+}
+
+
+/* v18 Report View UI consistency
+   Standalone public report page: keep charts/layout, reduce radius/shadow and use shared-border primitives. */
+:root {
+  --rv-bg: #f7f7f7;
+  --rv-card: #ffffff;
+  --rv-soft: #fbfbfb;
+  --rv-border: #e7e7e7;
+  --rv-text: #111111;
+  --rv-sub: #6b7280;
+  --rv-radius: 8px;
+  --rv-radius-sm: 6px;
+  --rv-shadow: none;
+}
+
+body[data-page="report_view"] {
+  background:
+    linear-gradient(rgba(17, 17, 17, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 17, 17, .025) 1px, transparent 1px),
+    var(--rv-bg);
+  background-size: 24px 24px;
+}
+
+body[data-page="report_view"] .rv-app {
+  width: min(calc(100vw - 20px), 1240px);
+  margin: 0 auto;
+  padding-left: 0;
+  padding-right: 0;
+  gap: 8px;
+}
+
+body[data-page="report_view"] .rv-topbar,
+body[data-page="report_view"] .rv-filterbar,
+body[data-page="report_view"] .rv-card,
+body[data-page="report_view"] .rv-summary-card,
+body[data-page="report_view"] .rv-insight-panel,
+body[data-page="report_view"] .rv-highlight-popover,
+body[data-page="report_view"] .rv-fullscreen-panel,
+body[data-page="report_view"] .rv-tooltip {
+  border-radius: var(--rv-radius) !important;
+  box-shadow: none !important;
+}
+
+body[data-page="report_view"] .rv-topbar {
+  border-color: var(--rv-border);
+  padding: 10px;
+  backdrop-filter: blur(14px);
+}
+
+body[data-page="report_view"] .rv-eyebrow,
+body[data-page="report_view"] .rv-pill,
+body[data-page="report_view"] .rv-icon-btn,
+body[data-page="report_view"] .rv-secondary-btn,
+body[data-page="report_view"] .rv-highlight-toggle,
+body[data-page="report_view"] .rv-topbar select,
+body[data-page="report_view"] .rv-filterbar select,
+body[data-page="report_view"] .rv-highlight-popover input {
+  border-radius: var(--rv-radius-sm) !important;
+  box-shadow: none !important;
+}
+
+body[data-page="report_view"] .rv-topbar-actions {
+  min-width: 0;
+}
+
+body[data-page="report_view"] .rv-summary-grid {
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--rv-border);
+  border-radius: var(--rv-radius);
+  background: var(--rv-card);
+}
+
+body[data-page="report_view"] .rv-summary-card {
+  border: 0 !important;
+  border-right: 1px solid var(--rv-border) !important;
+  border-bottom: 1px solid var(--rv-border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 10px 12px;
+}
+
+body[data-page="report_view"] .rv-summary-grid > :nth-child(4n) {
+  border-right: 0 !important;
+}
+
+body[data-page="report_view"] .rv-summary-grid > :nth-last-child(-n + 4) {
+  border-bottom: 0 !important;
+}
+
+body[data-page="report_view"] .rv-layout,
+body[data-page="report_view"] .rv-side-panel,
+body[data-page="report_view"] .rv-small-grid {
+  gap: 8px;
+}
+
+body[data-page="report_view"] .rv-card {
+  border-color: var(--rv-border);
+  padding: 10px;
+}
+
+body[data-page="report_view"] .rv-card--main {
+  min-height: calc(100dvh - 228px);
+}
+
+body[data-page="report_view"] .rv-card-head {
+  gap: 8px;
+}
+
+body[data-page="report_view"] .rv-card-head > div {
+  min-width: 0;
+}
+
+body[data-page="report_view"] .rv-filterbar {
+  gap: 0;
+  padding: 0;
+  border-color: var(--rv-border);
+  background: var(--rv-card);
+  overflow-x: auto;
+}
+
+body[data-page="report_view"] .rv-filterbar label,
+body[data-page="report_view"] .rv-highlight-toggle {
+  border: 0 !important;
+  border-right: 1px solid var(--rv-border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  min-height: 38px;
+  box-shadow: none !important;
+}
+
+body[data-page="report_view"] .rv-filterbar > :last-child {
+  border-right: 0 !important;
+}
+
+body[data-page="report_view"] .rv-main-chart-wrap,
+body[data-page="report_view"] .rv-small-chart-wrap,
+body[data-page="report_view"] .rv-fullscreen-canvas-wrap,
+body[data-page="report_view"] .rv-event-list,
+body[data-page="report_view"] .rv-inspector-empty {
+  border-radius: var(--rv-radius) !important;
+  box-shadow: none !important;
+}
+
+body[data-page="report_view"] .rv-main-chart-wrap {
+  min-height: 450px;
+}
+
+body[data-page="report_view"] .rv-small-chart-wrap {
+  height: 286px;
+}
+
+body[data-page="report_view"] .rv-event-item,
+body[data-page="report_view"] .rv-inspector-card,
+body[data-page="report_view"] .rv-forecast-card,
+body[data-page="report_view"] .rv-cost-row {
+  border-radius: var(--rv-radius) !important;
+  box-shadow: none !important;
+}
+
+body[data-page="report_view"] .rv-small-grid {
+  align-items: stretch;
+}
+
+body[data-page="report_view"] .rv-fullscreen {
+  background:
+    linear-gradient(rgba(17, 17, 17, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 17, 17, .025) 1px, transparent 1px),
+    var(--rv-bg);
+  background-size: 24px 24px;
+}
+
+@media (max-width: 900px) {
+  body[data-page="report_view"] .rv-app {
+    width: calc(100vw - 16px);
+    gap: 7px;
+  }
+
+  body[data-page="report_view"] .rv-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-page="report_view"] .rv-summary-grid > :nth-child(4n) {
+    border-right: 1px solid var(--rv-border) !important;
+  }
+
+  body[data-page="report_view"] .rv-summary-grid > :nth-child(2n) {
+    border-right: 0 !important;
+  }
+
+  body[data-page="report_view"] .rv-summary-grid > :nth-last-child(-n + 4) {
+    border-bottom: 1px solid var(--rv-border) !important;
+  }
+
+  body[data-page="report_view"] .rv-summary-grid > :nth-last-child(-n + 2) {
+    border-bottom: 0 !important;
+  }
+
+  body[data-page="report_view"] .rv-topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body[data-page="report_view"] .rv-topbar-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+  }
+
+  body[data-page="report_view"] .rv-main-chart-wrap {
+    min-height: 390px;
+  }
+
+  body[data-page="report_view"] .rv-small-chart-wrap {
+    height: 250px;
+  }
+}
+
+@media (max-width: 430px) {
+  body[data-page="report_view"] .rv-summary-card {
+    padding: 9px 10px;
+  }
+
+  body[data-page="report_view"] .rv-summary-card strong {
+    font-size: 18px;
+  }
+
+  body[data-page="report_view"] .rv-card {
+    padding: 8px;
+  }
+}
+
+
+/* v18.1 Report View event timeline rail fix
+   The original .rv-event-list::before only covers the scroll container viewport.
+   Row-based rail segments scroll with the event content and stop at the last event dot. */
+body[data-page="report_view"] .rv-event-list::before {
+  display: none !important;
+}
+
+body[data-page="report_view"] .rv-timeline-day::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--rv-border);
+  z-index: 0;
+  pointer-events: none;
+}
+
+body[data-page="report_view"] .rv-timeline-day:first-child::before {
+  top: 26px;
+}
+
+body[data-page="report_view"] .rv-timeline-day:last-child::before {
+  bottom: calc(100% - 26px);
+}
+
+body[data-page="report_view"] .rv-timeline-day:only-child::before {
+  display: none;
+}
+
+body[data-page="report_view"] .rv-timeline-dot {
+  position: relative;
+  z-index: 2;
+}
+
+body[data-page="report_view"] .rv-timeline-items,
+body[data-page="report_view"] .rv-timeline-date {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 640px) {
+  body[data-page="report_view"] .rv-timeline-day::before {
+    left: 15px;
+  }
+}
+
+
+/* ===== css/core/section-loading.css ===== */
+[data-section-state] {
+  position: relative;
+}
+
+[data-section-state='loading'],
+[data-section-state='syncing'],
+[data-section-state='refreshing'],
+[data-section-state='saving'] {
+  min-height: 24px;
+}
+
+[data-section-state='loading']::after,
+[data-section-state='syncing']::after,
+[data-section-state='refreshing']::after,
+[data-section-state='saving']::after,
+[data-section-state='cached']::after,
+[data-section-state='stale']::after,
+[data-section-state='fresh']::after {
+  content: attr(data-section-status);
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  max-width: min(220px, calc(100% - 16px));
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, rgba(15, 23, 42, .12));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
+  color: var(--muted-text, #64748b);
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+  pointer-events: none;
+}
+
+[data-section-state='loading']::before,
+[data-section-state='syncing']::before,
+[data-section-state='refreshing']::before,
+[data-section-state='saving']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+  background-size: 220% 100%;
+  animation: ducky-section-shimmer 1.1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+[data-section-state='cached']::after {
+  background: rgba(248, 250, 252, .94);
+}
+
+[data-section-state='stale']::after {
+  border-color: rgba(245, 158, 11, .35);
+  background: rgba(255, 251, 235, .94);
+  color: #92400e;
+}
+
+[data-section-state='fresh']::after {
+  border-color: rgba(16, 185, 129, .28);
+  background: rgba(236, 253, 245, .94);
+  color: #047857;
+}
+
+@keyframes ducky-section-shimmer {
+  0% { background-position: 220% 0; opacity: .2; }
+  50% { opacity: .55; }
+  100% { background-position: -220% 0; opacity: .2; }
+}
+
+@media (max-width: 640px) {
+  [data-section-state='loading']::after,
+  [data-section-state='syncing']::after,
+  [data-section-state='refreshing']::after,
+  [data-section-state='saving']::after,
+  [data-section-state='cached']::after,
+  [data-section-state='stale']::after,
+  [data-section-state='fresh']::after {
+    top: 6px;
+    right: 6px;
+    font-size: 10px;
+    max-width: calc(100% - 12px);
+  }
 }

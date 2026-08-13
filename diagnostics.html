@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Diagnostics | Ducky Management Pro</title>
+  <link rel="stylesheet" href="css/dist/diagnostics.bundle.css?v=20260813-095043">
+
+</head>
+
+<body data-page="diagnostics" class="dm-supabase-theme">
+  <header class="app-header container">
+    <div class="header-leading">
+      <button class="icon-btn hamburger-btn" data-nav-toggle type="button" aria-label="เปิดเมนู">☰</button>
+      <div>
+        <h1>Diagnostics</h1>
+        <p class="muted">Production health, views, cache, integrity & hardening</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="refreshDiagnosticsBtn" type="button" title="โหลดใหม่" aria-label="โหลดใหม่">↻</button>
+      <button class="icon-btn" onclick="history.back()" type="button" title="ย้อนกลับ" aria-label="ย้อนกลับ">←</button>
+      <button class="icon-btn" onclick="AppAuth.logout()" type="button" title="ออกจากระบบ" aria-label="ออกจากระบบ">⎋</button>
+    </div>
+  </header>
+
+  <main class="container page-body diagnostics-page">
+    <section class="diag-hero card-panel">
+      <div class="diag-hero__icon">◎</div>
+      <div>
+        <div class="health-card-kicker">Production Observability</div>
+        <h2 id="diagHeroTitle">กำลังตรวจระบบ...</h2>
+        <p class="muted" id="diagHeroDesc">โหลดข้อมูล diagnostics แบบเบา และไม่แก้ไขข้อมูล production</p>
+      </div>
+      <span class="badge-inline" id="diagOverallBadge">loading</span>
+    </section>
+
+    <section class="diag-toolbar card-panel">
+      <div class="section-card-head">
+        <div>
+          <h3>Actions</h3>
+          <p class="muted">Integrity check อาจใช้เวลานานกว่า action อื่น ควรรันหลัง deploy หรือเมื่อตรวจข้อมูล</p>
+        </div>
+        <span class="badge-inline muted-badge" id="diagLastUpdated">ยังไม่ตรวจ</span>
+      </div>
+      <div class="diag-actions">
+        <button class="health-icon-action primary" id="diagRefreshBtn" type="button"><span>↻</span><b>Refresh</b><small>light dashboard</small></button>
+        <button class="health-icon-action" id="diagIntegrityBtn" type="button"><span>✓</span><b>Integrity</b><small>read-only check</small></button>
+        <button class="health-icon-action" id="diagSmokeBtn" type="button"><span>⌁</span><b>Smoke test</b><small>quick test</small></button>
+        <button class="health-icon-action" id="diagPerformanceBtn" type="button"><span>◷</span><b>Performance</b><small>read baseline</small></button>
+        <button class="health-icon-action danger" id="diagClearCacheBtn" type="button"><span>×</span><b>Clear cache</b><small>server/client</small></button>
+      </div>
+    </section>
+
+    <section class="diag-grid" aria-live="polite">
+      <article class="card-panel diag-card" id="diagModeCard">
+        <div class="diag-card__head"><h3>Mode</h3><span class="badge-inline muted-badge">-</span></div>
+        <div class="diag-card__body skeleton-lines skeleton-lines--kv">
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+        </div>
+      </article>
+      <article class="card-panel diag-card" id="diagWarmupCard">
+        <div class="diag-card__head"><h3>Warm-up</h3><span class="badge-inline muted-badge">-</span></div>
+        <div class="diag-card__body skeleton-lines skeleton-lines--kv">
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+        </div>
+      </article>
+      <article class="card-panel diag-card" id="diagViewsCard">
+        <div class="diag-card__head"><h3>Supabase Views</h3><span class="badge-inline muted-badge">-</span></div>
+        <div class="diag-card__body skeleton-lines skeleton-lines--list">
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+        </div>
+      </article>
+      <article class="card-panel diag-card" id="diagHardeningCard">
+        <div class="diag-card__head"><h3>Hardening</h3><span class="badge-inline muted-badge">-</span></div>
+        <div class="diag-card__body skeleton-lines skeleton-lines--kv">
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+        </div>
+      </article>
+      <article class="card-panel diag-card diag-card--wide" id="diagHealthCard">
+        <div class="diag-card__head"><h3>System Health</h3><span class="badge-inline muted-badge">-</span></div>
+        <div class="diag-card__body skeleton-lines skeleton-lines--list">
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+          <div class="skeleton-row"><span class="skeleton-cell skeleton-cell--label"></span><span class="skeleton-cell skeleton-cell--value"></span></div>
+        </div>
+      </article>
+      <article class="card-panel diag-card diag-card--wide" id="diagPerformanceCard">
+        <div class="diag-card__head"><h3>Performance Baseline</h3><span class="badge-inline muted-badge">ยังไม่รัน</span></div>
+        <div class="diag-card__body"><p class="muted">กด Performance เพื่อวัดเวลา read action สำคัญแบบ read-only</p></div>
+      </article>
+      <article class="card-panel diag-card diag-card--wide" id="diagIntegrityCard">
+        <div class="diag-card__head"><h3>Data Integrity</h3><span class="badge-inline muted-badge">ยังไม่รัน</span></div>
+        <div class="diag-card__body"><p class="muted">กด Integrity เพื่อรัน check แบบ read-only</p></div>
+      </article>
+    </section>
+
+    <section class="card-panel diag-raw-panel">
+      <div class="section-card-head">
+        <div>
+          <h3>Raw result</h3>
+          <p class="muted">ใช้ copy ส่งกลับมาตรวจต่อเวลาพบ error</p>
+        </div>
+        <button class="small-btn" id="diagCopyBtn" type="button">Copy JSON</button>
+      </div>
+      <pre id="diagRawJson" class="diag-json">{}</pre>
+    </section>
+  </main>
+
+  <script defer src="js/dist/diagnostics.bundle.js?v=20260813-095043"></script>
+
+</body>
+
+</html>
